@@ -49,15 +49,15 @@ function fetch(url) {
 async function searchIcons(query) {
   try {
     // The AntV Infographic icon API endpoint
-    // Based on common API patterns, the API likely provides a search or list endpoint
     const apiBaseUrl = 'https://infographic.antv.vision';
     
     // Try to fetch icon data from the API
-    // This may need to be adjusted based on the actual API structure
     let iconData;
     
     try {
       // Attempt to fetch from a JSON API endpoint
+      // Note: This endpoint structure is speculative and may need adjustment
+      // If the API is unavailable or structured differently, we fall back to built-in icons
       const apiUrl = `${apiBaseUrl}/api/icons?q=${encodeURIComponent(query)}`;
       const response = await fetch(apiUrl);
       iconData = JSON.parse(response);
@@ -79,7 +79,8 @@ async function searchIcons(query) {
           try {
             svgContent = await fetch(icon.url);
           } catch (err) {
-            console.error(`Failed to fetch SVG from URL: ${icon.url}`, err.message);
+            // Log to stderr - won't interfere with JSON output on stdout
+            console.error(`Warning: Failed to fetch SVG from URL: ${icon.url}`, err.message);
           }
         }
         
@@ -90,7 +91,8 @@ async function searchIcons(query) {
             const svgUrl = `${apiBaseUrl}/assets/icons/${iconId}.svg`;
             svgContent = await fetch(svgUrl);
           } catch (err) {
-            console.error(`Failed to fetch icon by ID: ${icon.id || icon.name}`, err.message);
+            // Log to stderr - won't interfere with JSON output on stdout
+            console.error(`Warning: Failed to fetch icon by ID: ${icon.id || icon.name}`, err.message);
           }
         }
         
@@ -100,8 +102,8 @@ async function searchIcons(query) {
           svg: svgContent
         });
       } catch (err) {
-        // Skip icons that fail to process
-        console.error(`Failed to process icon: ${icon.name || icon.id}`, err.message);
+        // Log to stderr - won't interfere with JSON output on stdout
+        console.error(`Warning: Failed to process icon: ${icon.name || icon.id}`, err.message);
       }
     }
     
@@ -262,7 +264,7 @@ async function main() {
     console.log(JSON.stringify(output, null, 2));
     
     if (results.length === 0) {
-      console.error(`\nWarning: No icons found for query "${query}"`);
+      console.error(`Warning: No icons found for query "${query}"`);
       process.exit(0);
     }
   } catch (error) {
