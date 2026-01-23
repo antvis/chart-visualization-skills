@@ -26,6 +26,15 @@
       "skills": [
         "./skills/infographic-creator"
       ]
+    },
+    {
+      "name": "narrative-text-visualization",
+      "description": "Transform unstructured text data into engaging narrative visualizations with visual storytelling elements. Supports timelines, chapters, scroll-driven stories, and more.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/narrative-text-visualization"
+      ]
     }
   ]
 }

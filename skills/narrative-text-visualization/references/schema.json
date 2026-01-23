@@ -1,0 +1,366 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Narrative Text Visualization Schema",
+  "description": "JSON schema for narrative text visualization data structure",
+  "type": "object",
+  "required": [
+    "layout",
+    "title",
+    "sections"
+  ],
+  "properties": {
+    "layout": {
+      "type": "string",
+      "enum": [
+        "timeline",
+        "chapters",
+        "scroll",
+        "cards",
+        "story-arc"
+      ],
+      "description": "The layout type for the narrative visualization"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "The main title of the narrative"
+    },
+    "subtitle": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "Optional subtitle or tagline"
+    },
+    "theme": {
+      "type": "object",
+      "description": "Visual theme configuration",
+      "properties": {
+        "palette": {
+          "type": "array",
+          "description": "Color palette for the visualization",
+          "minItems": 3,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "pattern": "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
+            "description": "Hex color code"
+          }
+        },
+        "font": {
+          "type": "string",
+          "description": "Font family choice",
+          "enum": [
+            "serif",
+            "sans-serif",
+            "monospace"
+          ],
+          "default": "sans-serif"
+        },
+        "style": {
+          "type": "string",
+          "description": "Overall design style",
+          "enum": [
+            "modern",
+            "classic",
+            "minimal",
+            "bold",
+            "elegant"
+          ],
+          "default": "modern"
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Content sections of the narrative",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "title",
+          "content"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "intro",
+              "content",
+              "highlight",
+              "quote",
+              "conclusion"
+            ],
+            "default": "content",
+            "description": "The type of section"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Section title"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Section text content"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Optional timestamp for timeline layouts (e.g., '1991', '2023-05', 'Q1 2024')"
+          },
+          "image": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional image URL"
+          },
+          "icon": {
+            "type": "string",
+            "description": "Optional icon name or identifier"
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Additional metadata for the section",
+            "properties": {
+              "author": {
+                "type": "string",
+                "description": "Author of the section"
+              },
+              "date": {
+                "type": "string",
+                "description": "Date associated with the section"
+              },
+              "tags": {
+                "type": "array",
+                "description": "Tags or categories",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "description": "Footer information",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Footer text content"
+        },
+        "credits": {
+          "type": "string",
+          "description": "Attribution or credits"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "layoutTypes": {
+      "timeline": {
+        "description": "Chronological timeline layout with time markers",
+        "bestFor": [
+          "Historical narratives",
+          "Event sequences",
+          "Chronological stories",
+          "Milestones"
+        ]
+      },
+      "chapters": {
+        "description": "Chapter-based layout with distinct sections",
+        "bestFor": [
+          "Long-form content",
+          "Educational material",
+          "Multi-part stories",
+          "Books"
+        ]
+      },
+      "scroll": {
+        "description": "Single-page scrolling with parallax effects",
+        "bestFor": [
+          "Immersive storytelling",
+          "Interactive narratives",
+          "Modern web experiences",
+          "Marketing content"
+        ]
+      },
+      "cards": {
+        "description": "Card-based grid layout",
+        "bestFor": [
+          "Modular content",
+          "Snippets",
+          "Highlights",
+          "Portfolios"
+        ]
+      },
+      "story-arc": {
+        "description": "Story arc visualization with tension flow",
+        "bestFor": [
+          "Dramatic narratives",
+          "Plot structures",
+          "Emotional journeys",
+          "Case studies"
+        ]
+      }
+    },
+    "sectionTypes": {
+      "intro": {
+        "description": "Introduction section with prominent styling",
+        "characteristics": [
+          "Larger text",
+          "Eye-catching design",
+          "Sets the tone"
+        ]
+      },
+      "content": {
+        "description": "Standard content section",
+        "characteristics": [
+          "Body text",
+          "Regular styling",
+          "Main narrative"
+        ]
+      },
+      "highlight": {
+        "description": "Emphasized content section",
+        "characteristics": [
+          "Special styling",
+          "Key points",
+          "Important information"
+        ]
+      },
+      "quote": {
+        "description": "Quote or testimonial section",
+        "characteristics": [
+          "Quote styling",
+          "Attribution",
+          "Pull quotes"
+        ]
+      },
+      "conclusion": {
+        "description": "Conclusion or summary section",
+        "characteristics": [
+          "Summary styling",
+          "Key takeaways",
+          "Call-to-action"
+        ]
+      }
+    }
+  },
+  "examples": [
+    {
+      "layout": "timeline",
+      "title": "The Evolution of Web Development",
+      "subtitle": "From static pages to modern web apps",
+      "theme": {
+        "palette": [
+          "#2c3e50",
+          "#3498db",
+          "#e74c3c"
+        ],
+        "font": "sans-serif",
+        "style": "modern"
+      },
+      "sections": [
+        {
+          "type": "intro",
+          "title": "The Beginning",
+          "content": "In the early 1990s, the World Wide Web was born, marking the start of a digital revolution.",
+          "timestamp": "1991",
+          "icon": "web"
+        },
+        {
+          "type": "content",
+          "title": "The Rise of Dynamic Content",
+          "content": "JavaScript emerged in 1995, enabling interactive experiences and dynamic web pages.",
+          "timestamp": "1995",
+          "icon": "code"
+        },
+        {
+          "type": "highlight",
+          "title": "The Modern Era",
+          "content": "React, Vue, and Angular revolutionized web development with component-based architecture.",
+          "timestamp": "2013",
+          "icon": "rocket"
+        }
+      ]
+    },
+    {
+      "layout": "story-arc",
+      "title": "Product Launch Journey",
+      "theme": {
+        "palette": [
+          "#667eea",
+          "#764ba2",
+          "#f093fb"
+        ],
+        "font": "serif",
+        "style": "elegant"
+      },
+      "sections": [
+        {
+          "type": "intro",
+          "title": "The Idea",
+          "content": "It started with a simple observation about a common problem users faced daily."
+        },
+        {
+          "type": "content",
+          "title": "Development Challenges",
+          "content": "The team faced numerous technical and design obstacles during the development phase."
+        },
+        {
+          "type": "highlight",
+          "title": "The Launch",
+          "content": "After months of hard work, the moment finally arrived. The product was ready for the world."
+        },
+        {
+          "type": "conclusion",
+          "title": "Impact",
+          "content": "The product exceeded all expectations, reaching 100,000 users in the first month."
+        }
+      ],
+      "footer": {
+        "credits": "Product Team - 2024"
+      }
+    },
+    {
+      "layout": "chapters",
+      "title": "Complete Guide to Data Visualization",
+      "subtitle": "Learn the principles and practices",
+      "theme": {
+        "palette": [
+          "#27ae60",
+          "#16a085",
+          "#f39c12"
+        ],
+        "font": "sans-serif",
+        "style": "minimal"
+      },
+      "sections": [
+        {
+          "type": "intro",
+          "title": "Chapter 1: Introduction",
+          "content": "Data visualization is the graphical representation of information and data.",
+          "metadata": {
+            "author": "Data Team"
+          }
+        },
+        {
+          "type": "content",
+          "title": "Chapter 2: Principles",
+          "content": "Understanding the core principles helps create effective visualizations."
+        },
+        {
+          "type": "content",
+          "title": "Chapter 3: Practice",
+          "content": "Apply these principles to real-world projects and case studies."
+        },
+        {
+          "type": "conclusion",
+          "title": "Chapter 4: Conclusion",
+          "content": "With practice and these principles, you can create compelling visualizations."
+        }
+      ]
+    }
+  ]
+}
