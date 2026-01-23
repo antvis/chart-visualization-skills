@@ -28,6 +28,15 @@
       ]
     },
     {
+      "name": "infographic-icon",
+      "description": "Search and retrieve icon SVG strings from AntV's infographic icon library. Returns top 5 matches by default, allowing customization.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/infographic-icon"
+      ]
+    },
+    {
       "name": "narrative-text-visualization",
       "description": "Generate structured narrative text visualizations from data using T8 schema. Creates data interpretation reports with entity labeling.",
       "source": "./",
