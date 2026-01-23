@@ -36,10 +36,7 @@ def search_icons(query, top_k=5):
         try:
             with urllib.request.urlopen(url) as svg_response:
                 svg_content = svg_response.read().decode('utf-8')
-                # Extract icon name from URL
-                icon_name = url.split('/')[-1].replace('.svg', '')
                 results.append({
-                    'name': icon_name,
                     'url': url,
                     'svg': svg_content
                 })

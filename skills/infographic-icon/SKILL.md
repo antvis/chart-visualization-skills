@@ -49,7 +49,6 @@ The script returns a JSON object containing:
 - `topK`: Maximum number of results requested
 - `count`: Actual number of results returned (may be less than topK)
 - `results`: Array of icon objects, each containing:
-  - `name`: The icon name/identifier
   - `url`: The source URL of the icon
   - `svg`: The complete SVG string content
 
@@ -67,7 +66,6 @@ The script returns a JSON object containing:
    ```
 
 3. **Review Results**: The script returns the requested number of matching icons with:
-   - Icon names for reference
    - Icon source URLs
    - SVG content for preview or direct use
 
@@ -89,12 +87,10 @@ The script returns a JSON object containing:
   "count": 2,
   "results": [
     {
-      "name": "document-icon",
       "url": "https://example.com/icon1.svg",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>"
     },
     {
-      "name": "file-icon",
       "url": "https://example.com/icon2.svg",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>"
     }
