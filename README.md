@@ -10,6 +10,11 @@ In the era of data-driven decision-making, efficient and accurate data visualiza
 
 ## Usage
 
+Add this marketplace to Claude Code:
+```bash
+/plugin marketplace add antvis/chart-visualization-skills
+```
+
 Add this skill to your project:
 
 ```bash
