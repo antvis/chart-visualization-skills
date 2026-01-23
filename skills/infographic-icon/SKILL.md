@@ -1,6 +1,6 @@
 ---
 name: infographic-icon
-description: Search and retrieve icon SVG strings from icon library. Returns up to 20 matching icons with their SVG content.
+description: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default, customizable via topK parameter.
 ---
 
 # Icon Search
@@ -21,26 +21,31 @@ This skill helps discover available icons and their correct keywords by:
 To search for icons, use the search script with a keyword or phrase:
 
 ```bash
-node ./scripts/search.js '<search_query>'
+node ./scripts/search.js '<search_query>' [topK]
 ```
+
+**Parameters:**
+- `search_query` (required): The keyword or phrase to search for
+- `topK` (optional): Maximum number of results to return (default: 5)
 
 **Examples:**
 ```bash
-# Search for document icons
+# Search for document icons (default 5 results)
 node ./scripts/search.js 'document'
 
-# Search for security icons
-node ./scripts/search.js 'security'
+# Search for security icons with top 10 results
+node ./scripts/search.js 'security' 10
 
-# Search for technology icons
-node ./scripts/search.js 'tech'
+# Search for technology icons with top 20 results
+node ./scripts/search.js 'tech' 20
 ```
 
 ### Understanding Results
 
 The script returns a JSON object containing:
 - `query`: The search query used
-- `count`: Number of results returned (maximum 20)
+- `topK`: Maximum number of results requested
+- `count`: Actual number of results returned (may be less than topK)
 - `results`: Array of icon objects, each containing:
   - `name`: The icon name/identifier
   - `keywords`: Array of keywords associated with the icon
@@ -52,10 +57,14 @@ The script returns a JSON object containing:
 
 2. **Search for Icons**: Run the search script with relevant keywords
    ```bash
+   # Default search (returns up to 5 results)
    node ./scripts/search.js 'security'
+   
+   # Or specify a custom topK value
+   node ./scripts/search.js 'security' 10
    ```
 
-3. **Review Results**: The script returns up to 20 matching icons with:
+3. **Review Results**: The script returns the requested number of matching icons with:
    - Icon names for reference
    - Keywords associated with the icon
    - SVG content for preview or direct use
@@ -64,7 +73,8 @@ The script returns a JSON object containing:
 
 ## Important Notes
 
-- **Up to 20 Results**: The search returns a maximum of 20 icons to provide comprehensive results
+- **Default Result Count**: By default, the search returns up to 5 icons. You can customize this by providing the `topK` parameter
+- **Customizable Results**: Use the optional `topK` parameter to get more or fewer results (e.g., `node ./scripts/search.js 'icon' 20`)
 - **SVG Strings**: The script returns complete SVG strings, not remote URLs
 - **Keyword Matching**: Icons are matched based on their associated keywords and names
 - **Multiple Use Cases**: Icons can be used in infographics, web development, design projects, and more
@@ -74,6 +84,7 @@ The script returns a JSON object containing:
 ```json
 {
   "query": "document",
+  "topK": 5,
   "count": 3,
   "results": [
     {

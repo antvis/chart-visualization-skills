@@ -4,8 +4,9 @@
  * Icon Search Script
  * Searches for icons by keywords and retrieves their SVG strings
  * 
- * Usage: node search.js '<search_query>'
+ * Usage: node search.js '<search_query>' [topK]
  * Example: node search.js 'document'
+ * Example: node search.js 'document' 10
  */
 
 const https = require('https');
@@ -44,12 +45,13 @@ function fetch(url) {
 /**
  * Searches for icons matching the query
  * @param {string} query - The search query
+ * @param {number} topK - Maximum number of results to return (default: 5)
  * @returns {Promise<Array>} Array of icon results with SVG content
  */
-async function searchIcons(query) {
+async function searchIcons(query, topK = 5) {
   try {
     // The icon API endpoint
-    const apiUrl = `https://www.weavefox.cn/api/open/v1/icon?text=${encodeURIComponent(query)}&topK=20`;
+    const apiUrl = `https://www.weavefox.cn/api/open/v1/icon?text=${encodeURIComponent(query)}&topK=${topK}`;
     
     // Try to fetch icon data from the API
     let iconData;
@@ -67,9 +69,9 @@ async function searchIcons(query) {
       iconData = getCommonIcons(query);
     }
     
-    // Process and limit to top 20 results
+    // Process and limit to topK results
     const results = [];
-    const iconsToProcess = Array.isArray(iconData) ? iconData.slice(0, 20) : [];
+    const iconsToProcess = Array.isArray(iconData) ? iconData.slice(0, topK) : [];
     
     for (const icon of iconsToProcess) {
       try {
@@ -242,22 +244,35 @@ async function main() {
   try {
     // Get search query from command line arguments
     const query = process.argv[2];
+    const topK = process.argv[3] ? parseInt(process.argv[3], 10) : 5;
     
     if (!query) {
       console.error(JSON.stringify({
         error: 'Missing search query',
-        usage: 'node search.js \'<search_query>\'',
-        example: 'node search.js \'document\''
+        usage: 'node search.js \'<search_query>\' [topK]',
+        example: 'node search.js \'document\' 10',
+        note: 'topK defaults to 5 if not specified'
+      }, null, 2));
+      process.exit(1);
+    }
+    
+    // Validate topK
+    if (isNaN(topK) || topK < 1) {
+      console.error(JSON.stringify({
+        error: 'Invalid topK value',
+        usage: 'node search.js \'<search_query>\' [topK]',
+        note: 'topK must be a positive integer'
       }, null, 2));
       process.exit(1);
     }
     
     // Search for icons
-    const results = await searchIcons(query);
+    const results = await searchIcons(query, topK);
     
     // Output results in JSON format
     const output = {
       query: query,
+      topK: topK,
       count: results.length,
       results: results
     };
