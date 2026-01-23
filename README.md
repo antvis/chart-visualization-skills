@@ -15,7 +15,7 @@ Add this marketplace to Claude Code:
 /plugin marketplace add antvis/chart-visualization-skills
 ```
 
-Add this skill to your project:
+Or you can directly install the skills for your multiple agents:
 
 ```bash
 npx skills add antvis/chart-visualization-skills
