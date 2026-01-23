@@ -1,6 +1,8 @@
 ---
 name: infographic-icon
 description: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default, customizable via topK parameter.
+dependency:
+  python: python>=3.6
 ---
 
 # Icon Search
@@ -9,10 +11,10 @@ This skill provides icon search and SVG string retrieval capabilities. It helps 
 
 ## Purpose
 
-This skill helps discover available icons and their correct keywords by:
+This skill helps discover available icons by:
 - Searching the icon library by keywords
 - Retrieving SVG strings directly for use in your projects
-- Providing icon metadata including names and associated keywords
+- Providing icon metadata including names and URLs
 
 ## How to Use
 
@@ -21,7 +23,7 @@ This skill helps discover available icons and their correct keywords by:
 To search for icons, use the search script with a keyword or phrase:
 
 ```bash
-node ./scripts/search.js '<search_query>' [topK]
+python ./scripts/search.py '<search_query>' [topK]
 ```
 
 **Parameters:**
@@ -31,13 +33,13 @@ node ./scripts/search.js '<search_query>' [topK]
 **Examples:**
 ```bash
 # Search for document icons (default 5 results)
-node ./scripts/search.js 'document'
+python ./scripts/search.py 'document'
 
 # Search for security icons with top 10 results
-node ./scripts/search.js 'security' 10
+python ./scripts/search.py 'security' 10
 
 # Search for technology icons with top 20 results
-node ./scripts/search.js 'tech' 20
+python ./scripts/search.py 'tech' 20
 ```
 
 ### Understanding Results
@@ -48,7 +50,7 @@ The script returns a JSON object containing:
 - `count`: Actual number of results returned (may be less than topK)
 - `results`: Array of icon objects, each containing:
   - `name`: The icon name/identifier
-  - `keywords`: Array of keywords associated with the icon
+  - `url`: The source URL of the icon
   - `svg`: The complete SVG string content
 
 ## Workflow
@@ -58,15 +60,15 @@ The script returns a JSON object containing:
 2. **Search for Icons**: Run the search script with relevant keywords
    ```bash
    # Default search (returns up to 5 results)
-   node ./scripts/search.js 'security'
+   python ./scripts/search.py 'security'
    
    # Or specify a custom topK value
-   node ./scripts/search.js 'security' 10
+   python ./scripts/search.py 'security' 10
    ```
 
 3. **Review Results**: The script returns the requested number of matching icons with:
    - Icon names for reference
-   - Keywords associated with the icon
+   - Icon source URLs
    - SVG content for preview or direct use
 
 4. **Use the Icon**: Use the SVG content directly in your project (web pages, designs, infographics, etc.)
@@ -74,9 +76,8 @@ The script returns a JSON object containing:
 ## Important Notes
 
 - **Default Result Count**: By default, the search returns up to 5 icons. You can customize this by providing the `topK` parameter
-- **Customizable Results**: Use the optional `topK` parameter to get more or fewer results (e.g., `node ./scripts/search.js 'icon' 20`)
-- **SVG Strings**: The script returns complete SVG strings, not remote URLs
-- **Keyword Matching**: Icons are matched based on their associated keywords and names
+- **Customizable Results**: Use the optional `topK` parameter to get more or fewer results (e.g., `python ./scripts/search.py 'icon' 20`)
+- **SVG Strings**: The script returns complete SVG strings fetched from the icon service
 - **Multiple Use Cases**: Icons can be used in infographics, web development, design projects, and more
 
 ## Output Format
@@ -85,16 +86,16 @@ The script returns a JSON object containing:
 {
   "query": "document",
   "topK": 5,
-  "count": 3,
+  "count": 2,
   "results": [
     {
-      "name": "document-text",
-      "keywords": ["document", "file", "text", "paper"],
+      "name": "document-icon",
+      "url": "https://example.com/icon1.svg",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>"
     },
     {
-      "name": "document-outline",
-      "keywords": ["document", "file", "outline"],
+      "name": "file-icon",
+      "url": "https://example.com/icon2.svg",
       "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\">...</svg>"
     }
   ]

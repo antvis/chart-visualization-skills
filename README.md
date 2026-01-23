@@ -33,7 +33,7 @@ npx skills add antvis/chart-visualization-skills
 
 - **infographic-icon**: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default (customizable).
 
-`Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their names, keywords, and complete SVG content.
+`Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their names, URLs, and complete SVG content.
 
 - **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 schema.
 
