@@ -58,7 +58,7 @@ theme
 - `theme` 用于自定义主题（palette、font 等）
   例如：暗色主题 + 自定义配色
   ```plain
-  infographic list-row-simple-horizontal-arrow
+  infographic list-row-horizontal-icon-arrow
   theme dark
     palette
       - #61DDAA
@@ -75,7 +75,7 @@ theme
   例如：手绘风格（rough）
 
   ```plain
-  infographic list-row-simple-horizontal-arrow
+  infographic list-row-horizontal-icon-arrow
   theme
     stylize rough
     base
@@ -273,7 +273,7 @@ data
 - SWOT → `compare-swot`
 - 层级结构（树图）→ `hierarchy-tree-*`
 - 数据图表 → `chart-*`
-- 象限分析 → `quadrant-*`
+- 象限分析 → `compare-quadrant-*`
 - 网格列表（要点）→ `list-grid-*`
 - 关系展示 → `relation-*`
 - 词云 → `chart-wordcloud`
@@ -357,10 +357,12 @@ data
     width: '100%',
     height: '100%',
   });
-  infographic.render(`{syntax}`);
   document.fonts?.ready.then(() => {
     infographic.render(`{syntax}`);
-  }).catch((error) => console.error('Error waiting for fonts to load:', error));
+  }).catch((error) => {
+    console.error('Error waiting for fonts to load:', error);
+    infographic.render(`{syntax}`);
+  });
 </script>
 ```
 
