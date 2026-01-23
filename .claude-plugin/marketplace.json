@@ -17,6 +17,15 @@
       "skills": [
         "./skills/chart-visualization"
       ]
+    },
+    {
+      "name": "infographic-creator",
+      "description": "基于给定文字内容创建精美信息图。当用户请求创建信息图时使用。",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/infographic-creator"
+      ]
     }
   ]
 }
