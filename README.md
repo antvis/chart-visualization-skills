@@ -27,9 +27,9 @@ npx skills add antvis/chart-visualization-skills
 
 `Chart Visualization` intelligently selects the most appropriate chart type from 26+ available options, extracts parameters based on detailed specifications, and generates high-quality chart images. It covers time series, comparisons, part-to-whole, relationships, geographic, hierarchical, statistical, and specialized visualizations.
 
-- **infographic-creator**: 基于给定文字内容创建精美信息图。当用户请求创建信息图时使用。
+- **infographic-creator**: Create beautiful infographics based on given text content. Use when users request to create infographics.
 
-`Infographic Creator` 使用 AntV Infographic 将数据、信息与知识转化为可感知的视觉语言。它结合视觉设计与数据可视化，提供 50+ 模板，包括列表、序列、层级、对比、关系和图表等多种类型，用直观符号压缩复杂信息，帮助受众快速理解并记住要点。
+`Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
 
 > [!TIP]
 > More skills are coming soon.
