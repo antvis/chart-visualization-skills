@@ -295,7 +295,7 @@ Reference HTML template structure:
 
 ### Step 4: Output and Delivery
 
-1. Use the **create** tool to generate the HTML file, named as `{title}-narrative.html`
+1. Generate the HTML file using file creation tools, named as `{title}-narrative.html`
 2. Show to user:
    - File path with instructions: "Open with a browser to view the narrative visualization"
    - Data structure used
