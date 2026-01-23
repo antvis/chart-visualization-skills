@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * AntV Infographic Icon Search Script
+ * Icon Search Script
  * Searches for icons by keywords and retrieves their SVG strings
  * 
  * Usage: node search.js '<search_query>'
@@ -48,27 +48,28 @@ function fetch(url) {
  */
 async function searchIcons(query) {
   try {
-    // The AntV Infographic icon API endpoint
-    const apiBaseUrl = 'https://infographic.antv.vision';
+    // The icon API endpoint
+    const apiUrl = `https://www.weavefox.cn/api/open/v1/icon?text=${encodeURIComponent(query)}&topK=20`;
     
     // Try to fetch icon data from the API
     let iconData;
     
     try {
-      // Attempt to fetch from a JSON API endpoint
-      // Note: This endpoint structure is speculative and may need adjustment
-      // If the API is unavailable or structured differently, we fall back to built-in icons
-      const apiUrl = `${apiBaseUrl}/api/icons?q=${encodeURIComponent(query)}`;
+      // Fetch from the API endpoint
       const response = await fetch(apiUrl);
-      iconData = JSON.parse(response);
+      const data = JSON.parse(response);
+      
+      // Extract icon data from API response
+      // The API response structure may vary, adjust as needed
+      iconData = data.data || data.results || data;
     } catch (apiError) {
       // If the API endpoint doesn't work, use fallback with built-in SVGs
       iconData = getCommonIcons(query);
     }
     
-    // Process and limit to top 5 results
+    // Process and limit to top 20 results
     const results = [];
-    const iconsToProcess = Array.isArray(iconData) ? iconData.slice(0, 5) : [];
+    const iconsToProcess = Array.isArray(iconData) ? iconData.slice(0, 20) : [];
     
     for (const icon of iconsToProcess) {
       try {
@@ -88,7 +89,7 @@ async function searchIcons(query) {
         if (!svgContent && (icon.id || icon.name)) {
           try {
             const iconId = icon.id || icon.name;
-            const svgUrl = `${apiBaseUrl}/assets/icons/${iconId}.svg`;
+            const svgUrl = `https://www.weavefox.cn/api/open/v1/icon/${iconId}.svg`;
             svgContent = await fetch(svgUrl);
           } catch (err) {
             // Log to stderr - won't interfere with JSON output on stdout

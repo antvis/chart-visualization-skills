@@ -1,17 +1,17 @@
 ---
 name: infographic-icon
-description: Search and retrieve icon SVG strings from AntV Infographic icon library. Returns top 5 matching icons with their SVG content.
+description: Search and retrieve icon SVG strings from icon library. Returns up to 20 matching icons with their SVG content.
 ---
 
-# Infographic Icon Search
+# Icon Search
 
-This skill provides icon search and SVG string retrieval capabilities based on the AntV Infographic icon service. It helps users find appropriate icons when creating infographics with the AntV Infographic tool.
+This skill provides icon search and SVG string retrieval capabilities. It helps users find appropriate icons for various use cases including infographics, web development, design, and more.
 
 ## Purpose
 
-When creating infographics, users need to specify icons using keywords (e.g., `icon document text`, `icon star fill`). This skill helps discover available icons and their correct keywords by:
-- Searching the AntV Infographic icon library by keywords
-- Retrieving SVG strings directly for use in infographic configurations
+This skill helps discover available icons and their correct keywords by:
+- Searching the icon library by keywords
+- Retrieving SVG strings directly for use in your projects
 - Providing icon metadata including names and associated keywords
 
 ## How to Use
@@ -40,25 +40,11 @@ node ./scripts/search.js 'tech'
 
 The script returns a JSON object containing:
 - `query`: The search query used
-- `count`: Number of results returned (maximum 5)
+- `count`: Number of results returned (maximum 20)
 - `results`: Array of icon objects, each containing:
   - `name`: The icon name/identifier
   - `keywords`: Array of keywords associated with the icon
   - `svg`: The complete SVG string content
-
-### Using Icons in Infographics
-
-Once you find an icon, you can use its keywords in your infographic syntax:
-
-```plain
-infographic list-row-horizontal-icon-arrow
-data
-  lists
-    - label Security Feature
-      icon shield secure
-    - label Fast Performance
-      icon flash fast
-```
 
 ## Workflow
 
@@ -69,22 +55,19 @@ data
    node ./scripts/search.js 'security'
    ```
 
-3. **Review Results**: The script returns the top 5 matching icons with:
+3. **Review Results**: The script returns up to 20 matching icons with:
    - Icon names for reference
-   - Keywords that can be used in infographic syntax
+   - Keywords associated with the icon
    - SVG content for preview or direct use
 
-4. **Use in Infographic**: Copy the appropriate keywords to your infographic data:
-   ```plain
-   icon shield secure
-   ```
+4. **Use the Icon**: Use the SVG content directly in your project (web pages, designs, infographics, etc.)
 
 ## Important Notes
 
-- **Top 5 Results Only**: The search returns a maximum of 5 icons to keep results focused and relevant
+- **Up to 20 Results**: The search returns a maximum of 20 icons to provide comprehensive results
 - **SVG Strings**: The script returns complete SVG strings, not remote URLs
 - **Keyword Matching**: Icons are matched based on their associated keywords and names
-- **Direct Usage**: Use the icon keywords directly in your AntV Infographic syntax
+- **Multiple Use Cases**: Icons can be used in infographics, web development, design projects, and more
 
 ## Output Format
 
@@ -131,33 +114,9 @@ Some commonly used icon keywords in AntV Infographic:
 - `application`, `brackets`
 - `brain`, `ai`
 
-## Integration with Infographic Creator
-
-This skill works seamlessly with the `infographic-creator` skill. After finding icons:
-
-1. Use this skill to search for appropriate icons
-2. Copy the icon keywords from the results
-3. Use them in your infographic data structure when working with `infographic-creator`
-
-Example workflow:
-```bash
-# Step 1: Search for an icon
-node ./scripts/search.js 'analytics'
-
-# Step 2: Use the keywords in your infographic
-infographic list-grid-badge-card
-data
-  title Data Analytics Features
-  lists
-    - label Data Analysis
-      icon chart analytics
-    - label Performance Metrics
-      icon graph data
-```
-
 ## Tips
 
 - Use descriptive, single-word queries for best results
 - Try variations of keywords (e.g., "security", "secure", "shield")
-- Combine multiple keywords when using icons in infographics (e.g., `icon shield check`)
-- Review all 5 results to find the most appropriate icon for your needs
+- Review the results to find the most appropriate icon for your needs
+- Icons can be used across various scenarios: infographics, web development, design, and more
