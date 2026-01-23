@@ -29,7 +29,7 @@
     },
     {
       "name": "narrative-text-visualization",
-      "description": "Transform unstructured text data into engaging narrative visualizations with visual storytelling elements. Supports timelines, chapters, scroll-driven stories, and more.",
+      "description": "Generate structured narrative text visualizations from data using T8 schema. Creates data interpretation reports with entity labeling.",
       "source": "./",
       "strict": false,
       "skills": [

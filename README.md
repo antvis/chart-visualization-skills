@@ -31,9 +31,9 @@ npx skills add antvis/chart-visualization-skills
 
 `Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
 
-- **narrative-text-visualization**: Transform unstructured text data into engaging narrative visualizations with visual storytelling elements.
+- **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 schema.
 
-`Narrative Text Visualization` creates HTML-based story-driven layouts that transform text narratives into visually compelling experiences. It supports multiple layout types including timelines, chapters, scroll-driven stories, cards, and story arcs. Perfect for visualizing historical events, case studies, educational content, storytelling, and progress reports with customizable themes and interactive elements.
+`Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports with entity labeling. It uses a declarative JSON Schema to describe data interpretation reports, making it easy for LLMs to generate structured articles with proper semantic markup. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
 
 > [!TIP]
 > More skills are coming soon.
