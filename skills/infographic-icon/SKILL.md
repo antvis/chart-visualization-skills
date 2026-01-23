@@ -108,22 +108,7 @@ The script handles various error scenarios:
 - **Missing Query**: If no search query is provided, returns usage instructions
 - **Network Errors**: If the icon service is unavailable, returns an error message
 - **Empty Results**: If no icons match the query, returns an empty results array with a warning
-- **Invalid Response**: If the API returns invalid data, falls back to common icon suggestions
-
-## Common Icon Keywords
-
-Some commonly used icon keywords in AntV Infographic:
-- `document`, `text`, `file`
-- `star`, `fill`
-- `flash`, `fast`
-- `shield`, `secure`, `check`
-- `sun`, `moon`
-- `web`, `internet`
-- `account`, `multiple`
-- `cellphone`, `mobile`
-- `cloud`
-- `application`, `brackets`
-- `brain`, `ai`
+- **Invalid Response**: If the API returns invalid data, returns an error message
 
 ## Tips
 
