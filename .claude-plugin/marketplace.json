@@ -1,0 +1,22 @@
+{
+  "name": "anthropic-agent-skills",
+  "owner": {
+    "name": "AntV Visualization Team",
+    "email": "pub_antv@antgroup.com"
+  },
+  "metadata": {
+    "description": "Data visualization skills",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "chart-visualization",
+      "description": "A comprehensive chart generation skill powered by AntV that provides 26+ chart types for intelligent data visualization",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/chart-visualization"
+      ]
+    }
+  ]
+}
