@@ -31,9 +31,9 @@ npx skills add antvis/chart-visualization-skills
 
 `Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
 
-- 🖼️ **infographic-icon**: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default (customizable).
+- 🖼️ **infographic-icon**: Search and retrieve icon SVG strings from AntV's infographic icon library. Returns top 5 matches by default, allowing customization.
 
-`Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their URLs and complete SVG content.
+`Infographic Icon` assists in finding and fetching relevant icons for creating high-quality infographics and designs. Users can provide keywords to retrieve matching icons and directly utilize their SVG content.
 
 - 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 schema.
 
