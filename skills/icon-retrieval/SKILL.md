@@ -1,5 +1,5 @@
 ---
-name: infographic-icon
+name: icon-retrieval
 description: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default, customizable via topK parameter.
 dependency:
   python: python>=3.6
