@@ -27,6 +27,14 @@ npx skills add antvis/chart-visualization-skills
 
 `Chart Visualization` intelligently selects the most appropriate chart type from 26+ available options, extracts parameters based on detailed specifications, and generates high-quality chart images. It covers time series, comparisons, part-to-whole, relationships, geographic, hierarchical, statistical, and specialized visualizations.
 
+- 📋 **s2-spreadsheet**: Create interactive spreadsheet and pivot table visualizations using S2. Use for tabular data, cross-tabulation analysis, or data grids.
+
+`S2 Spreadsheet` provides powerful data grid and pivot table capabilities with features like sorting, filtering, aggregation, and custom rendering. Perfect for business intelligence, multi-dimensional data analysis, and interactive data exploration with both simple tables and complex pivot tables.
+
+- 🕸️ **g6-graph-visualization**: Create interactive graph and network visualizations using G6. Use for relationships, networks, hierarchies, or node-link diagrams.
+
+`G6 Graph Visualization` is a powerful graph visualization engine for relational data analysis. Supports various layouts (force, dagre, circular, radial), custom node shapes, and rich interactions. Ideal for social networks, knowledge graphs, organizational charts, dependency graphs, and network analysis.
+
 - 🎨 **infographic-creator**: Create beautiful infographics based on given text content. Use when users request to create infographics.
 
 `Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
@@ -38,6 +46,10 @@ npx skills add antvis/chart-visualization-skills
 - 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 schema.
 
 `Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports with entity labeling. It uses a declarative JSON Schema to describe data interpretation reports, making it easy for LLMs to generate structured articles with proper semantic markup. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
+
+- 🤖 **gpt-vis**: Create AI-powered visualizations using GPT-Vis. Use when users need intelligent, context-aware visualizations from natural language descriptions.
+
+`GPT-Vis` is designed to work seamlessly with Large Language Models (LLMs) to generate visualizations from natural language descriptions. Supports streaming data, markdown integration, and automatic chart type detection. Ideal for AI assistants, chatbots, and conversational data visualization.
 
 > [!TIP]
 > More skills are coming soon.
