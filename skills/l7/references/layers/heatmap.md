@@ -417,10 +417,10 @@ A: 调整地图的 `padding` 或使用 `fitBounds()` 方法
 
 ## 相关技能
 
-- [点图层](./point-layer.md)
-- [面图层](./polygon-layer.md)
-- [数据映射](../04-visual/color-mapping.md)
-- [数据聚合](../02-data/data-aggregation.md)
+- [点图层](./point.md)
+- [面图层](./polygon.md)
+- [数据映射](../visual/mapping.md)
+- [数据聚合](../data/source-parser.md)
 
 ## 在线示例
 
