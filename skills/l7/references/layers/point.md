@@ -457,12 +457,12 @@ layer.setMaxZoom(15);
 
 ## 相关技能
 
-- [场景初始化](../01-core/scene-initialization.md)
-- [GeoJSON 数据处理](../02-data/source-geojson.md)
-- [颜色映射](../04-visual/color-mapping.md)
-- [大小映射](../04-visual/size-mapping.md)
-- [事件交互](../05-interaction/event-handling.md)
-- [添加弹窗](../06-components/popup.md)
+- [场景初始化](../core/scene.md)
+- [GeoJSON 数据处理](../data/source-geojson.md)
+- [颜色映射](../visual/mapping.md)
+- [大小映射](../visual/mapping.md)
+- [事件交互](../interaction/events.md)
+- [添加弹窗](../interaction/popup.md)
 
 ## 在线示例
 
