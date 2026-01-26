@@ -1,0 +1,2 @@
+# Python 3.0+ dependencies for chart-visualization skill
+requests>=2.31.0

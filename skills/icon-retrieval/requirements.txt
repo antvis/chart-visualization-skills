@@ -1,0 +1,3 @@
+# Python 3.0+ dependencies for icon-retrieval skill
+# This script uses only standard library modules (urllib, json, ssl, os, sys)
+# No external dependencies required
