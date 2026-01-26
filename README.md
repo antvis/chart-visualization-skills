@@ -8,8 +8,12 @@
 
 In the era of data-driven decision-making, efficient and accurate data visualization and analysis are paramount. AntV offers a professional suite of visualization solutions, providing a robust toolkit and a comprehensive set of skills for the entire workflow—from chart design and interactive exploration to in-depth data analysis. It empowers users to swiftly transform complex datasets into intuitive visual charts, significantly lowering the barrier to creation through intelligent design specifications and a rich library of components. Whether for daily reporting, dynamic dashboards, or sophisticated interactive analysis, AntV delivers reliable support. By integrating AI capabilities, these tools further streamline and automate the generation and optimization of visualizations. This allows analysts to focus more on uncovering insights and driving business decisions, truly making data visible and understandable.
 
-> [!NOTE]
+> [!WARNING]
 > This project only merges AI-generated code.
+>
+> **How to contribute:**
+> 1. Submit an issue describing the problem clearly
+> 2. Assign it to @copilot with your requirements
 
 ## Usage
 
