@@ -86,8 +86,9 @@ class TestGenerateChartUrl(unittest.TestCase):
         mock_post.assert_called_once()
         
         # Verify payload structure
-        call_args = mock_post.call_args
-        payload = call_args[1]['json']
+        call_kwargs = mock_post.call_args.kwargs
+        self.assertIn('json', call_kwargs)
+        payload = call_kwargs['json']
         self.assertEqual(payload['type'], "line")
         self.assertEqual(payload['source'], "chart-visualization-creator")
         self.assertEqual(payload['data'], [1, 2, 3])
@@ -139,8 +140,9 @@ class TestGenerateMap(unittest.TestCase):
         mock_post.assert_called_once()
         
         # Verify payload structure
-        call_args = mock_post.call_args
-        payload = call_args[1]['json']
+        call_kwargs = mock_post.call_args.kwargs
+        self.assertIn('json', call_kwargs)
+        payload = call_kwargs['json']
         self.assertEqual(payload['tool'], "generate_district_map")
         self.assertEqual(payload['serviceId'], "service-123")
         self.assertEqual(payload['source'], "chart-visualization-creator")
