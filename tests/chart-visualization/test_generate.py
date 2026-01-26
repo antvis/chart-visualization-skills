@@ -18,7 +18,7 @@ from unittest.mock import patch, Mock, mock_open
 from io import StringIO
 
 # Add the scripts directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'scripts'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'skills', 'chart-visualization', 'scripts'))
 import generate
 
 
