@@ -106,6 +106,15 @@ The script handles various error scenarios:
 - **Network Errors**: If the icon service is unavailable, returns an error message
 - **Empty Results**: If no icons match the query, returns an empty results array with a warning
 - **Invalid Response**: If the API returns invalid data, returns an error message
+- **SSL Certificate Errors**: If you encounter SSL certificate verification errors, you can disable verification by setting an environment variable:
+  ```bash
+  # Option 1: Using PYTHONHTTPSVERIFY
+  PYTHONHTTPSVERIFY=0 python ./scripts/search.py 'document'
+  
+  # Option 2: Using SSL_VERIFY
+  SSL_VERIFY=false python ./scripts/search.py 'document'
+  ```
+  **Note**: Disabling SSL verification should only be used in development environments or when certificate issues are unavoidable. It reduces security by allowing potential man-in-the-middle attacks.
 
 ## Tips
 

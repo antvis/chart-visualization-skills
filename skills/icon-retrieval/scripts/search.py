@@ -14,6 +14,7 @@ import json
 import urllib.request
 import urllib.parse
 import ssl
+import os
 
 
 def search_icons(query, top_k=5):
@@ -22,11 +23,17 @@ def search_icons(query, top_k=5):
     params = urllib.parse.urlencode({'text': query, 'topK': top_k})
     api_url = f'https://www.weavefox.cn/api/open/v1/icon?{params}'
     
-    # Create SSL context that doesn't verify certificates
-    # This is needed to avoid SSL certificate verification errors
+    # Create SSL context
+    # By default, uses standard certificate verification
+    # Set PYTHONHTTPSVERIFY=0 or SSL_VERIFY=false environment variable to disable verification
+    # if encountering certificate issues
     ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    # Allow disabling SSL verification via environment variable for troubleshooting
+    # This should only be used in development or when certificate issues are unavoidable
+    if os.environ.get('PYTHONHTTPSVERIFY', '1') == '0' or os.environ.get('SSL_VERIFY', '').lower() == 'false':
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
     
     # Fetch icon URLs
     with urllib.request.urlopen(api_url, context=ssl_context) as response:
