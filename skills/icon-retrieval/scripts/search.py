@@ -13,6 +13,7 @@ import sys
 import json
 import urllib.request
 import urllib.parse
+import ssl
 
 
 def search_icons(query, top_k=5):
@@ -21,8 +22,14 @@ def search_icons(query, top_k=5):
     params = urllib.parse.urlencode({'text': query, 'topK': top_k})
     api_url = f'https://www.weavefox.cn/api/open/v1/icon?{params}'
     
+    # Create SSL context that doesn't verify certificates
+    # This is needed to avoid SSL certificate verification errors
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
     # Fetch icon URLs
-    with urllib.request.urlopen(api_url) as response:
+    with urllib.request.urlopen(api_url, context=ssl_context) as response:
         data = json.loads(response.read())
     
     if not data.get('status') or not data.get('data', {}).get('success'):
@@ -34,7 +41,7 @@ def search_icons(query, top_k=5):
     results = []
     for url in icon_urls:
         try:
-            with urllib.request.urlopen(url) as svg_response:
+            with urllib.request.urlopen(url, context=ssl_context) as svg_response:
                 svg_content = svg_response.read().decode('utf-8')
                 results.append({
                     'url': url,
