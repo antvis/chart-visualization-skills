@@ -525,11 +525,11 @@ scene.render();
 
 ## 相关技能
 
-- [场景初始化](../01-core/scene-initialization.md)
-- [点图层](./point-layer.md)
-- [轨迹动画](../07-animation/trajectory-animation.md)
-- [颜色映射](../04-visual/color-mapping.md)
-- [事件交互](../05-interaction/event-handling.md)
+- [场景初始化](../core/scene.md)
+- [点图层](./point.md)
+- [轨迹动画](../animation/layer-animation.md)
+- [颜色映射](../visual/mapping.md)
+- [事件交互](../interaction/events.md)
 
 ## 在线示例
 
