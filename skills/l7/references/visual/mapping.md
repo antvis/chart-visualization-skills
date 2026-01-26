@@ -537,10 +537,10 @@ layer.color((d) => {
 ## 相关技能
 
 - [样式配置](./style.md)
-- [点图层](../03-layers/point-layer.md)
-- [线图层](../03-layers/line-layer.md)
-- [面图层](../03-layers/polygon-layer.md)
-- [组件](../05-interaction/components.md)
+- [点图层](../layers/point.md)
+- [线图层](../layers/line.md)
+- [面图层](../layers/polygon.md)
+- [组件](../interaction/components.md)
 
 ## 在线示例
 
