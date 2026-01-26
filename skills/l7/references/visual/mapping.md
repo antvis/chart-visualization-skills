@@ -24,8 +24,8 @@ version: 2.x
 
 ## 前置条件
 
-- 已完成[场景初始化](../01-core/scene-initialization.md)
-- 已创建图层（[点图层](../03-layers/point-layer.md)、[线图层](../03-layers/line-layer.md)等）
+- 已完成[场景初始化](../core/scene.md)
+- 已创建图层（[点图层](../layers/point.md)、[线图层](../layers/line.md)等）
 - 数据中包含用于映射的字段
 
 ## 核心概念
@@ -520,7 +520,7 @@ layer
 
 ### Q: 如何自定义图例？
 
-A: 参考 [components.md](../05-interaction/components.md) 中的图例组件
+A: 参考 [components.md](../interaction/components.md) 中的图例组件
 
 ### Q: 能否同时映射多个字段到一个属性？
 

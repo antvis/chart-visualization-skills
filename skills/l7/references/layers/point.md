@@ -24,7 +24,7 @@ version: 2.x
 
 ## 前置条件
 
-- 已完成[场景初始化](../01-core/scene-initialization.md)
+- 已完成[场景初始化](../core/scene.md)
 - 准备好点位数据（包含经纬度）
 
 ## 输入参数
@@ -400,7 +400,7 @@ layer.source(data.filter((d, i) => i % 10 === 0));
 layer.setMinZoom(10); // 只在 zoom >= 10 时显示
 
 // 3. 使用聚合
-// 参考: ../10-performance/aggregation.md
+// 参考: ../performance/optimization.md
 ```
 
 ### 3. 点的大小不一致

@@ -25,7 +25,7 @@ version: 2.x
 
 ## 前置条件
 
-- 已完成[场景初始化](../01-core/scene-initialization.md)
+- 已完成[场景初始化](../core/scene.md)
 - 准备好面数据（通常是 GeoJSON 格式）
 
 ## 面类型
@@ -465,7 +465,6 @@ layer.style({
 - [线图层（描边）](./line.md)
 - [颜色映射](../visual/mapping.md)
 - [事件交互](../interaction/events.md)
-- [高亮选中](../interaction/events.md)
 - [添加弹窗](../interaction/popup.md)
 - [添加图例](../interaction/components.md)
 
