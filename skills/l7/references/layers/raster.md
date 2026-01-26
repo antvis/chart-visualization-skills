@@ -597,9 +597,9 @@ A: L7 会自动缓存已加载的瓦片，可通过调整地图视角提前触�
 
 ## 相关技能
 
-- [场景初始化](../01-core/scene-initialization.md)
+- [场景初始化](../core/scene.md)
 - [图片图层](./image.md)
-- [地图配置](../01-core/map-types.md)
+- [地图配置](../core/map-types.md)
 
 ## 在线示例
 
