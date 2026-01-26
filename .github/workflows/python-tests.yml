@@ -28,17 +28,17 @@ jobs:
       
       - name: Install chart-visualization dependencies
         run: |
-          cd skills/chart-visualization
+          cd skills/chart-visualization/tests
           pip install -r requirements.txt
       
       - name: Run chart-visualization tests
         run: |
-          cd skills/chart-visualization/scripts
+          cd skills/chart-visualization/tests
           python -m unittest test_generate.py -v
       
       - name: Install icon-retrieval dependencies
         run: |
-          cd skills/icon-retrieval
+          cd skills/icon-retrieval/tests
           # icon-retrieval has no external dependencies, just verify requirements.txt exists
           if [ -f requirements.txt ]; then
             echo "requirements.txt found"
@@ -46,5 +46,5 @@ jobs:
       
       - name: Run icon-retrieval tests
         run: |
-          cd skills/icon-retrieval/scripts
+          cd skills/icon-retrieval/tests
           python -m unittest test_search.py -v
