@@ -27,25 +27,40 @@ Test data examples are based on:
 - `skills/chart-visualization/references/` - Chart type specifications
 - `skills/icon-retrieval/SKILL.md` - Icon search examples
 
-## Network Requirements
+## CI/CD Behavior
 
-⚠️ **Important**: These tests require network access to external APIs:
+⚠️ **Real API tests are automatically skipped in CI environments** (when `CI=true`):
+- CHART_TYPE_MAP validation tests run in CI (no network required)
+- Real API integration tests are skipped in CI to avoid network dependency failures
+- All tests including real API calls run in local development
+
+To run tests locally with real API calls:
+```bash
+npm test
+```
+
+To simulate CI behavior locally:
+```bash
+CI=true npm test
+```
+
+## Network Requirements (Local Development Only)
+
+Real API tests require network access to external APIs:
 - Chart API: `https://antv-studio.alipay.com/api/gpt-vis`
 - Icon API: `https://www.weavefox.cn/api/open/v1/icon`
 
-In CI/CD environments with restricted network access, tests may fail with `ENOTFOUND` errors. This is expected behavior and indicates that the tests are correctly making real API calls.
-
 ## Test Coverage
 
-- **CHART_TYPE_MAP validation** (no network required)
-- **Real chart generation** with various chart types:
+- **CHART_TYPE_MAP validation** (runs in CI - no network required)
+- **Real chart generation** (skipped in CI):
   - Line charts
   - Pie charts
   - Bar charts
   - Area charts
   - District maps
   - Pin maps
-- **Real icon searches** with various queries:
+- **Real icon searches** (skipped in CI):
   - Document icons
   - Security icons
   - Technology icons

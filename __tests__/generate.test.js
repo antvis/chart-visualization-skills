@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../skills/chart-visualization/scripts/generate.js';
 
+// Skip real API tests in CI environment
+const skipRealApiTests = process.env.CI === 'true';
+
 describe('generate.js - Chart Visualization Script', () => {
   describe('CHART_TYPE_MAP', () => {
     it('should contain all expected chart types', () => {
@@ -24,7 +27,7 @@ describe('generate.js - Chart Visualization Script', () => {
     });
   });
 
-  describe('generateChartUrl - Real API Tests', () => {
+  describe.skipIf(skipRealApiTests)('generateChartUrl - Real API Tests', () => {
     it('should generate line chart with real data', async () => {
       // Real data from generate_line_chart.md reference
       const lineChartData = [
@@ -103,7 +106,7 @@ describe('generate.js - Chart Visualization Script', () => {
     }, 10000);
   });
 
-  describe('generateMap - Real API Tests', () => {
+  describe.skipIf(skipRealApiTests)('generateMap - Real API Tests', () => {
     it('should generate district map with real data', async () => {
       const districtMapData = {
         region: 'china',

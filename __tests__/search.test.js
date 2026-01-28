@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { searchIcons } from '../skills/icon-retrieval/scripts/search.js';
 
+// Skip real API tests in CI environment
+const skipRealApiTests = process.env.CI === 'true';
+
 describe('search.js - Icon Retrieval Script', () => {
-  describe('searchIcons - Real API Tests', () => {
+  describe.skipIf(skipRealApiTests)('searchIcons - Real API Tests', () => {
     it('should search for document icons and return results', async () => {
       const results = await searchIcons('document', 3);
 
