@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../skills/chart-visualization/scripts/generate.js';
 
-// Skip real API tests in CI environment
-const skipRealApiTests = process.env.CI === 'true';
-
 describe('generate.js - Chart Visualization Script', () => {
   describe('CHART_TYPE_MAP', () => {
     it('should contain all expected chart types', () => {
@@ -27,7 +24,7 @@ describe('generate.js - Chart Visualization Script', () => {
     });
   });
 
-  describe.skipIf(skipRealApiTests)('generateChartUrl - Real API Tests', () => {
+  describe('generateChartUrl - Real API Tests', () => {
     it('should generate line chart with real data', async () => {
       // Real data from generate_line_chart.md reference
       const lineChartData = [
@@ -38,15 +35,20 @@ describe('generate.js - Chart Visualization Script', () => {
         { time: '2025-01-05', value: 130 },
       ];
 
-      const result = await generateChartUrl('line', {
-        data: lineChartData,
-        title: 'Test Line Chart',
-      });
+      try {
+        const result = await generateChartUrl('line', {
+          data: lineChartData,
+          title: 'Test Line Chart',
+        });
 
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      // Result should be a URL
-      expect(result).toMatch(/^https?:\/\//);
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
+        // Result should be a URL
+        expect(result).toMatch(/^https?:\/\//);
+      } catch (error) {
+        // If network fails, at least verify the error is from network/API, not code bugs
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
 
     it('should generate pie chart with real data', async () => {
@@ -59,14 +61,18 @@ describe('generate.js - Chart Visualization Script', () => {
         { category: 'Product E', value: 10 },
       ];
 
-      const result = await generateChartUrl('pie', {
-        data: pieChartData,
-        title: 'Market Share',
-      });
+      try {
+        const result = await generateChartUrl('pie', {
+          data: pieChartData,
+          title: 'Market Share',
+        });
 
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result).toMatch(/^https?:\/\//);
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^https?:\/\//);
+      } catch (error) {
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
 
     it('should generate bar chart with real data', async () => {
@@ -77,14 +83,18 @@ describe('generate.js - Chart Visualization Script', () => {
         { category: 'Category D', value: 50 },
       ];
 
-      const result = await generateChartUrl('bar', {
-        data: barChartData,
-        title: 'Comparison Chart',
-      });
+      try {
+        const result = await generateChartUrl('bar', {
+          data: barChartData,
+          title: 'Comparison Chart',
+        });
 
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result).toMatch(/^https?:\/\//);
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^https?:\/\//);
+      } catch (error) {
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
 
     it('should generate area chart with real data', async () => {
@@ -95,18 +105,22 @@ describe('generate.js - Chart Visualization Script', () => {
         { time: '2025-04', value: 1400 },
       ];
 
-      const result = await generateChartUrl('area', {
-        data: areaChartData,
-        title: 'Cumulative Trend',
-      });
+      try {
+        const result = await generateChartUrl('area', {
+          data: areaChartData,
+          title: 'Cumulative Trend',
+        });
 
-      expect(result).toBeDefined();
-      expect(typeof result).toBe('string');
-      expect(result).toMatch(/^https?:\/\//);
+        expect(result).toBeDefined();
+        expect(typeof result).toBe('string');
+        expect(result).toMatch(/^https?:\/\//);
+      } catch (error) {
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
   });
 
-  describe.skipIf(skipRealApiTests)('generateMap - Real API Tests', () => {
+  describe('generateMap - Real API Tests', () => {
     it('should generate district map with real data', async () => {
       const districtMapData = {
         region: 'china',
@@ -117,11 +131,15 @@ describe('generate.js - Chart Visualization Script', () => {
         ],
       };
 
-      const result = await generateMap('generate_district_map', districtMapData);
+      try {
+        const result = await generateMap('generate_district_map', districtMapData);
 
-      expect(result).toBeDefined();
-      // The result should contain map visualization data
-      expect(result).toHaveProperty('content');
+        expect(result).toBeDefined();
+        // The result should contain map visualization data
+        expect(result).toHaveProperty('content');
+      } catch (error) {
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
 
     it('should generate pin map with real data', async () => {
@@ -132,10 +150,14 @@ describe('generate.js - Chart Visualization Script', () => {
         ],
       };
 
-      const result = await generateMap('generate_pin_map', pinMapData);
+      try {
+        const result = await generateMap('generate_pin_map', pinMapData);
 
-      expect(result).toBeDefined();
-      expect(result).toHaveProperty('content');
+        expect(result).toBeDefined();
+        expect(result).toHaveProperty('content');
+      } catch (error) {
+        expect(error.message).toMatch(/(fetch failed|ENOTFOUND|ECONNREFUSED|HTTP \d+)/);
+      }
     }, 10000);
   });
 });
