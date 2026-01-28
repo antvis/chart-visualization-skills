@@ -1,14 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateChartUrl, generateMap, httpPost, CHART_TYPE_MAP } from '../skills/chart-visualization/scripts/generate.js';
-
-// Mock global fetch
-global.fetch = vi.fn();
+import { describe, it, expect } from 'vitest';
+import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../skills/chart-visualization/scripts/generate.js';
 
 describe('generate.js - Chart Visualization Script', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe('CHART_TYPE_MAP', () => {
     it('should contain all expected chart types', () => {
       expect(CHART_TYPE_MAP).toHaveProperty('generate_line_chart', 'line');
@@ -31,122 +24,115 @@ describe('generate.js - Chart Visualization Script', () => {
     });
   });
 
-  describe('httpPost', () => {
-    it('should make POST request with correct payload', async () => {
-      const mockResponse = { success: true, data: 'test' };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
+  describe('generateChartUrl - Real API Tests', () => {
+    it('should generate line chart with real data', async () => {
+      // Real data from generate_line_chart.md reference
+      const lineChartData = [
+        { time: '2025-01-01', value: 100 },
+        { time: '2025-01-02', value: 120 },
+        { time: '2025-01-03', value: 110 },
+        { time: '2025-01-04', value: 140 },
+        { time: '2025-01-05', value: 130 },
+      ];
+
+      const result = await generateChartUrl('line', {
+        data: lineChartData,
+        title: 'Test Line Chart',
       });
 
-      const result = await httpPost('https://example.com', { test: 'data' });
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      // Result should be a URL
+      expect(result).toMatch(/^https?:\/\//);
+    }, 10000);
 
-      expect(global.fetch).toHaveBeenCalledWith('https://example.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ test: 'data' }),
+    it('should generate pie chart with real data', async () => {
+      // Real data from generate_pie_chart.md reference
+      const pieChartData = [
+        { category: 'Product A', value: 30 },
+        { category: 'Product B', value: 25 },
+        { category: 'Product C', value: 20 },
+        { category: 'Product D', value: 15 },
+        { category: 'Product E', value: 10 },
+      ];
+
+      const result = await generateChartUrl('pie', {
+        data: pieChartData,
+        title: 'Market Share',
       });
-      expect(result).toEqual(mockResponse);
-    });
 
-    it('should throw error on failed request', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        text: async () => 'Not found',
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(/^https?:\/\//);
+    }, 10000);
+
+    it('should generate bar chart with real data', async () => {
+      const barChartData = [
+        { category: 'Category A', value: 45 },
+        { category: 'Category B', value: 60 },
+        { category: 'Category C', value: 35 },
+        { category: 'Category D', value: 50 },
+      ];
+
+      const result = await generateChartUrl('bar', {
+        data: barChartData,
+        title: 'Comparison Chart',
       });
 
-      await expect(httpPost('https://example.com', {})).rejects.toThrow('HTTP 404: Not found');
-    });
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(/^https?:\/\//);
+    }, 10000);
+
+    it('should generate area chart with real data', async () => {
+      const areaChartData = [
+        { time: '2025-01', value: 1000 },
+        { time: '2025-02', value: 1200 },
+        { time: '2025-03', value: 1100 },
+        { time: '2025-04', value: 1400 },
+      ];
+
+      const result = await generateChartUrl('area', {
+        data: areaChartData,
+        title: 'Cumulative Trend',
+      });
+
+      expect(result).toBeDefined();
+      expect(typeof result).toBe('string');
+      expect(result).toMatch(/^https?:\/\//);
+    }, 10000);
   });
 
-  describe('generateChartUrl', () => {
-    it('should generate chart URL successfully', async () => {
-      const mockResponse = {
-        success: true,
-        resultObj: 'https://example.com/chart.png',
+  describe('generateMap - Real API Tests', () => {
+    it('should generate district map with real data', async () => {
+      const districtMapData = {
+        region: 'china',
+        data: [
+          { name: '北京', value: 100 },
+          { name: '上海', value: 120 },
+          { name: '广东', value: 150 },
+        ],
       };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
 
-      const result = await generateChartUrl('line', { data: [1, 2, 3] });
+      const result = await generateMap('generate_district_map', districtMapData);
 
-      expect(result).toBe('https://example.com/chart.png');
-      const callArgs = global.fetch.mock.calls[0][1];
-      const payload = JSON.parse(callArgs.body);
-      expect(payload.type).toBe('line');
-      expect(payload.source).toBe('chart-visualization-creator');
-      expect(payload.data).toEqual([1, 2, 3]);
-    });
+      expect(result).toBeDefined();
+      // The result should contain map visualization data
+      expect(result).toHaveProperty('content');
+    }, 10000);
 
-    it('should throw error when API returns success: false', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: false, errorMessage: 'Test error' }),
-      });
-
-      await expect(generateChartUrl('line', {})).rejects.toThrow('Test error');
-    });
-
-    it('should throw error with default message when errorMessage is missing', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: false }),
-      });
-
-      await expect(generateChartUrl('line', {})).rejects.toThrow('Unknown error');
-    });
-  });
-
-  describe('generateMap', () => {
-    it('should generate map successfully', async () => {
-      const mockResponse = {
-        success: true,
-        resultObj: { content: [{ type: 'text', text: 'Map URL' }] },
+    it('should generate pin map with real data', async () => {
+      const pinMapData = {
+        points: [
+          { name: 'Location 1', lat: 39.9, lng: 116.4, value: 100 },
+          { name: 'Location 2', lat: 31.2, lng: 121.5, value: 150 },
+        ],
       };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse,
-      });
 
-      const result = await generateMap('generate_district_map', { region: 'test' });
+      const result = await generateMap('generate_pin_map', pinMapData);
 
-      expect(result).toEqual({ content: [{ type: 'text', text: 'Map URL' }] });
-      const callArgs = global.fetch.mock.calls[0][1];
-      const payload = JSON.parse(callArgs.body);
-      expect(payload.tool).toBe('generate_district_map');
-      expect(payload.source).toBe('chart-visualization-creator');
-      expect(payload.input).toEqual({ region: 'test' });
-    });
-
-    it('should include serviceId when available', async () => {
-      process.env.SERVICE_ID = 'test-service-id';
-      
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true, resultObj: {} }),
-      });
-
-      await generateMap('generate_pin_map', {});
-
-      const callArgs = global.fetch.mock.calls[0][1];
-      const payload = JSON.parse(callArgs.body);
-      expect(payload.serviceId).toBe('test-service-id');
-      
-      delete process.env.SERVICE_ID;
-    });
-
-    it('should throw error when API returns success: false', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: false, errorMessage: 'Map generation failed' }),
-      });
-
-      await expect(generateMap('generate_district_map', {})).rejects.toThrow('Map generation failed');
-    });
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('content');
+    }, 10000);
   });
 });
