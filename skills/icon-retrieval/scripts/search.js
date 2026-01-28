@@ -1,33 +1,16 @@
 #!/usr/bin/env node
 
-const https = require('https');
-const http = require('http');
-
-async function fetchUrl(url) {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const client = urlObj.protocol === 'https:' ? https : http;
-    
-    client.get(url, (res) => {
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(data);
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${data}`));
-        }
-      });
-    }).on('error', reject);
-  });
-}
-
 async function searchIcons(query, topK = 5) {
   const params = new URLSearchParams({ text: query, topK: topK.toString() });
   const apiUrl = `https://www.weavefox.cn/api/open/v1/icon?${params}`;
   
-  const responseText = await fetchUrl(apiUrl);
-  const data = JSON.parse(responseText);
+  const response = await fetch(apiUrl);
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+  
+  const data = await response.json();
   
   if (!data.status || !data.data?.success) {
     throw new Error(data.message || 'API request failed');
@@ -38,7 +21,11 @@ async function searchIcons(query, topK = 5) {
   
   for (const url of iconUrls) {
     try {
-      const svgContent = await fetchUrl(url);
+      const svgResponse = await fetch(url);
+      if (!svgResponse.ok) {
+        throw new Error(`HTTP ${svgResponse.status}`);
+      }
+      const svgContent = await svgResponse.text();
       results.push({ url, svg: svgContent });
     } catch (e) {
       console.error(`Warning: Failed to fetch SVG from ${url}: ${e.message}`);
@@ -96,5 +83,3 @@ async function main() {
 if (require.main === module) {
   main();
 }
-
-module.exports = { searchIcons };

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const https = require('https');
 
 // Chart type mapping, consistent with src/utils/callTool.ts
 const CHART_TYPE_MAP = {
@@ -40,42 +39,21 @@ function getServiceIdentifier() {
   return process.env.SERVICE_ID;
 }
 
-function httpPost(url, payload) {
-  return new Promise((resolve, reject) => {
-    const urlObj = new URL(url);
-    const data = JSON.stringify(payload);
-    
-    const options = {
-      hostname: urlObj.hostname,
-      port: urlObj.port || 443,
-      path: urlObj.pathname + urlObj.search,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-      },
-    };
-
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => body += chunk);
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            resolve(JSON.parse(body));
-          } catch (e) {
-            reject(new Error(`Failed to parse response: ${e.message}`));
-          }
-        } else {
-          reject(new Error(`HTTP ${res.statusCode}: ${body}`));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.write(data);
-    req.end();
+async function httpPost(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`HTTP ${response.status}: ${text}`);
+  }
+
+  return response.json();
 }
 
 async function generateChartUrl(chartType, options) {
@@ -181,5 +159,3 @@ if (require.main === module) {
     process.exit(1);
   });
 }
-
-module.exports = { generateChartUrl, generateMap, CHART_TYPE_MAP };
