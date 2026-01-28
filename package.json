@@ -1,0 +1,16 @@
+{
+  "name": "chart-visualization-skills",
+  "version": "1.0.0",
+  "description": "Chart visualization and icon retrieval skills",
+  "type": "commonjs",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.2.0"
+  }
+}

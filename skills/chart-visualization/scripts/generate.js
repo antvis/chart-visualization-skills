@@ -159,3 +159,6 @@ if (require.main === module) {
     process.exit(1);
   });
 }
+
+// Export functions for testing
+module.exports = { generateChartUrl, generateMap, httpPost, CHART_TYPE_MAP };
