@@ -2,7 +2,7 @@
 name: icon-retrieval
 description: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default, customizable via topK parameter.
 dependency:
-  python: python>=3.6
+  nodejs: ">=18.0.0"
 ---
 
 # Icon Search
@@ -23,7 +23,7 @@ This skill helps discover available icons by:
 To search for icons, use the search script with a keyword or phrase:
 
 ```bash
-python ./scripts/search.py '<search_query>' [topK]
+node ./scripts/search.js '<search_query>' [topK]
 ```
 
 **Parameters:**
@@ -33,13 +33,13 @@ python ./scripts/search.py '<search_query>' [topK]
 **Examples:**
 ```bash
 # Search for document icons (default 5 results)
-python ./scripts/search.py 'document'
+node ./scripts/search.js 'document'
 
 # Search for security icons with top 10 results
-python ./scripts/search.py 'security' 10
+node ./scripts/search.js 'security' 10
 
 # Search for technology icons with top 20 results
-python ./scripts/search.py 'tech' 20
+node ./scripts/search.js 'tech' 20
 ```
 
 ### Understanding Results
@@ -59,10 +59,10 @@ The script returns a JSON object containing:
 2. **Search for Icons**: Run the search script with relevant keywords
    ```bash
    # Default search (returns up to 5 results)
-   python ./scripts/search.py 'security'
+   node ./scripts/search.js 'security'
    
    # Or specify a custom topK value
-   python ./scripts/search.py 'security' 10
+   node ./scripts/search.js 'security' 10
    ```
 
 3. **Review Results**: The script returns the requested number of matching icons with:
@@ -74,7 +74,7 @@ The script returns a JSON object containing:
 ## Important Notes
 
 - **Default Result Count**: By default, the search returns up to 5 icons. You can customize this by providing the `topK` parameter
-- **Customizable Results**: Use the optional `topK` parameter to get more or fewer results (e.g., `python ./scripts/search.py 'icon' 20`)
+- **Customizable Results**: Use the optional `topK` parameter to get more or fewer results (e.g., `node ./scripts/search.js 'icon' 20`)
 - **SVG Strings**: The script returns complete SVG strings fetched from the icon service
 - **Multiple Use Cases**: Icons can be used in infographics, web development, design projects, and more
 
@@ -106,15 +106,6 @@ The script handles various error scenarios:
 - **Network Errors**: If the icon service is unavailable, returns an error message
 - **Empty Results**: If no icons match the query, returns an empty results array with a warning
 - **Invalid Response**: If the API returns invalid data, returns an error message
-- **SSL Certificate Errors**: If you encounter SSL certificate verification errors, you can disable verification by setting an environment variable:
-  ```bash
-  # Option 1: Using PYTHONHTTPSVERIFY
-  PYTHONHTTPSVERIFY=0 python ./scripts/search.py 'document'
-  
-  # Option 2: Using SSL_VERIFY
-  SSL_VERIFY=false python ./scripts/search.py 'document'
-  ```
-  **Note**: Disabling SSL verification should only be used in development environments or when certificate issues are unavoidable. It reduces security by allowing potential man-in-the-middle attacks.
 
 ## Tips
 

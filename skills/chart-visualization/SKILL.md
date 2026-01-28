@@ -1,8 +1,8 @@
 ---
 name: chart-visualization
-description: This skill should be used when the user wants to visualize data. It intelligently selects the most suitable chart type from 26 available options, extracts parameters based on detailed specifications, and generates a chart image using a Python script.
+description: This skill should be used when the user wants to visualize data. It intelligently selects the most suitable chart type from 26 available options, extracts parameters based on detailed specifications, and generates a chart image using a JavaScript script.
 dependency:
-  python: requests>=2.28.0
+  nodejs: ">=18.0.0"
 ---
 
 # Chart Visualization Skill
@@ -38,7 +38,7 @@ Once a chart type is selected, read the corresponding file in the `references/` 
 Extract the data from the user's input and map it to the expected `args` format.
 
 ### 3. Chart Generation
-Invoke the `scripts/generate.py` script with a JSON payload.
+Invoke the `scripts/generate.js` script with a JSON payload.
 
 **Payload Format:**
 ```json
@@ -55,7 +55,7 @@ Invoke the `scripts/generate.py` script with a JSON payload.
 
 **Execution Command:**
 ```bash
-python ./scripts/generate.py '<payload_json>'
+node ./scripts/generate.js '<payload_json>'
 ```
 
 ### 4. Result Return
