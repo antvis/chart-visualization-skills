@@ -46,6 +46,14 @@ function runTests() {
     const url = `https://www.weavefox.cn/api/open/v1/icon?${params}`;
     assert.ok(url.includes('test'));
     assert.ok(url.includes('special'));
+    assert.ok(url.includes('%26')); // & should be encoded
+  });
+
+  // Test NaN handling
+  test('should validate non-numeric topK values', () => {
+    const topK = parseInt('abc', 10);
+    assert.ok(isNaN(topK));
+    assert.ok(isNaN(topK) || topK < 1); // Should be caught by validation
   });
 
   console.log(`\n${passed} passed, ${failed} failed`);

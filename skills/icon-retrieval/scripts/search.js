@@ -63,7 +63,7 @@ async function main() {
   const query = process.argv[2];
   const topK = process.argv[3] ? parseInt(process.argv[3], 10) : 5;
   
-  if (topK < 1) {
+  if (isNaN(topK) || topK < 1) {
     const error = {
       error: 'Invalid topK value',
       usage: 'node search.js \'<search_query>\' [topK]',
