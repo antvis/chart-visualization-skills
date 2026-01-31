@@ -42,9 +42,9 @@ npx skills add antvis/chart-visualization-skills
 
 `Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their URLs and complete SVG content.
 
-- 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 schema.
+- 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 Syntax.
 
-`Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports with entity labeling. It uses a declarative JSON Schema to describe data interpretation reports, making it easy for LLMs to generate structured articles with proper semantic markup. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
+`Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
 
 > [!TIP]
 > More skills are coming soon.
