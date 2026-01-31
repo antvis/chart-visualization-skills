@@ -38,7 +38,7 @@
     },
     {
       "name": "narrative-text-visualization",
-      "description": "Generate structured narrative text visualizations from data using T8 schema. Creates data interpretation reports with entity labeling.",
+      "description": "Generate structured narrative text visualizations from data using T8 Syntax. Creates data interpretation reports with semantic entity annotations using a declarative Markdown-like language.",
       "source": "./",
       "strict": false,
       "skills": [
