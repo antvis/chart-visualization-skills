@@ -1,5 +1,5 @@
 ---
-name: s2-expert
+name: antv-s2-expert
 description: S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.
 ---
 
