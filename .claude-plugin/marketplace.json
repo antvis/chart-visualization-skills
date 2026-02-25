@@ -44,6 +44,24 @@
       "skills": [
         "./skills/narrative-text-visualization"
       ]
+    },
+    {
+      "name": "antv-s2-expert",
+      "description": "S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/antv-s2-expert"
+      ]
+    },
+    {
+      "name": "antv-skills-maintainer",
+      "description": "Automatically sync documentation and configuration after any skill is added or updated. Triggers on every AI code execution to keep README Available Skills and .claude-plugin/marketplace.json up to date.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/antv-skills-maintainer"
+      ]
     }
   ]
 }

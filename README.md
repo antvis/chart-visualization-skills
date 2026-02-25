@@ -46,6 +46,14 @@ npx skills add antvis/chart-visualization-skills
 
 `Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
 
+- 📋 **antv-s2-expert**: S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.
+
+`AntV S2 Expert` helps users develop with the S2 multi-dimensional cross-analysis table engine. It provides comprehensive guidance on `@antv/s2` core engine, `@antv/s2-react` and `@antv/s2-vue` framework bindings, `@antv/s2-react-components` advanced analysis components, and `@antv/s2-ssr` server-side rendering. Covers pivot tables, table sheets, custom cells, theming, events, interactions, sorting, totals, tooltips, frozen rows/columns, icons, pagination, and more.
+
+- 🔧 **antv-skills-maintainer**: Automatically sync documentation and configuration after any skill is added or updated.
+
+`AntV Skills Maintainer` ensures that all documentation and configuration files remain in sync whenever a skill is added or updated. It keeps the README Available Skills section and `.claude-plugin/marketplace.json` up to date with the latest skill directories, names, and descriptions.
+
 > [!TIP]
 > More skills are coming soon.
 
