@@ -9,6 +9,10 @@ triggers:
 
 This skill ensures that all documentation and configuration files remain in sync whenever a skill is added or updated in this repository.
 
+## Important
+
+The `antv-skills-maintainer` skill is **internal-only** — it is used solely for this repository's iteration workflow. Do **not** add it to `README.md` "Available Skills" or `.claude-plugin/marketplace.json`. Only user-facing skills should appear in those files.
+
 ## When to Apply
 
 Apply this skill automatically after **every code change** — especially when:

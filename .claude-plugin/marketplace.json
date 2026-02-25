@@ -53,15 +53,6 @@
       "skills": [
         "./skills/antv-s2-expert"
       ]
-    },
-    {
-      "name": "antv-skills-maintainer",
-      "description": "Automatically sync documentation and configuration after any skill is added or updated. Triggers on every AI code execution to keep README Available Skills and .claude-plugin/marketplace.json up to date.",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/antv-skills-maintainer"
-      ]
     }
   ]
 }

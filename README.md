@@ -50,10 +50,6 @@ npx skills add antvis/chart-visualization-skills
 
 `AntV S2 Expert` helps users develop with the S2 multi-dimensional cross-analysis table engine. It provides comprehensive guidance on `@antv/s2` core engine, `@antv/s2-react` and `@antv/s2-vue` framework bindings, `@antv/s2-react-components` advanced analysis components, and `@antv/s2-ssr` server-side rendering. Covers pivot tables, table sheets, custom cells, theming, events, interactions, sorting, totals, tooltips, frozen rows/columns, icons, pagination, and more.
 
-- 🔧 **antv-skills-maintainer**: Automatically sync documentation and configuration after any skill is added or updated.
-
-`AntV Skills Maintainer` ensures that all documentation and configuration files remain in sync whenever a skill is added or updated. It keeps the README Available Skills section and `.claude-plugin/marketplace.json` up to date with the latest skill directories, names, and descriptions.
-
 > [!TIP]
 > More skills are coming soon.
 
