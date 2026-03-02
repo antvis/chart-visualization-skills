@@ -174,9 +174,31 @@ The `s2.interaction` namespace provides methods for programmatic interaction:
 
 ```ts
 s2.interaction.selectAll();
-s2.interaction.selectCell(cell);
+s2.interaction.selectCell(cell, options?: ChangeCellOptions);
 s2.interaction.highlightCell(cell);
-s2.interaction.changeCell(cell);
+s2.interaction.changeCell(cell, options?: ChangeCellOptions);
+
+// Scrolling
+s2.interaction.scrollTo({ offsetX, offsetY });
+s2.interaction.scrollToNode(node, { animate: true });
+s2.interaction.scrollToCell(cell, { animate: true });
+s2.interaction.scrollToTop({ animate: true });
+```
+
+## Window-level Sticky Header
+
+If you want the table header to stick to the top of the viewport when the table content exceeds the screen height, use `interaction.stickyHeader`.
+
+```ts
+const s2Options = {
+  interaction: {
+    stickyHeader: {
+      offsetTop: 60, // e.g., offset for a top navigation bar
+      scrollContainer: window, // default
+      enableInteraction: true, // enable sorting/resizing while stuck
+    },
+  },
+};
 ```
 
 ## Custom Interactions

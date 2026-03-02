@@ -175,6 +175,20 @@ Interaction configuration.
 | eventListenerOptions | `false` | | | Options for `addEventListener`, can control whether events trigger during bubble or capture phase |
 | selectedCellHighlight | `boolean \| { rowHeader?: boolean, colHeader?: boolean, currentRow?: boolean, currentCol?: boolean }` | | `false` | Row/column highlight linkage after selecting data cells |
 | overscrollBehavior | `"auto" \| "contain" \| "none" \| null` | | `auto` | Control behavior when scrolling to boundary, can disable browser default scroll behavior |
+| stickyHeader | `boolean \| StickyHeaderOptions` | | `false` | Enable window-level sticky header when table height exceeds viewport |
+
+### StickyHeaderOptions
+
+```ts
+export interface StickyHeaderOptions {
+  /** Offset from the top when stuck (e.g., for external fixed navigation bars) */
+  offsetTop?: number | (() => number);
+  /** External scroll container to bind to. Default is window */
+  scrollContainer?: HTMLElement | Window;
+  /** Whether to enable header interaction when stuck (sort/resize/expand) */
+  enableInteraction?: boolean;
+}
+```
 
 ### Copy
 
