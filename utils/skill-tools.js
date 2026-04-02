@@ -24,7 +24,8 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'list_references',
-      description: '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
+      description:
+        '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
       parameters: {
         type: 'object',
         properties: {
@@ -74,7 +75,9 @@ const TOOLS = [
  * @returns {string|null}
  */
 function loadSkillFile(skillPath, verbose = false) {
-  const fullPath = skillPath.startsWith('/') ? skillPath : path.join(ROOT_DIR, skillPath);
+  const fullPath = skillPath.startsWith('/')
+    ? skillPath
+    : path.join(ROOT_DIR, skillPath);
   if (!fs.existsSync(fullPath)) {
     if (verbose) console.log(`   ⚠️  File not found: ${fullPath}`);
     return null;
@@ -127,7 +130,8 @@ function extractKeySections(content, maxChars = 5000) {
       const level = headingMatch[1].length;
       const title = headingMatch[2];
       if (TARGET_SECTIONS.some((t) => title.includes(t))) {
-        if (currentLines.length > 0 && inSection) sections.push(currentLines.join('\n'));
+        if (currentLines.length > 0 && inSection)
+          sections.push(currentLines.join('\n'));
         inSection = true;
         sectionLevel = level;
         currentLines = [line];
@@ -143,12 +147,16 @@ function extractKeySections(content, maxChars = 5000) {
       currentLines.push(line);
     }
   }
-  if (currentLines.length > 0 && inSection) sections.push(currentLines.join('\n'));
+  if (currentLines.length > 0 && inSection)
+    sections.push(currentLines.join('\n'));
 
   const B = '```';
   const withCode = sections.filter((s) => s.includes(B));
   const withoutCode = sections.filter((s) => !s.includes(B));
-  return [...withCode, ...withoutCode].slice(0, 4).join('\n\n').slice(0, maxChars);
+  return [...withCode, ...withoutCode]
+    .slice(0, 4)
+    .join('\n\n')
+    .slice(0, maxChars);
 }
 
 // ── Tool handlers ─────────────────────────────────────────────────────────────
@@ -170,7 +178,9 @@ function toolListReferences(args, verbose = false) {
     const catDir = path.join(referencesDir, cat);
     if (!fs.existsSync(catDir) || !fs.statSync(catDir).isDirectory()) continue;
 
-    for (const file of fs.readdirSync(catDir).filter((f) => f.endsWith('.md'))) {
+    for (const file of fs
+      .readdirSync(catDir)
+      .filter((f) => f.endsWith('.md'))) {
       const raw = fs.readFileSync(path.join(catDir, file), 'utf-8');
       const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
       let meta = {};
@@ -178,14 +188,20 @@ function toolListReferences(args, verbose = false) {
         const yaml = yamlMatch[1];
         const idMatch = yaml.match(/^id:\s*["']?([^'"\n]+)["']?/m);
         const titleMatch = yaml.match(/^title:\s*["']?([^'"\n]+)["']?/m);
-        const descMatch = yaml.match(/^description:\s*\|?\s*([\s\S]*?)(?=^[a-z]|\s*$)/m);
+        const descMatch = yaml.match(
+          /^description:\s*\|?\s*([\s\S]*?)(?=^[a-z]|\s*$)/m
+        );
         meta = {
           id: idMatch ? idMatch[1].trim() : file.replace('.md', ''),
           title: titleMatch ? titleMatch[1].trim() : file,
           description: descMatch ? descMatch[1].trim().slice(0, 100) : ''
         };
       }
-      results.push({ ...meta, category: cat, path: `skills/${library}/references/${cat}/${file}` });
+      results.push({
+        ...meta,
+        category: cat,
+        path: `skills/${library}/references/${cat}/${file}`
+      });
     }
   }
 
@@ -204,7 +220,8 @@ function toolReadSkills(args, verbose = false) {
     const fileName = path.basename(skillPath, '.md');
     if (!content) return { path: skillPath, error: 'File not found' };
     const extracted = extractKeySections(content).slice(0, 10000);
-    if (verbose) console.log(`   📖 加载: ${fileName} (${extracted.length} 字符)`);
+    if (verbose)
+      console.log(`   📖 加载: ${fileName} (${extracted.length} 字符)`);
     return { id: fileName, path: skillPath, content: extracted };
   });
 }

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * AntV AI Code Generator Server
  *
@@ -11,14 +12,22 @@
 // Load environment variables from .env file
 require('dotenv').config();
 
+const express = require('express');
 const http = require('http');
-const fs = require('fs');
 const path = require('path');
-const url = require('url');
+const cors = require('cors');
 
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = path.resolve(__dirname, '..');
 const WEB_DIR = __dirname;
+
+const app = express();
+const server = http.createServer(app);
+
+// ── Middleware ─────────────────────────────────────────────────────────────────
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 
 // ── Skill retriever ───────────────────────────────────────────────────────────
 
@@ -263,201 +272,121 @@ async function generateWithToolCall(
   };
 }
 
-// ── Static file helpers ───────────────────────────────────────────────────────
+// ── Static files ──────────────────────────────────────────────────────────────
 
-const mimeTypes = {
-  '.html': 'text/html',
-  '.js': 'application/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
-};
+app.use(express.static(WEB_DIR));
+app.use('/index', express.static(path.join(ROOT_DIR, 'index')));
+app.use('/prompts', express.static(path.join(ROOT_DIR, 'prompts')));
+app.use('/skills', express.static(path.join(ROOT_DIR, 'skills')));
+app.use('/g2', express.static(path.join(ROOT_DIR, 'skills', 'g2')));
+app.use('/g6', express.static(path.join(ROOT_DIR, 'skills', 'g6')));
+app.use('/common', express.static(path.join(ROOT_DIR, 'skills', 'common')));
 
-function serveStaticFile(filePath, res) {
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = mimeTypes[ext] || 'application/octet-stream';
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      res.writeHead(err.code === 'ENOENT' ? 404 : 500, {
-        'Content-Type': 'text/plain'
+// ── API Routes ────────────────────────────────────────────────────────────────
+
+// GET /api/providers
+app.get('/api/providers', (req, res) => {
+  const providers = ProviderRegistry.listProviders().map((p) => ({
+    id: p.id,
+    name: p.name,
+    models: p.models,
+    hasApiKey: p.hasApiKey
+  }));
+  res.json({ providers });
+});
+
+// POST /api/generate
+app.post('/api/generate', async (req, res) => {
+  const {
+    query,
+    library = 'auto',
+    currentCode = null,
+    mode = 'bm25',
+    provider: reqProvider,
+    model: reqModel
+  } = req.body;
+
+  if (!query) {
+    return res.status(400).json({ error: 'Query is required' });
+  }
+
+  const { provider, model } = resolveProviderModel(reqProvider, reqModel);
+
+  if (!ProviderRegistry.hasProvider(provider)) {
+    return res.status(400).json({ error: `Unknown provider: ${provider}` });
+  }
+  if (!ProviderRegistry.hasApiKey(provider)) {
+    return res
+      .status(400)
+      .json({ error: `Missing API key for provider: ${provider}` });
+  }
+
+  console.log(
+    `\n[${mode}] "${query.substring(0, 60)}" (${library}) | ${provider}/${model}`
+  );
+
+  try {
+    if (mode === 'tool-call') {
+      const { code, selectedLibrary, toolCallsLog, loadedSkillPaths } =
+        await generateWithToolCall(
+          query,
+          library,
+          currentCode,
+          provider,
+          model
+        );
+
+      return res.json({
+        code,
+        library: selectedLibrary,
+        mode: 'tool-call',
+        provider,
+        model,
+        skills: loadedSkillPaths.map((p) => ({
+          id: path.basename(p, '.md'),
+          title: path.basename(p, '.md')
+        })),
+        toolCallsCount: toolCallsLog.length
       });
-      res.end(err.code === 'ENOENT' ? 'File not found' : 'Server error');
-    } else {
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content);
     }
-  });
-}
 
-function parseBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (c) => (body += c));
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(body));
-      } catch {
-        resolve({});
-      }
+    const { code, selectedLibrary, retrievedSkills, intent } =
+      await generateWithBM25(query, library, currentCode, provider, model);
+
+    console.log(
+      `[bm25] ${selectedLibrary.toUpperCase()} [${intent}], skills: ${retrievedSkills.length}`
+    );
+    return res.json({
+      code,
+      library: selectedLibrary,
+      mode: 'bm25',
+      provider,
+      model,
+      skills: retrievedSkills.map((s) => ({ id: s.id, title: s.title })),
+      intent
     });
-    req.on('error', reject);
-  });
-}
-
-// ── HTTP server ───────────────────────────────────────────────────────────────
-
-const server = http.createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
+  } catch (error) {
+    console.error('Generation error:', error);
+    return res.status(500).json({ error: error.message });
   }
+});
 
-  const parsedUrl = url.parse(req.url, true);
-  const pathname = parsedUrl.pathname;
+// Root — serve index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(WEB_DIR, 'index.html'));
+});
 
-  // ── /api/providers ───────────────────────────────────────────────────────────
-  if (pathname === '/api/providers' && req.method === 'GET') {
-    const providers = ProviderRegistry.listProviders().map((p) => ({
-      id: p.id,
-      name: p.name,
-      models: p.models,
-      hasApiKey: p.hasApiKey
-    }));
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ providers }));
-    return;
-  }
+// ── Error handling ────────────────────────────────────────────────────────────
 
-  // ── /api/generate (dispatches by mode) ──────────────────────────────────────
-  if (pathname === '/api/generate' && req.method === 'POST') {
-    try {
-      const body = await parseBody(req);
-      const {
-        query,
-        library = 'auto',
-        currentCode = null,
-        mode = 'bm25',
-        provider: reqProvider,
-        model: reqModel
-      } = body;
-
-      if (!query) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Query is required' }));
-        return;
-      }
-
-      const { provider, model } = resolveProviderModel(reqProvider, reqModel);
-
-      if (!ProviderRegistry.hasProvider(provider)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: `Unknown provider: ${provider}` }));
-        return;
-      }
-      if (!ProviderRegistry.hasApiKey(provider)) {
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({ error: `Missing API key for provider: ${provider}` })
-        );
-        return;
-      }
-
-      console.log(
-        `\n[${mode}] "${query.substring(0, 60)}" (${library}) | ${provider}/${model}`
-      );
-
-      if (mode === 'tool-call') {
-        const { code, selectedLibrary, toolCallsLog, loadedSkillPaths } =
-          await generateWithToolCall(
-            query,
-            library,
-            currentCode,
-            provider,
-            model
-          );
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            code,
-            library: selectedLibrary,
-            mode: 'tool-call',
-            provider,
-            model,
-            skills: loadedSkillPaths.map((p) => ({
-              id: path.basename(p, '.md'),
-              title: path.basename(p, '.md')
-            })),
-            toolCallsCount: toolCallsLog.length
-          })
-        );
-      } else {
-        const { code, selectedLibrary, retrievedSkills, intent } =
-          await generateWithBM25(query, library, currentCode, provider, model);
-
-        console.log(
-          `[bm25] ${selectedLibrary.toUpperCase()} [${intent}], skills: ${retrievedSkills.length}`
-        );
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({
-            code,
-            library: selectedLibrary,
-            mode: 'bm25',
-            provider,
-            model,
-            skills: retrievedSkills.map((s) => ({ id: s.id, title: s.title })),
-            intent
-          })
-        );
-      }
-    } catch (error) {
-      console.error('Generation error:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: error.message }));
-    }
-    return;
-  }
-
-  // ── Static files ─────────────────────────────────────────────────────────────
-  let filePath;
-  if (pathname === '/') {
-    filePath = path.join(WEB_DIR, 'index.html');
-  } else if (
-    pathname.startsWith('/index/') ||
-    pathname.startsWith('/prompts/') ||
-    pathname.startsWith('/skills/')
-  ) {
-    filePath = path.join(ROOT_DIR, pathname);
-  } else if (
-    pathname.startsWith('/g2/') ||
-    pathname.startsWith('/g6/') ||
-    pathname.startsWith('/common/')
-  ) {
-    filePath = path.join(ROOT_DIR, 'skills', pathname);
-  } else {
-    filePath = path.join(WEB_DIR, pathname);
-  }
-
-  if (!filePath.startsWith(ROOT_DIR) && !filePath.startsWith(WEB_DIR)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    res.end('Forbidden');
-    return;
-  }
-
-  serveStaticFile(filePath, res);
+app.use((err, req, res, next) => {
+  console.error('[ERR]', err);
+  res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
+
 loadSkillsIndex();
+
 server.listen(PORT, () => {
   const { provider, model } = resolveProviderModel();
   const providers =
@@ -480,4 +409,11 @@ Available providers (API key set): ${providers}
 Switch model via request body: { "provider": "anthropic", "model": "claude-sonnet-4-6-20250514" }
 GET /api/providers  — list all providers and models
   `);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n[Server] Shutting down...');
+  server.close();
+  process.exit(0);
 });

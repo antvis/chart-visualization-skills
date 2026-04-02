@@ -49,17 +49,15 @@ class ParallelExecutor {
     const total = items.length;
     const results = new Array(total);
     let completed = 0;
+    let nextIndex = 0;
 
-    // Create work queue
-    const queue = [...items.entries()];
-    const active = new Set();
+    // Each worker pulls from the shared index counter and loops until queue empty
+    const worker = async () => {
+      while (true) {
+        const index = nextIndex++;
+        if (index >= total) return;
 
-    const processNext = async () => {
-      if (queue.length === 0) return;
-
-      const [index, item] = queue.shift();
-
-      const promise = (async () => {
+        const item = items[index];
         try {
           const result = await processor(item, index);
           results[index] = result;
@@ -68,8 +66,6 @@ class ParallelExecutor {
           if (this.progressCallback) {
             this.progressCallback(completed, total, result);
           }
-
-          return result;
         } catch (error) {
           this.errors.push({ index, item, error });
 
@@ -77,35 +73,18 @@ class ParallelExecutor {
             this.errorCallback(error, item, index);
           }
 
-          // Return error result instead of throwing
           results[index] = { error: error.message, item };
           completed++;
-
-          return results[index];
         }
-      })();
-
-      active.add(promise);
-      promise.finally(() => active.delete(promise));
-
-      // If at concurrency limit, wait for one to complete
-      if (active.size >= concurrency) {
-        await Promise.race(active);
       }
-
-      // Process next item
-      return processNext();
     };
 
-    // Start initial batch
-    const starters = [];
-    for (let i = 0; i < Math.min(concurrency, items.length); i++) {
-      starters.push(processNext());
+    // Start exactly `concurrency` workers
+    const workers = [];
+    for (let i = 0; i < Math.min(concurrency, total); i++) {
+      workers.push(worker());
     }
-
-    // Wait for all to complete
-    await Promise.all(starters);
-    await Promise.all([...active]);
+    await Promise.all(workers);
 
     this.results = results;
     return results;

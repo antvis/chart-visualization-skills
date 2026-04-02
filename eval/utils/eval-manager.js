@@ -261,6 +261,7 @@ class EvaluationManager {
         concurrency
       });
       executor.onProgress((current, total, result) => {
+        evalRun.results.push(result);
         evalRun.progress = { current, total };
         this._saveProgress(evalRun, outputPath);
         if (wsHandler) {

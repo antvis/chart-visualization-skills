@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 /**
  * AI SDK 统一适配层
- * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI
+ * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek
+ *
+ * OpenAI 兼容格式（qwen/deepseek/openai）使用 openai 包
+ * Anthropic 格式使用 @anthropic-ai/sdk
  */
 
-const https = require('https');
-const http = require('http');
+const OpenAI = require('openai');
+const Anthropic = require('@anthropic-ai/sdk');
 
 // ── 配置 ───────────────────────────────────────────────────────────────────────
 
@@ -32,13 +35,11 @@ const PROVIDER_CONFIG = {
       process.env.ANTHROPIC_API_ENDPOINT ||
       process.env.ANTHROPIC_BASE_URL ||
       'https://api.anthropic.com',
-    path: '/v1/messages',
     defaultModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6-20250514'
   },
   openai: {
     apiKey: process.env.OPENAI_API_KEY,
     endpoint: process.env.OPENAI_API_ENDPOINT || 'https://api.openai.com',
-    path: '/v1/chat/completions',
     defaultModel: 'gpt-4'
   }
 };
@@ -57,139 +58,35 @@ function detectProviderFromModel(model) {
   if (modelLower.startsWith('gpt')) return 'openai';
   if (modelLower.startsWith('deepseek')) return 'deepseek';
   if (modelLower.startsWith('qwen')) return 'qwen';
-  return 'qwen'; // Default
+  return 'qwen';
 }
 
-// ── 统一消息格式转换 ───────────────────────────────────────────────────────────
+// ── 客户端工厂 ─────────────────────────────────────────────────────────────────
 
-function convertToProviderFormat(provider, messages, tools, options) {
-  switch (provider) {
-    case 'anthropic':
-      return convertToAnthropicFormat(messages, tools, options);
-    case 'openai':
-    case 'qwen':
-    case 'deepseek':
-    default:
-      return convertToOpenAIFormat(messages, tools, options);
-  }
+function createOpenAIClient(provider, config) {
+  const extraHeaders = config.extraHeaders
+    ? Object.fromEntries(Object.entries(config.extraHeaders).filter(([, v]) => v != null))
+    : {};
+
+  return new OpenAI({
+    apiKey: config.apiKey,
+    baseURL: `${config.endpoint}${config.path ? config.path.replace('/chat/completions', '') : '/v1'}`,
+    defaultHeaders: Object.keys(extraHeaders).length ? extraHeaders : undefined
+  });
 }
 
-function convertToOpenAIFormat(messages, tools, options) {
-  const body = {
-    model: options.model,
-    messages,
-    temperature: options.temperature ?? 0.3,
-    max_tokens: options.maxTokens ?? 10000
-  };
-
-  if (tools && tools.length > 0) {
-    body.tools = tools;
-    if (options.toolChoice) {
-      body.tool_choice = options.toolChoice;
-    }
-  }
-
-  return body;
-}
-
-function convertToAnthropicFormat(messages, tools, options) {
-  // 分离 system 消息
-  const systemMessage = messages.find((m) => m.role === 'system');
-  const userMessages = messages.filter((m) => m.role !== 'system');
-
-  // 转换消息格式
-  const anthropicMessages = userMessages.map((m) => ({
-    role: m.role === 'assistant' ? 'assistant' : 'user',
-    content: m.content
-  }));
-
-  const body = {
-    model: options.model,
-    messages: anthropicMessages,
-    temperature: options.temperature ?? 0.3,
-    max_tokens: options.maxTokens ?? 2000
-  };
-
-  if (systemMessage) {
-    body.system = systemMessage.content;
-  }
-
-  if (tools && tools.length > 0) {
-    body.tools = tools.map((t) => ({
-      name: t.function.name,
-      description: t.function.description,
-      input_schema: t.function.parameters
-    }));
-  }
-
-  return body;
-}
-
-// ── 响应格式转换 ────────────────────────────────────────────────────────────────
-
-function convertFromProviderFormat(provider, response) {
-  switch (provider) {
-    case 'anthropic':
-      return convertFromAnthropicFormat(response);
-    case 'openai':
-    case 'qwen':
-    case 'deepseek':
-    default:
-      return convertFromOpenAIFormat(response);
-  }
-}
-
-function convertFromOpenAIFormat(response) {
-  const choice = response.choices?.[0];
-  if (!choice) {
-    throw new Error('Invalid response format: no choices');
-  }
-
-  return {
-    content: choice.message?.content || '',
-    toolCalls:
-      choice.message?.tool_calls?.map((tc) => ({
-        id: tc.id,
-        type: tc.type,
-        function: {
-          name: tc.function.name,
-          arguments: tc.function.arguments
-        }
-      })) || [],
-    usage: response.usage,
-    raw: response
-  };
-}
-
-function convertFromAnthropicFormat(response) {
-  const content = response.content || [];
-  const textContent = content.find((c) => c.type === 'text');
-  const toolUseContent = content.filter((c) => c.type === 'tool_use');
-
-  return {
-    content: textContent?.text || '',
-    toolCalls: toolUseContent.map((tc) => ({
-      id: tc.id,
-      type: 'function',
-      function: {
-        name: tc.name,
-        arguments: JSON.stringify(tc.input)
-      }
-    })),
-    usage: {
-      prompt_tokens: response.usage?.input_tokens,
-      completion_tokens: response.usage?.output_tokens,
-      total_tokens:
-        (response.usage?.input_tokens || 0) +
-        (response.usage?.output_tokens || 0)
-    },
-    raw: response
-  };
+function createAnthropicClient(config) {
+  return new Anthropic({
+    apiKey: config.apiKey,
+    baseURL: config.endpoint !== 'https://api.anthropic.com' ? config.endpoint : undefined
+  });
 }
 
 // ── 核心 API 调用 ───────────────────────────────────────────────────────────────
 
-async function callAI(options) {
+const RETRY_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+
+async function callAI(options, _retryCount = 0) {
   const {
     provider = 'qwen',
     model,
@@ -207,92 +104,133 @@ async function callAI(options) {
     throw new Error(`Unknown provider: ${provider}`);
   }
 
-  const apiKey = config.apiKey;
-  if (!apiKey) {
+  if (!config.apiKey) {
     throw new Error(
       `Missing API key for ${provider}. Please set ${provider.toUpperCase()}_API_KEY environment variable.`
     );
   }
 
-  const requestBody = convertToProviderFormat(provider, messages, tools, {
-    model: model || config.defaultModel,
-    temperature,
-    maxTokens,
-    toolChoice
-  });
+  const resolvedModel = model || config.defaultModel;
 
-  if (debug) {
-    console.log(
-      '   📤 Request:',
-      JSON.stringify(requestBody, null, 2).slice(0, 500)
-    );
-  }
+  const maxRetries = 3;
+  const baseDelay = 2000; // 2s
 
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(requestBody);
-    const endpointUrl = new URL(config.endpoint);
-    const isHttps = endpointUrl.protocol === 'https:';
-
-    const requestOptions = {
-      hostname: endpointUrl.hostname,
-      port: endpointUrl.port ? parseInt(endpointUrl.port) : isHttps ? 443 : 80,
-      path: config.path,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Length': Buffer.byteLength(data),
-        ...(config.extraHeaders || {})
-      }
-    };
-
-    // Anthropic uses x-api-key
+  try {
     if (provider === 'anthropic') {
-      requestOptions.headers['x-api-key'] = apiKey;
-      requestOptions.headers['anthropic-version'] = '2023-06-01';
-      delete requestOptions.headers['Authorization'];
+      return await callAnthropic({ config, model: resolvedModel, messages, tools, temperature, maxTokens, timeout, debug });
+    } else {
+      return await callOpenAICompat({ provider, config, model: resolvedModel, messages, tools, toolChoice, temperature, maxTokens, timeout, debug });
+    }
+  } catch (error) {
+    const statusCode = error.status || error.statusCode || error.response?.status;
+    const isRetryable = RETRY_STATUS_CODES.has(statusCode) || error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET';
+
+    if (isRetryable && _retryCount < maxRetries) {
+      const delay = baseDelay * Math.pow(2, _retryCount);
+      if (debug) {
+        console.log(`   ⏳ Retry ${_retryCount + 1}/${maxRetries} after ${delay}ms (${error.message})`);
+      }
+      await new Promise((r) => setTimeout(r, delay));
+      return callAI(options, _retryCount + 1);
     }
 
-    const client = isHttps ? https : http;
+    throw error;
+  }
+}
 
-    const req = client.request(requestOptions, (res) => {
-      let body = '';
-      res.on('data', (chunk) => (body += chunk));
-      res.on('end', () => {
-        try {
-          if (debug) {
-            console.log('   📥 Response:', body.slice(0, 500));
-          }
+async function callOpenAICompat({ provider, config, model, messages, tools, toolChoice, temperature, maxTokens, timeout, debug }) {
+  const client = createOpenAIClient(provider, config);
 
-          const response = JSON.parse(body);
+  const params = {
+    model,
+    messages,
+    temperature: temperature ?? 0.3,
+    max_tokens: maxTokens ?? 10000
+  };
 
-          if (response.error) {
-            reject(
-              new Error(
-                response.error.message || JSON.stringify(response.error)
-              )
-            );
-          } else {
-            resolve(convertFromProviderFormat(provider, response));
-          }
-        } catch (e) {
-          reject(new Error(`Failed to parse response: ${e.message}`));
-        }
-      });
-    });
+  if (tools && tools.length > 0) {
+    params.tools = tools;
+    if (toolChoice) params.tool_choice = toolChoice;
+  }
 
-    req.setTimeout(timeout, () => {
-      req.destroy();
-      reject(new Error(`Request timeout (${timeout}ms)`));
-    });
+  if (debug) {
+    console.log('   📤 Request:', JSON.stringify(params, null, 2).slice(0, 500));
+  }
 
-    req.on('error', (err) => {
-      reject(new Error(`Request failed: ${err.message}`));
-    });
+  const response = await client.chat.completions.create(params, { timeout });
 
-    req.write(data);
-    req.end();
-  });
+  if (debug) {
+    console.log('   📥 Response:', JSON.stringify(response, null, 2).slice(0, 500));
+  }
+
+  const choice = response.choices?.[0];
+  if (!choice) throw new Error('Invalid response format: no choices');
+
+  return {
+    content: choice.message?.content || '',
+    toolCalls:
+      choice.message?.tool_calls?.map((tc) => ({
+        id: tc.id,
+        type: tc.type,
+        function: { name: tc.function.name, arguments: tc.function.arguments }
+      })) || [],
+    usage: response.usage,
+    raw: response
+  };
+}
+
+async function callAnthropic({ config, model, messages, tools, temperature, maxTokens, timeout, debug }) {
+  const client = createAnthropicClient(config);
+
+  const systemMessage = messages.find((m) => m.role === 'system');
+  const userMessages = messages
+    .filter((m) => m.role !== 'system')
+    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+
+  const params = {
+    model,
+    messages: userMessages,
+    temperature: temperature ?? 0.3,
+    max_tokens: maxTokens ?? 2000
+  };
+
+  if (systemMessage) params.system = systemMessage.content;
+
+  if (tools && tools.length > 0) {
+    params.tools = tools.map((t) => ({
+      name: t.function.name,
+      description: t.function.description,
+      input_schema: t.function.parameters
+    }));
+  }
+
+  if (debug) {
+    console.log('   📤 Request:', JSON.stringify(params, null, 2).slice(0, 500));
+  }
+
+  const response = await client.messages.create(params, { timeout });
+
+  if (debug) {
+    console.log('   📥 Response:', JSON.stringify(response, null, 2).slice(0, 500));
+  }
+
+  const textContent = response.content?.find((c) => c.type === 'text');
+  const toolUseContent = response.content?.filter((c) => c.type === 'tool_use') || [];
+
+  return {
+    content: textContent?.text || '',
+    toolCalls: toolUseContent.map((tc) => ({
+      id: tc.id,
+      type: 'function',
+      function: { name: tc.name, arguments: JSON.stringify(tc.input) }
+    })),
+    usage: {
+      prompt_tokens: response.usage?.input_tokens,
+      completion_tokens: response.usage?.output_tokens,
+      total_tokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0)
+    },
+    raw: response
+  };
 }
 
 // ── 流式调用（可选）─────────────────────────────────────────────────────────────
@@ -331,101 +269,86 @@ class AgentLoop {
         console.log(`   🔄 Agent round ${round + 1}/${this.maxRounds}...`);
       }
 
-      try {
-        const response = await callAI({
-          provider: this.provider,
-          model: this.model,
-          messages: this.messages,
-          tools: this.tools,
-          toolChoice: 'auto',
-          debug: this.debug && round === 0
+      const response = await callAI({
+        provider: this.provider,
+        model: this.model,
+        messages: this.messages,
+        tools: this.tools,
+        toolChoice: 'auto',
+        debug: this.debug && round === 0
+      });
+
+      if (response.content) {
+        lastAssistantContent = response.content;
+      }
+
+      if (response.toolCalls && response.toolCalls.length > 0) {
+        this.messages.push({
+          role: 'assistant',
+          content: response.content || '',
+          tool_calls: response.toolCalls
         });
 
-        if (response.content) {
-          lastAssistantContent = response.content;
-        }
+        for (const toolCall of response.toolCalls) {
+          const toolName = toolCall.function.name;
+          let toolArgs;
 
-        if (response.toolCalls && response.toolCalls.length > 0) {
-          this.messages.push({
-            role: 'assistant',
-            content: response.content || '',
-            tool_calls: response.toolCalls
+          try {
+            toolArgs = JSON.parse(toolCall.function.arguments);
+          } catch (e) {
+            toolArgs = {};
+          }
+
+          if (this.debug) {
+            console.log(`   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`);
+          }
+
+          let toolResult;
+          if (this.toolHandlers[toolName]) {
+            toolResult = await this.toolHandlers[toolName](toolArgs);
+          } else {
+            toolResult = { error: `Unknown tool: ${toolName}` };
+          }
+
+          this.toolCallsLog.push({
+            round: round + 1,
+            tool: toolName,
+            args: toolArgs,
+            resultSummary: Array.isArray(toolResult)
+              ? `返回 ${toolResult.length} 条结果`
+              : '执行完成'
           });
 
-          for (const toolCall of response.toolCalls) {
-            const toolName = toolCall.function.name;
-            let toolArgs;
-
-            try {
-              toolArgs = JSON.parse(toolCall.function.arguments);
-            } catch (e) {
-              toolArgs = {};
-            }
-
-            if (this.debug) {
-              console.log(
-                `   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`
-              );
-            }
-
-            let toolResult;
-            if (this.toolHandlers[toolName]) {
-              toolResult = await this.toolHandlers[toolName](toolArgs);
-            } else {
-              toolResult = { error: `Unknown tool: ${toolName}` };
-            }
-
-            this.toolCallsLog.push({
-              round: round + 1,
-              tool: toolName,
-              args: toolArgs,
-              resultSummary: Array.isArray(toolResult)
-                ? `返回 ${toolResult.length} 条结果`
-                : '执行完成'
-            });
-
-            this.messages.push({
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: JSON.stringify(toolResult)
-            });
-          }
-        } else {
-          finalContent = response.content || '';
-          break;
+          this.messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify(toolResult)
+          });
         }
-      } catch (error) {
-        if (this.debug) {
-          console.log(`   ⚠️ Agent loop error: ${error.message}`);
-        }
+      } else {
+        finalContent = response.content || '';
         break;
       }
     }
 
     // If maxRounds exhausted and still no final content, force a final generation call
     if (!finalContent && this.toolCallsLog.length > 0) {
-      try {
-        if (this.debug) {
-          console.log('   🔄 Force final generation (no tools)...');
-        }
-        const finalResponse = await callAI({
-          provider: this.provider,
-          model: this.model,
-          messages: [
-            ...this.messages,
-            {
-              role: 'user',
-              content:
-                '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
-            }
-          ],
-          // No tools - force text output
-          debug: this.debug
-        });
-        finalContent = finalResponse.content || '';
-      } catch (e) {
-        // ignore, fall through to lastAssistantContent
+      if (this.debug) {
+        console.log('   🔄 Force final generation (no tools)...');
       }
+      const finalResponse = await callAI({
+        provider: this.provider,
+        model: this.model,
+        messages: [
+          ...this.messages,
+          {
+            role: 'user',
+            content: '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
+          }
+        ],
+        debug: this.debug
+      });
+      finalContent = finalResponse.content || '';
     }
 
     return {
