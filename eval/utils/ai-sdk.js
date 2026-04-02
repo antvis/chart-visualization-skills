@@ -12,14 +12,14 @@ const http = require('http');
 const PROVIDER_CONFIG = {
   qwen: {
     apiKey: process.env.QWEN_API_KEY,
-    endpoint: process.env.QWEN_API_ENDPOINT,
-    path: '/v1/chat/completions',
+    endpoint: process.env.QWEN_API_ENDPOINT || 'https://dashscope.aliyuncs.com',
+    path: process.env.QWEN_API_PATH || '/v1/chat/completions',
     defaultModel: process.env.QWEN_MODEL || 'qwen3-coder-480b-a35b-instruct'
   },
   deepseek: {
-    apiKey: process.env.THETA_API_KEY,
-    endpoint: process.env.DEEPSEEK_API_ENDPOINT,
-    path: '/v1/chat/completions',
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    endpoint: process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com',
+    path: process.env.DEEPSEEK_API_PATH || '/v1/chat/completions',
     defaultModel: process.env.DEEPSEEK_MODEL || 'DeepSeek-V3.2',
     extraHeaders: {
       'SOFA-TraceId': process.env.SOFA_TRACE_ID,
@@ -241,7 +241,8 @@ async function callAI(options) {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
-        'Content-Length': Buffer.byteLength(data)
+        'Content-Length': Buffer.byteLength(data),
+        ...(config.extraHeaders || {})
       }
     };
 

@@ -162,18 +162,17 @@ app.get('/api/results/:filename', (req, res) => {
 });
 
 // DELETE /api/results/:filename - Delete a result file
-app.delete('/api/results/:filename', (req, res) => {
-  const fs = require('fs');
+app.delete('/api/results/:filename', async (req, res) => {
+  const fs = require('fs').promises;
   const filePath = path.join(__dirname, 'result', req.params.filename);
 
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'Result file not found' });
-  }
-
   try {
-    fs.unlinkSync(filePath);
+    await fs.unlink(filePath);
     res.json({ success: true, message: `Deleted ${req.params.filename}` });
   } catch (error) {
+    if (error.code === 'ENOENT') {
+      return res.status(404).json({ error: 'Result file not found' });
+    }
     res.status(500).json({ error: error.message });
   }
 });
