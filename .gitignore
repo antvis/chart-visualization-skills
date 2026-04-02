@@ -42,3 +42,13 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# env
+.env
+
+# Eval results (local runs, not for review)
+eval/result/
+logs
+
+# lock files
+pnpm-lock.yaml
