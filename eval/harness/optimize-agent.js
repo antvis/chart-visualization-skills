@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { callAI } = require('../lib/ai-sdk');
+const { callAI } = require('../utils/ai-sdk');
 
 // ── Dry-run log writer ────────────────────────────────────────────────────────
 
@@ -79,7 +79,9 @@ async function optimizeSkill(skillPath, errorCases, provider, model) {
   const skillContent = fs.readFileSync(skillPath, 'utf-8');
   const skillName = path.basename(skillPath, '.md');
 
-  console.log(`\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`);
+  console.log(
+    `\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`
+  );
 
   const errorContext = errorCases
     .map((c, i) => {
@@ -87,8 +89,8 @@ async function optimizeSkill(skillPath, errorCases, provider, model) {
         c.renderStatus === 'blank'
           ? '渲染白屏（图表容器为空或画布无内容）'
           : c.renderStatus === 'error'
-          ? `渲染报错：${c.renderError || '未知错误'}`
-          : c.error || 'unknown';
+            ? `渲染报错：${c.renderError || '未知错误'}`
+            : c.error || 'unknown';
 
       return [
         `#### Case ${i + 1}: ${c.id}`,
@@ -162,7 +164,15 @@ ${errorContext}
  */
 async function run(
   skillToErrors,
-  { provider, model, rootDir, dryRun = false, logFile, iteration = 0, allErrorCases = [] }
+  {
+    provider,
+    model,
+    rootDir,
+    dryRun = false,
+    logFile,
+    iteration = 0,
+    allErrorCases = []
+  }
 ) {
   if (dryRun) {
     writeErrorLog(logFile, iteration, allErrorCases, skillToErrors, rootDir);

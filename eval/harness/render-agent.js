@@ -9,7 +9,7 @@
  */
 
 const fs = require('fs');
-const { testAllResults } = require('../lib/render-tester');
+const { testAllResults } = require('../utils/render-tester');
 
 /**
  * Run render tests on all results in a result file.
@@ -24,7 +24,9 @@ async function run(resultPath, { concurrency = 5 } = {}) {
   const allResults = data.results || [];
   const total = allResults.length;
 
-  console.log(`\nRender testing ${total} result(s) (concurrency=${concurrency})...`);
+  console.log(
+    `\nRender testing ${total} result(s) (concurrency=${concurrency})...`
+  );
 
   const testedResults = await testAllResults(allResults, {
     concurrency,

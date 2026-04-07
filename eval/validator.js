@@ -25,15 +25,15 @@
 require('dotenv').config();
 
 const path = require('path');
-const { parseArgs } = require('./lib/eval-utils');
-const { detectProviderFromModel } = require('./lib/ai-sdk');
+const { parseArgs } = require('./utils/eval-utils');
+const { detectProviderFromModel } = require('./utils/ai-sdk');
 const { getLibraryConfig } = require('./harness/config');
 const evalAgent = require('./harness/eval-agent');
 const renderAgent = require('./harness/render-agent');
 const analyzeAgent = require('./harness/analyze-agent');
 const optimizeAgent = require('./harness/optimize-agent');
 const indexAgent = require('./harness/index-agent');
-const { closeBrowser } = require('./lib/render-tester');
+const { closeBrowser } = require('./utils/render-tester');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
