@@ -20,7 +20,12 @@ const LIBRARY_REGISTRY = {
     systemPromptFile: 'g2-system-prompt.md',
     buildCmd: 'node bin/skills-antv.js build',
     detectPattern: '@antv/g2', // pattern to detect library in generated code
-    defaultDataset: 'dataset-200.json'
+    defaultDataset: 'dataset-200.json',
+    // Local reference paths for optimize-agent context injection
+    refs: {
+      srcDir: '/Users/liufu/publicWorkspace/G2/src',
+      docsDir: '/Users/liufu/publicWorkspace/G2/site/docs'
+    }
   },
   g6: {
     id: 'g6',

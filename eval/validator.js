@@ -154,7 +154,8 @@ async function main() {
       dryRun: DRY_RUN,
       logFile: LOG_FILE,
       iteration,
-      allErrorCases: errorCases
+      allErrorCases: errorCases,
+      libraryId: LIBRARY_ID
     });
 
     if (DRY_RUN) {
