@@ -50,5 +50,8 @@ Thumbs.db
 eval/result/
 logs
 
+# Validator state directory
+eval/.validator/
+
 # lock files
 pnpm-lock.yaml

@@ -560,3 +560,89 @@ chart.options({
   }
 });
 ```
+
+### 错误 8：legend.labelFormatter 与 axis.labelFormatter 混淆
+
+虽然两者都用于格式化标签，但它们作用的对象不同。`legend.labelFormatter` 用于图例标签，而 `axis.labelFormatter` 用于坐标轴刻度标签。
+
+```javascript
+// ❌ 错误：在 legend 中使用 axis.labelFormatter
+legend: {
+  color: {
+    labelFormatter: '.0%'  // ❌ legend 不支持 axis 的 labelFormatter
+  }
+}
+
+// ✅ 正确：legend 使用自己的 labelFormatter
+legend: {
+  color: {
+    labelFormatter: (value) => `${Math.round(value)}%`  // ✅ 函数形式
+  }
+}
+```
+
+### 错误 9：tooltip.valueFormatter 与 axis.labelFormatter 混淆
+
+`tooltip.valueFormatter` 用于格式化提示框中的值，而 `axis.labelFormatter` 用于坐标轴标签。
+
+```javascript
+// ❌ 错误：在 tooltip.items 中使用 axis.labelFormatter
+tooltip: {
+  items: [
+    { channel: 'y', labelFormatter: '.2f' }  // ❌ tooltip.items 不支持 labelFormatter
+  ]
+}
+
+// ✅ 正确：tooltip.items 使用 valueFormatter
+tooltip: {
+  items: [
+    { channel: 'y', valueFormatter: '.2f' }  // ✅ 使用 valueFormatter
+  ]
+}
+```
+
+### 错误 10：cell 图表中 style.inset 设置不当导致渲染空白
+
+在 `cell` 类型图表中，`style.inset` 控制单元格的内边距。如果设置过大，可能导致单元格不可见。
+
+```javascript
+// ❌ 错误：inset 设置过大
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'x', y: 'y', color: 'value' },
+  style: {
+    inset: 10  // ❌ inset 太大，可能使矩形不可见
+  }
+});
+
+// ✅ 正确：合理设置 inset
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'x', y: 'y', color: 'value' },
+  style: {
+    inset: 0.5  // ✅ 合理的 inset 值
+  }
+});
+```
+
+### 错误 11：legend.layout 配置错误导致布局异常
+
+`legend.layout` 使用 Flexbox 布局模型，若配置不当会影响图例排版。
+
+```javascript
+// ❌ 错误：justifyContent 写错或不支持的值
+legend: {
+  color: {
+    layout: { justifyContent: 'centered' }  // ❌ 不支持的值
+  }
+}
+
+// ✅ 正确：使用合法的 Flexbox 值
+legend: {
+  color: {
+    layout: { justifyContent: 'center' }  // ✅ 正确值
+  }
+}
+```

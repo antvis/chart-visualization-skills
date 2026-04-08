@@ -63,8 +63,8 @@ chart.options({
     { month: 'Jun', value: 85 },
   ],
   encode: {
-    x: 'value',    // x 通道 → 径向长度（柱子长度）
-    y: 'month',    // y 通道 → 角度（圆周位置）
+    x: 'month',    // x 通道 → 角度（圆周位置）
+    y: 'value',    // y 通道 → 半径（柱子长度）
     color: 'month',
   },
   coordinate: { type: 'radial', innerRadius: 0.1, outerRadius: 0.8 },
@@ -93,7 +93,7 @@ chart.options({
 chart.options({
   type: 'interval',
   data,
-  encode: { x: 'value', y: 'category', color: 'category' },
+  encode: { x: 'category', y: 'value', color: 'category' },
   coordinate: {
     type: 'radial',
     innerRadius: 0.3,   // 留出中心空间
@@ -118,7 +118,7 @@ chart.options({
 chart.options({
   type: 'interval',
   data,
-  encode: { x: 'value', y: 'month' },  // x 为数值（半径），y 为分类（角度）
+  encode: { x: 'month', y: 'value' },  // x 为分类（角度），y 为数值（半径）
   coordinate: { type: 'radial' },
 });
 ```
@@ -127,17 +127,17 @@ chart.options({
 
 ### 错误：encode x/y 与预期方向相反
 ```javascript
-// ❌ 错误：radial 中 x 是半径方向（柱子长度），y 是角度方向
+// ❌ 错误：radial 中 x 应该是角度方向（类别），y 是半径方向（数值）
 chart.options({
   type: 'interval',
-  encode: { x: 'month', y: 'value' },  // ❌ 月份作为半径，数值作为角度
+  encode: { x: 'value', y: 'month' },  // ❌ 数值作为角度，月份作为半径
   coordinate: { type: 'radial' },
 });
 
-// ✅ 正确：将数值字段作为 x（映射为半径），分类字段作为 y（映射为角度）
+// ✅ 正确：将分类字段作为 x（映射为角度），数值字段作为 y（映射为半径）
 chart.options({
   type: 'interval',
-  encode: { x: 'value', y: 'month' },  // ✅ 数值→半径，月份→角度
+  encode: { x: 'month', y: 'value' },  // ✅ 月份→角度，数值→半径
   coordinate: { type: 'radial' },
 });
 ```

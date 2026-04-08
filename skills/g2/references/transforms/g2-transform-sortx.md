@@ -43,7 +43,7 @@ const chart = new Chart({ container: 'container', width: 640, height: 480 });
 
 chart.options({
   type: 'interval',
-   [
+  data: [
     { city: '北京', gdp: 3.6 },
     { city: '上海', gdp: 4.3 },
     { city: '广州', gdp: 2.8 },
@@ -146,6 +146,52 @@ chart.options({
 });
 ```
 
+## 径向坐标系中的排序注意事项
+
+在使用 `radial` 径向坐标系时，SortX 的行为与常规笛卡尔坐标系一致，但需要注意以下几点：
+
+1. **x 和 y 通道映射**：在径向坐标系中，x 通常映射为角度（即圆周方向），y 映射为半径（即距离中心的距离）。因此，`by: 'y'` 实际上是对半径进行排序。
+2. **排序必要性**：由于径向图表存在“半径反馈效应”，即外圈即使数值较小也可能看起来比内圈数值大的条目长，因此**强烈建议在使用径向坐标系时对数据进行排序**，以确保视觉准确性。
+3. **排序方向控制**：`reverse: true` 会使数据按降序排列，即数值最大的项靠近最外圈；`reverse: false` 则相反。
+
+```javascript
+// ✅ 正确：在径向坐标系中按 y 值排序并渲染
+chart.options({
+  type: 'interval',
+  data: [
+    { movie: '电影A', rating: 9.2, genre: '科幻' },
+    { movie: '电影B', rating: 8.7, genre: '动作' },
+    { movie: '电影C', rating: 8.5, genre: '科幻' },
+    { movie: '电影D', rating: 7.9, genre: '喜剧' },
+    { movie: '电影E', rating: 7.2, genre: '动作' },
+    { movie: '电影F', rating: 6.8, genre: '喜剧' }
+  ].sort((a, b) => b.rating - a.rating), // 数据预排序
+  coordinate: { type: 'radial', innerRadius: 0.35 },
+  encode: {
+    x: 'movie',
+    y: 'rating',
+    color: 'rating',
+  },
+  scale: {
+    y: { domain: [0, 10] },
+  },
+  style: {
+    radius: 5,
+    fillOpacity: 0.95,
+  },
+  labels: [{
+    text: 'rating',
+    position: 'inside',
+    style: { fontWeight: 'bold', fill: 'white' },
+  }],
+  axis: {
+    x: { label: { autoRotate: true, style: { fontSize: 10 } } },
+    y: { label: true, grid: false, style: { fontSize: 9 } },
+  },
+  interaction: [{ type: 'elementHighlightByColor' }],
+});
+```
+
 ## 常见错误与修正
 
 ### 错误：用自定义函数代替内置 reducer，且误用不存在的 `{ value }` 参数
@@ -191,4 +237,49 @@ G2 内部使用 d3，但 `d3` 对象不会暴露到用户代码作用域。调�
 // d3.max(arr, d => d.v)  →  Math.max(...arr.map(d => d.v))
 // d3.min(arr, d => d.v)  →  Math.min(...arr.map(d => d.v))
 // d3.mean(arr, d => d.v) →  arr.reduce((s, d) => s + d.v, 0) / arr.length
+```
+
+### 错误：在径向坐标系中错误使用 x/y 映射导致排序无效
+
+在径向坐标系中，如果将本应作为排序依据的字段错误地映射到 x 通道，而将角度映射到 y 通道，则 `sortX` 将无法达到预期效果。正确的做法是将排序依据字段映射到 y 通道，并确保数据已按该字段排序。
+
+```javascript
+// ❌ 错误：在径向坐标系中错误地将 rating 映射到 x 通道
+chart.options({
+  type: 'interval',
+  data: [
+    { movie: '电影A', rating: 9.2, genre: '科幻' },
+    { movie: '电影B', rating: 8.7, genre: '动作' },
+    // ...
+  ],
+  coordinate: { type: 'radial', innerRadius: 0.2 },
+  encode: {
+    x: 'rating',       // ❌ 错误：rating 应该映射到 y 通道
+    y: 'movie',        // ❌ 错误：movie 应该映射到 x 通道
+    color: 'rating',
+  },
+  transform: [
+    {
+      type: 'sortX',
+      by: 'rating',    // ❌ 错误：by 应该是 'y'
+      reverse: false,
+    },
+  ],
+});
+
+// ✅ 正确：rating 映射到 y 通道，movie 映射到 x 通道，并预排序
+chart.options({
+  type: 'interval',
+  data: [
+    { movie: '电影A', rating: 9.2, genre: '科幻' },
+    { movie: '电影B', rating: 8.7, genre: '动作' },
+    // ...
+  ].sort((a, b) => b.rating - a.rating),
+  coordinate: { type: 'radial', innerRadius: 0.35 },
+  encode: {
+    x: 'movie',        // ✅ 正确：movie 映射到 x 通道（角度）
+    y: 'rating',       // ✅ 正确：rating 映射到 y 通道（半径）
+    color: 'rating',
+  },
+});
 ```

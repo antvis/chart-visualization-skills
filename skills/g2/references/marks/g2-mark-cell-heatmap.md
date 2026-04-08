@@ -69,7 +69,10 @@ chart.options({
     color: 'value',    // 颜色深浅表示数值大小
   },
   scale: {
-    color: { palette: 'YlOrRd' },   // 连续色阶：YlOrRd | Blues | Viridis 等
+    color: { 
+      type: 'sequential',   // 明确指定为顺序色阶
+      palette: 'YlOrRd'     // 连续色阶：YlOrRd | Blues | Viridis 等
+    },
   },
   style: {
     inset: 1,    // 格子间距（px）
@@ -87,7 +90,7 @@ chart.options({
   data,
   encode: { x: 'week', y: 'hour', color: 'value' },
   scale: {
-    color: { palette: 'Blues' },
+    color: { type: 'sequential', palette: 'Blues' },
   },
   labels: [
     {
@@ -116,6 +119,7 @@ chart.options({
   },
   scale: {
     color: {
+      type: 'sequential',  // 明确指定为顺序色阶
       palette: 'RdBu',     // 发散色阶：红-白-蓝
       domain: [-1, 1],     // 固定数值范围
     },
@@ -142,7 +146,7 @@ chart.options({
     color: 'value',
   },
   scale: {
-    color: { palette: 'Greens', domain: [0, 20] },
+    color: { type: 'sequential', palette: 'Greens', domain: [0, 20] },
     y: {
       domain: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     },
@@ -155,6 +159,69 @@ chart.options({
 });
 ```
 
+## 地形高程热力图
+
+```javascript
+// 模拟地形高程数据
+const terrainData = [];
+for (let x = 0; x <= 50; x += 2) {
+  for (let y = 0; y <= 50; y += 2) {
+    // 模拟山峰地形：两个山峰的高程分布
+    const elevation1 = 100 * Math.exp(-((x - 15) ** 2 + (y - 15) ** 2) / 200);
+    const elevation2 = 80 * Math.exp(-((x - 35) ** 2 + (y - 35) ** 2) / 150);
+    const elevation = elevation1 + elevation2 + 10; // 基础海拔
+    terrainData.push({ x, y, elevation });
+  }
+}
+
+const chart = new Chart({
+  container: 'container',
+  autoFit: true,
+});
+
+chart.options({
+  type: 'cell',
+  data: terrainData,
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'elevation',
+  },
+  style: {
+    stroke: '#333',
+    strokeWidth: 0.5,
+    inset: 0.5,
+  },
+  scale: {
+    color: {
+      type: 'sequential',
+      palette: 'viridis',
+    },
+  },
+  legend: {
+    color: {
+      length: 300,
+      layout: { justifyContent: 'center' },
+      labelFormatter: (value) => `${Math.round(value)}m`,
+    },
+  },
+  tooltip: {
+    title: '海拔信息',
+    items: [
+      { field: 'x', name: '经度' },
+      { field: 'y', name: '纬度' },
+      {
+        field: 'elevation',
+        name: '海拔',
+        valueFormatter: (value) => `${Math.round(value)}m`,
+      },
+    ],
+  },
+});
+
+chart.render();
+```
+
 ## 常见错误与修正
 
 ### 错误 1：color 通道缺少 scale 配置导致离散色
@@ -163,11 +230,16 @@ chart.options({
 chart.options({ type: 'cell', encode: { x: 'a', y: 'b', color: 'value' } });
 // value 是连续数值，却被映射到离散颜色
 
-// ✅ 正确：指定连续色阶 palette
+// ✅ 正确：指定连续色阶 palette 并明确类型为 sequential
 chart.options({
   type: 'cell',
   encode: { x: 'a', y: 'b', color: 'value' },
-  scale: { color: { palette: 'Blues' } },  // 或 'YlOrRd'、'Viridis' 等
+  scale: { 
+    color: { 
+      type: 'sequential',   // 明确指定为顺序色阶
+      palette: 'Blues'      // 或 'YlOrRd'、'Viridis' 等
+    } 
+  },
 });
 ```
 

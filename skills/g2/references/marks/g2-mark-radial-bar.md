@@ -141,8 +141,8 @@ interface RadialBarOptions {
     endAngle?: number;       // 结束角度
   };
   encode: {
-    x: string;    // 分类字段
-    y: string;    // 数值字段
+    x: string;    // 分类字段（映射到角度）
+    y: string;    // 数值字段（映射到半径）
     color?: string;
   };
 }
@@ -183,4 +183,44 @@ coordinate: { type: 'radial' }
 ```javascript
 // ⚠️ 注意：分类数量建议不超过 15 个
 // 过多分类会导致环形过窄
+```
+
+### 错误 4：encode 通道映射错误
+
+```javascript
+// ❌ 问题：x 映射数值字段，y 映射分类字段，这在 radial 坐标系中是错误的
+encode: {
+  x: 'value',       // x 应该映射分类字段
+  y: 'category',    // y 应该映射数值字段
+}
+
+// ✅ 正确：x 映射分类字段，y 映射数值字段
+encode: {
+  x: 'category',    // x 映射分类字段（对应角度）
+  y: 'value',       // y 映射数值字段（对应半径）
+}
+```
+
+### 错误 5：transform 排序方式错误
+
+```javascript
+// ❌ 问题：使用了 transform 排序但方向错误
+transform: [
+  {
+    type: 'sortX',
+    by: 'value',
+    reverse: false,   // 应该为 true 才能实现由内向外递增
+  },
+],
+
+// ✅ 正确：使用正确的排序方向
+transform: [
+  {
+    type: 'sortX',
+    by: 'value',
+    reverse: true,   // 由内向外递增
+  },
+],
+// 或者更推荐的方式是在数据层面预先排序
+data: rawData.sort((a, b) => b.value - a.value)
 ```
