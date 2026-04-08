@@ -108,9 +108,9 @@ chart.options({
   type: 'view',
   coordinate: { transform: [{ type: 'transpose' }] },
   children: [
-    { type: 'interval',  multiData, encode: { x: 'metric', y: 'ranges', color: '#f5f5f5' } },
+    { type: 'interval', data: multiData, encode: { x: 'metric', y: 'ranges', color: '#f5f5f5' } },
     { type: 'interval', data: multiData, encode: { x: 'metric', y: 'measures', color: '#52c41a' } },
-    { type: 'point',  multiData, encode: { x: 'metric', y: 'target', shape: 'line', size: 6 } },
+    { type: 'point', data: multiData, encode: { x: 'metric', y: 'target', shape: 'line', size: 6 } },
   ],
 });
 ```
@@ -130,7 +130,7 @@ chart.options({
   children: [
     {
       type: 'interval',
-       transformedData,
+      data: transformedData,
       encode: { x: 'title', y: 'value', color: 'level' },
       transform: [{ type: 'stackY' }],
       scale: {

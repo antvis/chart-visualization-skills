@@ -191,7 +191,7 @@ const longData = data.flatMap((d) => [
 
 chart.options({
   type: 'interval',
-   longData,
+  data: longData,
   coordinate: { transform: [{ type: 'transpose' }] },  // 横向条形图
   encode: {
     x: 'age',
@@ -264,7 +264,7 @@ rightView.options({ ... });
 // ✅ 方案一（推荐）：负值技巧——单一 interval，男性取负值
 chart.options({
   type: 'interval',
-   combinedData,   // male/female 合并到一个数组
+  data: combinedData,   // male/female 合并到一个数组
   coordinate: { transform: [{ type: 'transpose' }] },
   encode: {
     x: 'age',
@@ -280,14 +280,14 @@ chart.options({
   children: [
     {
       type: 'interval',
-       leftData,
+      data: leftData,
       coordinate: { transform: [{ type: 'transpose' }, { type: 'reflectX' }] },
       encode: { x: 'age', y: 'male' },
       axis: { y: { position: 'right' } },
     },
     {
       type: 'interval',
-       rightData,
+      data: rightData,
       coordinate: { transform: [{ type: 'transpose' }] },
       encode: { x: 'age', y: 'female' },
       axis: { y: false },

@@ -66,7 +66,7 @@ const chart = new Chart({
 
 chart.options({
   type: 'sunburst',
-   {
+  data: {
     type: 'fetch',
     value: 'https://gw.alipayobjects.com/os/antvdemo/assets/data/sunburst.json',
   },
@@ -88,13 +88,13 @@ chart.render();
 // ❌ 错误：层次数据不是数组，不能用简写
 chart.options({
   type: 'sunburst',
-   hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ 不工作
 });
 
 // ✅ 正确：层次数据必须用完整形式
 chart.options({
   type: 'sunburst',
-   { value: hierarchyData },  // ✅ 内联数据
+  data: { value: hierarchyData },  // ✅ 内联数据
 });
 
 // ✅ 正确：远程数据
@@ -115,7 +115,7 @@ chart.options({
 ```javascript
 chart.options({
   type: 'sunburst',
-   { value: hierarchyData },
+  data: { value: hierarchyData },
   encode: { value: 'sum' },
   labels: [
     {
@@ -143,7 +143,7 @@ chart.options({
 ```javascript
 chart.options({
   type: 'sunburst',
-   { value: hierarchyData },
+  data: { value: hierarchyData },
   encode: { value: 'sum' },
   interaction: {
     drillDown: {
@@ -308,7 +308,7 @@ color: (d) => d.value
 // ❌ 错误：color: 'label' 等价于 d['label']，层次节点上没有此属性 → undefined
 chart.options({
   type: 'sunburst',
-   { value: data },
+  data: { value: data },
   encode: {
     value: 'sum',
     color: 'label',  // ❌ → 所有扇形相同颜色
@@ -318,7 +318,7 @@ chart.options({
 // ✅ 正确：color 必须用回调，通过 d.data 访问原始字段
 chart.options({
   type: 'sunburst',
-   { value: data },
+  data: { value: data },
   encode: {
     value: 'sum',
     color: (d) => d.path?.[1] || d.data?.name,  // ✅ 按父节点着色

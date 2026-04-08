@@ -14,6 +14,7 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const { scoreScreenshot } = require('./visual-scorer');
 
 const G2_CDN = 'https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js';
 const G6_CDN = 'https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js';
@@ -115,9 +116,13 @@ function transformCode(code) {
 /**
  * Test a single generated code string.
  *
- * @returns {{ status: 'success'|'blank'|'error', error?: string }}
+ * @param {string} code
+ * @param {object} [opts]
+ * @param {string} [opts.query]        - original query, passed to visual scorer
+ * @param {boolean} [opts.skipScore]   - skip VL scoring even on success
+ * @returns {{ status: 'success'|'blank'|'error', error?: string, visualScore?: number, visualDimensions?: object }}
  */
-async function testRender(code) {
+async function testRender(code, { query = '', skipScore = false } = {}) {
   const browser = await getBrowser();
   const page = await browser.newPage();
 
@@ -190,6 +195,24 @@ async function testRender(code) {
       }
     );
 
+    // ── Step 4: Visual quality scoring (success only) ─────────────────────────
+    if (result.status === 'success' && !skipScore) {
+      try {
+        const container = await page.$('#container');
+        const screenshotBuffer = container
+          ? await container.screenshot({ type: 'png' })
+          : await page.screenshot({ type: 'png' });
+        const scoreResult = await scoreScreenshot(screenshotBuffer, query);
+        if (!scoreResult.skipped) {
+          result.visualScore = scoreResult.visualScore;
+          result.visualDimensions = scoreResult.dimensions;
+          result.visualReasoning = scoreResult.reasoning;
+        }
+      } catch {
+        // Screenshot/score failure must not affect the render status
+      }
+    }
+
     return result;
   } catch (err) {
     return { status: 'error', error: err.message };
@@ -205,11 +228,12 @@ async function testRender(code) {
  *
  * @param {Array}    results     - Array of eval result objects
  * @param {object}   [opts]
- * @param {number}   [opts.concurrency=5]  - Max parallel render tests
- * @param {Function} [opts.onProgress]     - Called after each test: ({ done, total, result })
- * @returns {Array} same array with `renderStatus`/`renderError` added to each
+ * @param {number}   [opts.concurrency=5]   - Max parallel render tests
+ * @param {boolean}  [opts.skipScore=false] - Skip visual quality scoring
+ * @param {Function} [opts.onProgress]      - Called after each test: ({ done, total, result })
+ * @returns {Array} same array with `renderStatus`/`renderError`/`visualScore` added to each
  */
-async function testAllResults(results, { concurrency = 5, onProgress } = {}) {
+async function testAllResults(results, { concurrency = 5, skipScore = false, onProgress } = {}) {
   const output = new Array(results.length);
   let done = 0;
   let index = 0;
@@ -224,8 +248,10 @@ async function testAllResults(results, { concurrency = 5, onProgress } = {}) {
         tested = { ...result, renderStatus: 'error', renderError: result.error || 'no code' };
       } else {
         try {
-          const { status, error } = await testRender(result.generatedCode);
-          tested = { ...result, renderStatus: status, renderError: error };
+          const { status, error, visualScore, visualDimensions, visualReasoning } =
+            await testRender(result.generatedCode, { query: result.query || '', skipScore });
+          tested = { ...result, renderStatus: status, renderError: error,
+            ...(visualScore != null ? { visualScore, visualDimensions, visualReasoning } : {}) };
         } catch (err) {
           tested = { ...result, renderStatus: 'error', renderError: err.message };
         }

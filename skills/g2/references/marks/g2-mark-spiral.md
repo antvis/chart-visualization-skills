@@ -117,7 +117,7 @@ coordinate: {
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'fetch',
     value: 'url-to-data.json',
   },

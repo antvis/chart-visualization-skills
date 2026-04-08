@@ -78,7 +78,7 @@ const data = {
 
 chart.options({
   type: 'treemap',
-   {
+  data: {
     value: data
   },
   encode: {
@@ -110,13 +110,13 @@ chart.render();
 // ❌ 错误：层次数据不是数组，不能用简写
 chart.options({
   type: 'treemap',
-   hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ 不工作
 });
 
 // ✅ 正确：层次数据必须用完整形式
 chart.options({
   type: 'treemap',
-   { value: hierarchyData },  // ✅
+  data: { value: hierarchyData },  // ✅
 });
 ```
 
@@ -403,7 +403,7 @@ chart.options({
 // ✅ 正确：color 必须用回调函数，通过 d.data 访问原始字段
 chart.options({
   type: 'treemap',
-   { value: data },
+  data: { value: data },
   encode: {
     value: 'value',
     color: (d) => d.data?.growth,  // ✅ 按涨跌幅着色

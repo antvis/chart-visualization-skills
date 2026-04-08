@@ -110,7 +110,7 @@ const arrayData = [
 
 chart.options({
   type: 'interval',
-   arrayData,  // 简写形式
+  data: arrayData,  // 简写形式
 });
 ```
 
@@ -131,13 +131,13 @@ const hierarchyData = {
 // ❌ 错误：层次数据不是数组，不能用简写
 chart.options({
   type: 'pack',
-   hierarchyData,  // ❌ 不工作
+  data: hierarchyData,  // ❌ 不工作
 });
 
 // ✅ 正确：层次数据必须用完整形式
 chart.options({
   type: 'pack',
-   { value: hierarchyData },  // ✅
+  data: { value: hierarchyData },  // ✅
 });
 ```
 
@@ -160,13 +160,13 @@ chart.options({
 // ❌ 错误：层次数据不是数组，不能用简写形式
 chart.options({
   type: 'pack',
-   hierarchyData,   // ❌ 直接传树形对象不工作
+  data: hierarchyData,   // ❌ 直接传树形对象不工作
 });
 
 // ✅ 正确：层次数据必须用 { value: treeData } 形式
 chart.options({
   type: 'pack',
-   { value: hierarchyData },  // ✅
+  data: { value: hierarchyData },  // ✅
 });
 ```
 
@@ -261,7 +261,7 @@ labels: [
 // ✅ 正确理解
 chart.options({
   type: 'pack',
-   {
+  data: {
     value: {           // 这是数据配置的 value
       name: 'root',
       children: [
@@ -309,7 +309,7 @@ const color = datum.data?.['name']  // datum.data 才是原始数据对象
   value: 100,              // 节点数值（d3 计算的叶子值之和）
   depth: 2,                // 层级深度（0 = 根节点）
   height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
+  data: {                  // ← 原始数据在这里！
     name: '前端组',
     value: 12,
     category: 'tech',

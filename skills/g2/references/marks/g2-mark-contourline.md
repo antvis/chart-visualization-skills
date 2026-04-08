@@ -146,7 +146,7 @@ const chart = new Chart({
 
 chart.options({
   type: 'line',
-   generateContourLines(),
+  data: generateContourLines(),
   encode: {
     x: 'x',
     y: 'y',
@@ -190,7 +190,7 @@ chart.options({
 // ✅ 正确
 chart.options({
   type: 'cell',
-   terrainData,  // ✅
+  data: terrainData,
   encode: { x: 'x', y: 'y', color: 'elevation' },
 });
 ```

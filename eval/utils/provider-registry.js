@@ -62,7 +62,7 @@ const PROVIDERS = {
     id: 'glm',
     name: 'GLM',
     type: 'openai-compatible',
-    models: [{ id: 'GLM-4.5', name: 'GLM-4.5', isDefault: true }],
+    models: [{ id: 'GLM-5.1', name: 'GLM-5.1', isDefault: true }],
     apiKeyEnv: 'GLM_API_KEY',
     endpointEnv: 'GLM_API_ENDPOINT',
     pathEnv: 'GLM_API_PATH',

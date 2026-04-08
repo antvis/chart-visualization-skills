@@ -85,7 +85,7 @@ const processData = (nodes, links) => {
 
 chart.options({
   type: 'view',
-   { type: 'fetch', value: 'relationship.json' },
+   data: { type: 'fetch', value: 'relationship.json' },
   // ... 数据处理和渲染
 });
 
@@ -121,7 +121,7 @@ chart.options({
   type: 'view',
   children: [
     { type: 'line', data: arcData, encode: { x: 'x', y: 'y', series: 'linkId' } },
-    { type: 'point',  nodeData, encode: { x: 'x', y: 'y', color: 'group' } },
+    { type: 'point', data: nodeData, encode: { x: 'x', y: 'y', color: 'group' } },
     { type: 'text',  nodeData, encode: { x: 'x', y: 'y', text: 'name' } },
   ],
 });

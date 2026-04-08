@@ -62,7 +62,7 @@ const chart = new Chart({
 
 chart.options({
   type: 'line',
-   {
+  data: {
     value: [
       { value: 85 }, { value: 92 }, { value: 78 }, { value: 95 },
       { value: 88 }, { value: 72 }, { value: 91 }, { value: 83 },
@@ -206,7 +206,7 @@ chart.render();
 ```javascript
 chart.options({
   type: 'density',
-   {
+  data: {
     type: 'inline',
     value: rawData,
     transform: [
@@ -237,7 +237,7 @@ chart.options({
 // ❌ 效果：折线图，有明显锯齿，不像分布曲线
 chart.options({
   type: 'line',
-   binnedData,
+  data: binnedData,
   encode: { x: 'x', y: 'y' },  // ❌ 缺少 shape: 'smooth'
 });
 
@@ -255,14 +255,14 @@ chart.options({
 // ❌ 错误：原始数据点连成折线，不是密度曲线
 chart.options({
   type: 'line',
-   rawData,   // ❌ 未分箱，只是散点连线
+  data: rawData,   // ❌ 未分箱，只是散点连线
   encode: { x: 'index', y: 'value', shape: 'smooth' },
 });
 
 // ✅ 正确：先在 data.transform 中分箱，再绘制
 chart.options({
   type: 'line',
-   {
+  data: {
     value: rawData,
     transform: [{ type: 'custom', callback: binningFn }],
   },
@@ -276,14 +276,14 @@ chart.options({
 // ❌ 错误：transform 必须放在 data 对象内
 chart.options({
   type: 'line',
-  { value: rawData, transform: [...] },  // ❌ 孤立的 { } 语法错误
+  data: { value: rawData, transform: [...] },  // ❌ 孤立的 { } 语法错误
   encode: { x: 'x', y: 'y' },
 });
 
 // ✅ 正确：必须有 data: 键
 chart.options({
   type: 'line',
-   { value: rawData, transform: [...] },  // ✅
+  data: { value: rawData, transform: [...] },  // ✅
   encode: { x: 'x', y: 'y' },
 });
 ```

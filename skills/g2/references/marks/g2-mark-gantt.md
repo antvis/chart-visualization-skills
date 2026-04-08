@@ -127,13 +127,13 @@ chart.options({
   children: [
     {
       type: 'interval',
-       tasks,
+      data: tasks,
       encode: { x: 'name', y: 'startTime', y1: 'endTime' },
       coordinate: { transform: [{ type: 'transpose' }] },
     },
     {
       type: 'point',
-       milestones,
+      data: milestones,
       encode: {
         x: 'name',
         y: 'time',

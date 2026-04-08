@@ -165,10 +165,10 @@ chart.options({
 ### 错误：tree 与 treemap 混淆
 ```javascript
 // tree：展示层级结构关系（节点+连线，强调层次和连接）
-chart.options({ type: 'tree',  hierarchyData });
+chart.options({ type: 'tree',  data: { value: hierarchyData } });
 
 // treemap：按面积展示层级数据占比（矩形嵌套，强调大小和比例）
-chart.options({ type: 'treemap',  hierarchyData });
+chart.options({ type: 'treemap',  data: { value: hierarchyData } });
 ```
 
 ---
@@ -185,7 +185,7 @@ chart.options({ type: 'treemap',  hierarchyData });
   value: 10,               // 节点数值（d3 计算的子树总和）
   depth: 2,                // 层级深度（0 = 根节点）
   height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
+  data: {                  // ← 原始数据在这里！
     name: '前端组',
     value: 10,
     // ... 其它自定义字段

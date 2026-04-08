@@ -82,7 +82,7 @@ const rawData = [
 
 chart.options({
   type: 'boxplot',          // boxplot 是 box mark + boxplot transform 的组合快捷方式
-   rawData,
+  data: rawData,
   encode: {
     x: 'category',
     y: 'value',

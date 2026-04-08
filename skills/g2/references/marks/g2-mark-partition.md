@@ -103,7 +103,7 @@ chart.options({
 // ✅ 正确：层次数据必须用完整形式
 chart.options({
   type: 'partition',
-   { value: hierarchyData },  // ✅
+  data: { value: hierarchyData },  // ✅
 });
 ```
 
@@ -223,7 +223,7 @@ color: (d) => d.value
 // ❌ 错误：color: 'category' 等价于 d['category']，层次节点上没有此属性 → undefined
 chart.options({
   type: 'sunburst',
-   { value: data },
+  data: { value: data },
   encode: {
     value: 'value',
     color: 'category',  // ❌ → 所有扇区相同颜色
@@ -233,7 +233,7 @@ chart.options({
 // ✅ 正确：color 必须用回调，通过 d.data 访问原始字段
 chart.options({
   type: 'sunburst',
-   { value: data },
+  data: { value: data },
   encode: {
     value: 'value',
     color: (d) => d.path?.[1] || d.data?.name,  // ✅ 按父节点着色

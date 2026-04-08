@@ -102,12 +102,13 @@ function generateCodeFingerprint(code) {
 }
 
 function calculateFingerprintSimilarity(fp1, fp2) {
-  const common = fp1.hashSignature.filter(h => fp2.hashSignature.includes(h));
+  const set2 = new Set(fp2.hashSignature);
+  const intersection = new Set(fp1.hashSignature.filter(h => set2.has(h)));
   const union = new Set([...fp1.hashSignature, ...fp2.hashSignature]);
 
   if (union.size === 0) return 0;
 
-  return common.length / union.size;
+  return intersection.size / union.size;
 }
 
 // ── 结构相似度（基于代码结构特征）──────────────────────────────────────────────────

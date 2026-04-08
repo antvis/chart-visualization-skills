@@ -101,7 +101,7 @@ chart.render();
 ```javascript
 chart.options({
   type: 'interval',
-   [
+  data: [
     { text: '顶层', value: 5 },
     { text: '中上层', value: 10 },
     { text: '中等', value: 20 },

@@ -125,7 +125,7 @@ chart.options({
     // 折线图
     {
       type: 'line',
-       populationData,
+      data: populationData,
       encode: {
         x: (d) => new Date(d.year),
         y: 'population',
@@ -135,7 +135,7 @@ chart.options({
     // 数据点
     {
       type: 'point',
-       populationData,
+      data: populationData,
       encode: {
         x: (d) => new Date(d.year),
         y: 'population',

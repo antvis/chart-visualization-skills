@@ -11,8 +11,10 @@
  *   node eval/validator.js
  *   node eval/validator.js --library=g2 --sample=10 --retrieval=bm25
  *   node eval/validator.js --passes=3 --max-iterations=20 --concurrency=10
- *   node eval/validator.js --dry-run              # log errors only, skip optimization
- *   node eval/validator.js --dry-run --log=my.log # custom log file path
+ *   node eval/validator.js --dry-run                      # log errors only, skip optimization
+ *   node eval/validator.js --dry-run --log=my.log         # custom log file path
+ *   node eval/validator.js --skip-score                   # skip VL visual scoring
+ *   node eval/validator.js --score-threshold=0.7          # treat visualScore < 0.7 as failure
  *
  * Agent responsibilities:
  *   eval-agent     — invoke CLI eval, return result file path
@@ -70,6 +72,12 @@ const PROVIDER = detectProviderFromModel(MODEL);
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const NO_WORKTREE = process.argv.includes('--no-worktree');
+const SKIP_SCORE = process.argv.includes('--skip-score');
+const SCORE_THRESHOLD = parseFloat(
+  process.argv.find((a) => a.startsWith('--score-threshold='))?.split('=')[1] ||
+    process.env.LOOP_SCORE_THRESHOLD ||
+    '0.6'
+);
 const LOG_DIR = path.join(__dirname, 'logs');
 const LOG_FILE = (() => {
   const custom = process.argv
@@ -103,6 +111,8 @@ async function main() {
   console.log(`  Concurrency:    ${CONCURRENCY}`);
   if (DRY_RUN) console.log(`  Mode:           dry-run (log: ${LOG_FILE})`);
   if (NO_WORKTREE) console.log(`  Worktree:       disabled`);
+  if (SKIP_SCORE) console.log(`  Visual score:   disabled`);
+  else console.log(`  Score threshold:${SCORE_THRESHOLD}`);
   console.log('='.repeat(60));
 
   // ── Worktree setup ─────────────────────────────────────────────────────────
@@ -161,7 +171,9 @@ async function main() {
 
     // ── Step 2: Render test every generated code ──────────────────────────────
     const errorCases = await renderAgent.run(resultPath, {
-      concurrency: CONCURRENCY
+      concurrency: CONCURRENCY,
+      skipScore: SKIP_SCORE,
+      scoreThreshold: SCORE_THRESHOLD
     });
 
     if (errorCases.length === 0) {

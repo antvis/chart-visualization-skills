@@ -53,7 +53,7 @@ chart.options({
     // 主散点图
     {
       type: 'point',
-       scatterData,
+      data: scatterData,
       encode: { x: 'x', y: 'y' },
       style: { r: 3, fillOpacity: 0.6 },
     },

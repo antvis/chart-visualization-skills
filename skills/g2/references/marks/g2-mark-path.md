@@ -62,7 +62,7 @@ chart.options({
   children: [
     {
       type: 'path',
-       pathData,
+      data: pathData,
       encode: {
         d: 'd',          // SVG 路径字符串字段
         color: 'color',
