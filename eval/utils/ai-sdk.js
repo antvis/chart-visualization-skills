@@ -1,61 +1,25 @@
 #!/usr/bin/env node
 /**
  * AI SDK 统一适配层
- * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek、Kimi
+ * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek、Kimi、GLM
  *
- * OpenAI 兼容格式（qwen/deepseek/openai/kimi）使用 openai 包
+ * OpenAI 兼容格式（qwen/deepseek/openai/kimi/glm）使用 openai 包
  * Anthropic 格式使用 @anthropic-ai/sdk
+ *
+ * Provider/model 元数据统一在 provider-registry.js 维护，
+ * 本文件通过 getRuntimeConfig() 读取，不再重复定义。
  */
 
 const OpenAI = require('openai');
 const Anthropic = require('@anthropic-ai/sdk');
-
-// ── 配置 ───────────────────────────────────────────────────────────────────────
-
-const PROVIDER_CONFIG = {
-  qwen: {
-    apiKey: process.env.QWEN_API_KEY,
-    endpoint: process.env.QWEN_API_ENDPOINT || 'https://dashscope.aliyuncs.com',
-    path: process.env.QWEN_API_PATH || '/v1/chat/completions',
-    defaultModel: process.env.QWEN_MODEL || 'qwen3-coder-480b-a35b-instruct'
-  },
-  deepseek: {
-    apiKey: process.env.DEEPSEEK_API_KEY,
-    endpoint: process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com',
-    path: process.env.DEEPSEEK_API_PATH || '/v1/chat/completions',
-    defaultModel: process.env.DEEPSEEK_MODEL || 'DeepSeek-V3.2',
-    extraHeaders: {
-      'SOFA-TraceId': process.env.SOFA_TRACE_ID,
-      'SOFA-RpcId': process.env.SOFA_RPC_ID
-    }
-  },
-  anthropic: {
-    apiKey: process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY,
-    endpoint:
-      process.env.ANTHROPIC_API_ENDPOINT ||
-      process.env.ANTHROPIC_BASE_URL ||
-      'https://api.anthropic.com',
-    defaultModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-6-20250514'
-  },
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY,
-    endpoint: process.env.OPENAI_API_ENDPOINT || 'https://api.openai.com',
-    defaultModel: 'gpt-4'
-  },
-  kimi: {
-    apiKey: process.env.KIMI_API_KEY,
-    endpoint: process.env.KIMI_API_ENDPOINT || 'https://api.moonshot.cn',
-    path: '/v1/chat/completions',
-    defaultModel: process.env.KIMI_MODEL || 'kimi-k2-thinking'
-  }
-};
+const { getRuntimeConfig, PROVIDERS } = require('./provider-registry');
 
 // ── Provider 检测 ──────────────────────────────────────────────────────────────
 
 /**
  * Detect provider from model name
  * @param {string} model - Model ID
- * @returns {string} Provider ID (qwen, anthropic, openai, deepseek)
+ * @returns {string} Provider ID
  */
 function detectProviderFromModel(model) {
   if (!model) return 'qwen';
@@ -64,15 +28,21 @@ function detectProviderFromModel(model) {
   if (modelLower.startsWith('gpt')) return 'openai';
   if (modelLower.startsWith('deepseek')) return 'deepseek';
   if (modelLower.startsWith('qwen')) return 'qwen';
-  if (modelLower.startsWith('kimi') || modelLower.startsWith('moonshot')) return 'kimi';
+  if (modelLower.startsWith('glm')) return 'glm';
+  if (modelLower.startsWith('kimi') || modelLower.startsWith('moonshot'))
+    return 'kimi';
+  // Fall back to provider id match
+  if (model in PROVIDERS) return model;
   return 'qwen';
 }
 
 // ── 客户端工厂 ─────────────────────────────────────────────────────────────────
 
-function createOpenAIClient(provider, config) {
+function createOpenAIClient(config) {
   const extraHeaders = config.extraHeaders
-    ? Object.fromEntries(Object.entries(config.extraHeaders).filter(([, v]) => v != null))
+    ? Object.fromEntries(
+        Object.entries(config.extraHeaders).filter(([, v]) => v != null)
+      )
     : {};
 
   return new OpenAI({
@@ -85,7 +55,10 @@ function createOpenAIClient(provider, config) {
 function createAnthropicClient(config) {
   return new Anthropic({
     apiKey: config.apiKey,
-    baseURL: config.endpoint !== 'https://api.anthropic.com' ? config.endpoint : undefined
+    baseURL:
+      config.endpoint !== 'https://api.anthropic.com'
+        ? config.endpoint
+        : undefined
   });
 }
 
@@ -106,7 +79,7 @@ async function callAI(options, _retryCount = 0) {
     debug = false
   } = options;
 
-  const config = PROVIDER_CONFIG[provider];
+  const config = getRuntimeConfig(provider);
   if (!config) {
     throw new Error(`Unknown provider: ${provider}`);
   }
@@ -120,22 +93,47 @@ async function callAI(options, _retryCount = 0) {
   const resolvedModel = model || config.defaultModel;
 
   const maxRetries = 3;
-  const baseDelay = 2000; // 2s
+  const baseDelay = 2000;
 
   try {
     if (provider === 'anthropic') {
-      return await callAnthropic({ config, model: resolvedModel, messages, tools, temperature, maxTokens, timeout, debug });
+      return await callAnthropic({
+        config,
+        model: resolvedModel,
+        messages,
+        tools,
+        temperature,
+        maxTokens,
+        timeout,
+        debug
+      });
     } else {
-      return await callOpenAICompat({ provider, config, model: resolvedModel, messages, tools, toolChoice, temperature, maxTokens, timeout, debug });
+      return await callOpenAICompat({
+        config,
+        model: resolvedModel,
+        messages,
+        tools,
+        toolChoice,
+        temperature,
+        maxTokens,
+        timeout,
+        debug
+      });
     }
   } catch (error) {
-    const statusCode = error.status || error.statusCode || error.response?.status;
-    const isRetryable = RETRY_STATUS_CODES.has(statusCode) || error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET';
+    const statusCode =
+      error.status || error.statusCode || error.response?.status;
+    const isRetryable =
+      RETRY_STATUS_CODES.has(statusCode) ||
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ECONNRESET';
 
     if (isRetryable && _retryCount < maxRetries) {
       const delay = baseDelay * Math.pow(2, _retryCount);
       if (debug) {
-        console.log(`   ⏳ Retry ${_retryCount + 1}/${maxRetries} after ${delay}ms (${error.message})`);
+        console.log(
+          `   ⏳ Retry ${_retryCount + 1}/${maxRetries} after ${delay}ms (${error.message})`
+        );
       }
       await new Promise((r) => setTimeout(r, delay));
       return callAI(options, _retryCount + 1);
@@ -145,8 +143,18 @@ async function callAI(options, _retryCount = 0) {
   }
 }
 
-async function callOpenAICompat({ provider, config, model, messages, tools, toolChoice, temperature, maxTokens, timeout, debug }) {
-  const client = createOpenAIClient(provider, config);
+async function callOpenAICompat({
+  config,
+  model,
+  messages,
+  tools,
+  toolChoice,
+  temperature,
+  maxTokens,
+  timeout,
+  debug
+}) {
+  const client = createOpenAIClient(config);
 
   const params = {
     model,
@@ -161,13 +169,19 @@ async function callOpenAICompat({ provider, config, model, messages, tools, tool
   }
 
   if (debug) {
-    console.log('   📤 Request:', JSON.stringify(params, null, 2).slice(0, 500));
+    console.log(
+      '   📤 Request:',
+      JSON.stringify(params, null, 2).slice(0, 500)
+    );
   }
 
   const response = await client.chat.completions.create(params, { timeout });
 
   if (debug) {
-    console.log('   📥 Response:', JSON.stringify(response, null, 2).slice(0, 500));
+    console.log(
+      '   📥 Response:',
+      JSON.stringify(response, null, 2).slice(0, 500)
+    );
   }
 
   const choice = response.choices?.[0];
@@ -186,13 +200,25 @@ async function callOpenAICompat({ provider, config, model, messages, tools, tool
   };
 }
 
-async function callAnthropic({ config, model, messages, tools, temperature, maxTokens, timeout, debug }) {
+async function callAnthropic({
+  config,
+  model,
+  messages,
+  tools,
+  temperature,
+  maxTokens,
+  timeout,
+  debug
+}) {
   const client = createAnthropicClient(config);
 
   const systemMessage = messages.find((m) => m.role === 'system');
   const userMessages = messages
     .filter((m) => m.role !== 'system')
-    .map((m) => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+    .map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content
+    }));
 
   const params = {
     model,
@@ -212,17 +238,24 @@ async function callAnthropic({ config, model, messages, tools, temperature, maxT
   }
 
   if (debug) {
-    console.log('   📤 Request:', JSON.stringify(params, null, 2).slice(0, 500));
+    console.log(
+      '   📤 Request:',
+      JSON.stringify(params, null, 2).slice(0, 500)
+    );
   }
 
   const response = await client.messages.create(params, { timeout });
 
   if (debug) {
-    console.log('   📥 Response:', JSON.stringify(response, null, 2).slice(0, 500));
+    console.log(
+      '   📥 Response:',
+      JSON.stringify(response, null, 2).slice(0, 500)
+    );
   }
 
   const textContent = response.content?.find((c) => c.type === 'text');
-  const toolUseContent = response.content?.filter((c) => c.type === 'tool_use') || [];
+  const toolUseContent =
+    response.content?.filter((c) => c.type === 'tool_use') || [];
 
   return {
     content: textContent?.text || '',
@@ -234,7 +267,9 @@ async function callAnthropic({ config, model, messages, tools, temperature, maxT
     usage: {
       prompt_tokens: response.usage?.input_tokens,
       completion_tokens: response.usage?.output_tokens,
-      total_tokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0)
+      total_tokens:
+        (response.usage?.input_tokens || 0) +
+        (response.usage?.output_tokens || 0)
     },
     raw: response
   };
@@ -307,7 +342,9 @@ class AgentLoop {
           }
 
           if (this.debug) {
-            console.log(`   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`);
+            console.log(
+              `   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`
+            );
           }
 
           let toolResult;
@@ -350,7 +387,8 @@ class AgentLoop {
           ...this.messages,
           {
             role: 'user',
-            content: '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
+            content:
+              '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
           }
         ],
         debug: this.debug
@@ -371,6 +409,5 @@ module.exports = {
   callAI,
   streamAI,
   AgentLoop,
-  PROVIDER_CONFIG,
   detectProviderFromModel
 };

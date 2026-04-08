@@ -21,7 +21,7 @@
  */
 
 // Load environment variables from .env file
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const { SkillBuilder } = require('./builder');
 const { SkillRetriever } = require('./retriever');

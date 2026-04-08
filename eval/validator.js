@@ -22,7 +22,7 @@
  *   index-agent    — rebuild BM25 skill index
  */
 
-require('dotenv').config();
+require('dotenv').config({ override: true });
 
 const path = require('path');
 const { parseArgs } = require('./utils/eval-utils');
@@ -110,9 +110,15 @@ async function main() {
   let activeSkillsDir = SKILLS_DIR;
 
   if (!DRY_RUN && !NO_WORKTREE) {
-    worktree = worktreeManager.create({ rootDir: ROOT_DIR, libraryId: LIBRARY_ID });
+    worktree = worktreeManager.create({
+      rootDir: ROOT_DIR,
+      libraryId: LIBRARY_ID
+    });
     activeRootDir = worktree.worktreePath;
-    activeSkillsDir = path.join(worktree.worktreePath, path.relative(ROOT_DIR, SKILLS_DIR));
+    activeSkillsDir = path.join(
+      worktree.worktreePath,
+      path.relative(ROOT_DIR, SKILLS_DIR)
+    );
 
     // Register cleanup on SIGINT so Ctrl-C doesn't leave a dangling worktree
     process.once('SIGINT', () => {
@@ -154,7 +160,9 @@ async function main() {
     }
 
     // ── Step 2: Render test every generated code ──────────────────────────────
-    const errorCases = await renderAgent.run(resultPath, { concurrency: CONCURRENCY });
+    const errorCases = await renderAgent.run(resultPath, {
+      concurrency: CONCURRENCY
+    });
 
     if (errorCases.length === 0) {
       consecutivePasses++;
@@ -200,7 +208,9 @@ async function main() {
 
     // ── Step 4b: Commit changes to worktree branch ────────────────────────────
     if (worktree) {
-      worktree.commit(`validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`);
+      worktree.commit(
+        `validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`
+      );
     }
 
     // ── Step 5: Rebuild index via tool calls ──────────────────────────────────

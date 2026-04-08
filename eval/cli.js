@@ -12,8 +12,8 @@
  *   node eval/cli.js providers              # List available providers
  */
 
-// Load environment variables from .env file
-require('dotenv').config();
+// Load environment variables from .env file, overriding system environment variables
+require('dotenv').config({ override: true });
 
 const path = require('path');
 const fs = require('fs');
@@ -63,6 +63,23 @@ function startServer(cmdArgs) {
 async function runEvaluation(cmdArgs) {
   const ProviderRegistry = require('./utils/provider-registry');
   const EvaluationManager = require('./utils/eval-manager');
+
+  // Validate argument format
+  const knownFlags = ['--full', '--verbose'];
+  const knownPrefixes = [
+    '--model=', '--dataset=', '--sample=', '--concurrency=', '--retrieval='
+  ];
+  const unknown = cmdArgs.filter(
+    (a) =>
+      !knownFlags.includes(a) &&
+      !knownPrefixes.some((p) => a.startsWith(p))
+  );
+  if (unknown.length > 0) {
+    console.error(`Unknown or malformed argument(s): ${unknown.join(', ')}`);
+    console.log('Valid flags: --full, --verbose');
+    console.log(`Valid options: ${knownPrefixes.join(', ')}`);
+    process.exit(1);
+  }
 
   // Parse options
   const retrieval =
@@ -114,8 +131,10 @@ async function runEvaluation(cmdArgs) {
     process.exit(1);
   }
 
-  // Set default model if not provided
-  options.model = options.model || ProviderRegistry.getDefaultModel(provider);
+  // Set default model if not provided, or if model equals provider name (alias)
+  if (!options.model || options.model === provider) {
+    options.model = ProviderRegistry.getDefaultModel(provider);
+  }
 
   console.log('');
   console.log('='.repeat(60));
