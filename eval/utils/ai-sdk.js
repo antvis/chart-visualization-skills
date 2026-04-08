@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * AI SDK 统一适配层
- * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek
+ * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek、Kimi
  *
- * OpenAI 兼容格式（qwen/deepseek/openai）使用 openai 包
+ * OpenAI 兼容格式（qwen/deepseek/openai/kimi）使用 openai 包
  * Anthropic 格式使用 @anthropic-ai/sdk
  */
 
@@ -41,6 +41,12 @@ const PROVIDER_CONFIG = {
     apiKey: process.env.OPENAI_API_KEY,
     endpoint: process.env.OPENAI_API_ENDPOINT || 'https://api.openai.com',
     defaultModel: 'gpt-4'
+  },
+  kimi: {
+    apiKey: process.env.KIMI_API_KEY,
+    endpoint: process.env.KIMI_API_ENDPOINT || 'https://api.moonshot.cn',
+    path: '/v1/chat/completions',
+    defaultModel: process.env.KIMI_MODEL || 'kimi-k2-thinking'
   }
 };
 
@@ -58,6 +64,7 @@ function detectProviderFromModel(model) {
   if (modelLower.startsWith('gpt')) return 'openai';
   if (modelLower.startsWith('deepseek')) return 'deepseek';
   if (modelLower.startsWith('qwen')) return 'qwen';
+  if (modelLower.startsWith('kimi') || modelLower.startsWith('moonshot')) return 'kimi';
   return 'qwen';
 }
 
