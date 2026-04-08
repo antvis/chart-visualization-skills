@@ -46,15 +46,23 @@ const chart = new Chart({ container: 'container', width: 640, height: 400 });
 
 chart.options({
   type: 'cell',
-  data: heatmapData,
-  encode: { x: 'hour', y: 'day', color: 'value' },
+  data: {
+    type: 'fetch',
+    value: 'https://assets.antv.antgroup.com/g2/seattle-weather.json',
+  },
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max',
+  },
+  transform: [{ type: 'group', color: 'max' }],
   scale: {
     color: {
       type: 'sequential',
-      palette: 'blues',   // 内置色板：从浅蓝到深蓝
+      palette: 'gnBu',   // 内置色板：从浅蓝到深蓝
     },
   },
-  style: { lineWidth: 0.5, stroke: '#fff' },
+  style: { inset: 0.5 },
 });
 
 chart.render();
@@ -209,4 +217,36 @@ chart.options({
   encode: { color: 'city' },
   scale: { color: { type: 'ordinal', range: ['#5B8FF9', '#61DDAA', '#FFD666'] } },  // ✅
 });
+```
+
+### 错误：未使用 transform 导致数据聚合异常
+
+在使用 `cell` 类型图表时，若原始数据包含多个相同 `(x, y)` 坐标的记录，必须使用 `transform` 对其进行聚合，否则可能导致颜色映射不准确甚至图表渲染失败。
+
+```javascript
+// ❌ 未聚合相同坐标的 temp_max 值
+chart.options({
+  type: 'cell',
+  data: weatherData,
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max',
+  },
+  scale: { color: { type: 'sequential', palette: 'gnBu' } },
+});
+
+// ✅ 使用 group transform 聚合相同坐标的数据
+chart.options({
+  type: 'cell',
+  data: weatherData,
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max',
+  },
+  transform: [{ type: 'group', color: 'max' }],  // 对每个格子取 temp_max 的最大值
+  scale: { color: { type: 'sequential', palette: 'gnBu' } },
+});
+```
 ```

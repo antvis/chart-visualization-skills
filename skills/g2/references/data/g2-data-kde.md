@@ -333,3 +333,94 @@ chart.options({
   encode: { x: 'x', y: 'y', size: 'size' } // 正确字段名
 });
 ```
+
+### 错误 9：KDE 分组字段选择不当导致渲染异常
+
+在使用 KDE 时，`groupBy` 字段的选择非常重要。如果选择了错误的字段或者没有充分考虑数据结构，可能导致生成的密度曲线不符合预期甚至完全不可见。
+
+```javascript
+// ❌ 错误：groupBy 字段选择不当
+chart.options({
+  type: 'density',
+  data: {
+    transform: [
+      {
+        type: 'kde',
+        field: 'y',
+        groupBy: ['species'], // 仅按 species 分组，忽略了 x 字段的不同类别
+      },
+    ],
+  },
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'species',
+    size: 'size',
+  },
+});
+
+// ✅ 正确：合理选择 groupBy 字段
+chart.options({
+  type: 'density',
+  data: {
+    transform: [
+      {
+        type: 'kde',
+        field: 'y',
+        groupBy: ['x', 'species'], // 同时按 x 和 species 分组
+      },
+    ],
+  },
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'species',
+    size: 'size',
+  },
+});
+```
+
+### 错误 10：KDE 输出字段被后续操作覆盖
+
+当 KDE 生成的字段（如 `y` 和 `size`）在后续的数据处理步骤中被修改或覆盖时，会导致图表渲染异常。
+
+```javascript
+// ❌ 错误：KDE 输出字段被后续 transform 覆盖
+chart.options({
+  type: 'density',
+  data: {
+    transform: [
+      { type: 'kde', field: 'y', groupBy: ['x', 'species'] },
+      { type: 'map', callback: (d) => ({ ...d, y: d.y.map(v => v * 2) }) } // 修改了 y 字段
+    ],
+  },
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'species',
+    size: 'size',
+  },
+});
+
+// ✅ 正确：使用自定义字段名避免冲突
+chart.options({
+  type: 'density',
+  data: {
+    transform: [
+      { 
+        type: 'kde', 
+        field: 'y', 
+        groupBy: ['x', 'species'],
+        as: ['kdeY', 'kdeSize'] // 使用自定义字段名
+      },
+      { type: 'map', callback: (d) => ({ ...d, y: d.y.map(v => v * 2) }) } // 不会影响 KDE 结果
+    ],
+  },
+  encode: {
+    x: 'x',
+    y: 'kdeY', // 使用 KDE 生成的自定义字段
+    color: 'species',
+    size: 'kdeSize',
+  },
+});
+```

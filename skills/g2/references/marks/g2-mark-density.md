@@ -356,6 +356,86 @@ chart.options({
 });
 ```
 
+### 错误 8：KDE 输出字段名与 encode 映射不一致导致图表空白
+
+在 KDE 变换中使用 `as` 自定义输出字段名时，必须确保 `encode` 中的 `y` 和 `size` 通道引用的是正确的自定义字段名。
+
+```javascript
+// ❌ 错误：KDE 输出字段名为 density_x 和 density_y，但 encode 引用了默认字段名
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{
+      type: 'kde',
+      field: 'y',
+      groupBy: ['x'],
+      as: ['density_x', 'density_y']
+    }]
+  },
+  encode: {
+    x: 'x',
+    y: 'y',       // ❌ 应为 'density_x'
+    size: 'size', // ❌ 应为 'density_y'
+    series: 'x'
+  }
+});
+
+// ✅ 正确：encode 中引用 KDE 输出的自定义字段名
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{
+      type: 'kde',
+      field: 'y',
+      groupBy: ['x'],
+      as: ['density_x', 'density_y']
+    }]
+  },
+  encode: {
+    x: 'x',
+    y: 'density_x',  // ✅ 正确引用自定义字段名
+    size: 'density_y', // ✅ 正确引用自定义字段名
+    series: 'x'
+  }
+});
+```
+
+### 错误 9：KDE 分组后每组样本数过少导致图表空白
+
+KDE 算法要求每组数据具有足够的样本点（建议每组至少 5~10 个不同值）才能有效计算密度分布。若分组后每组样本数过少，可能导致图表渲染为空白。
+
+```javascript
+// ❌ 错误：分组后每组样本数过少
+const insufficientData = [
+  { group: 'A', value: 1 },
+  { group: 'A', value: 1 },
+  { group: 'B', value: 2 },
+  { group: 'B', value: 2 }
+];
+
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: insufficientData,
+    transform: [{ type: 'kde', field: 'value', groupBy: ['group'] }]
+  },
+  encode: { x: 'group', y: 'y', size: 'size', series: 'group' }
+});
+
+// ✅ 解决方案：合并分组或增加样本数，或改用其他图表类型
+const sufficientData = [
+  { group: 'A', value: 1 }, { group: 'A', value: 1.1 }, { group: 'A', value: 1.2 },
+  { group: 'A', value: 1.3 }, { group: 'A', value: 1.4 }, { group: 'B', value: 2 },
+  { group: 'B', value: 2.1 }, { group: 'B', value: 2.2 }, { group: 'B', value: 2.3 },
+  { group: 'B', value: 2.4 }
+];
+```
+
 ## 配置项
 
 ### encode 通道
@@ -363,7 +443,7 @@ chart.options({
 | 属性   | 描述                                     | 必选 |
 |--------|------------------------------------------|------|
 | x      | X 轴字段，时间或有序分类字段             | ✓    |
-| y      | Y 轴字段，数值字段                       | ✓    |
+| y      | Y 轴字段，数值字段（KDE 输出字段）       | ✓    |
 | size   | 密度大小字段（KDE 变换后生成）           | ✓    |
 | series | 系列分组字段                             | ✓    |
 | color  | 颜色映射字段                            |      |

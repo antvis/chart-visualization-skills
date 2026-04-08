@@ -146,6 +146,39 @@ chart.options({
 });
 ```
 
+## Cell 图表中的 Group 使用
+
+对于 `cell` 类型的图表，通常需要先对数据进行分组聚合再渲染。例如，按日期的 UTC 日和 UTC 月分组，并取最高温度的最大值：
+
+```javascript
+const chart = new Chart({
+  container: 'container',
+});
+
+chart.options({
+  type: 'cell',
+  height: 300,
+  data: {
+    type: 'inline',
+    value: [
+      { date: '2012-01-01', temp_max: 12.8 },
+      { date: '2012-01-02', temp_max: 10.6 },
+      // 更多数据...
+    ]
+  },
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max',
+  },
+  transform: [{ type: 'group', color: 'max' }],
+  scale: { color: { type: 'sequential', palette: 'gnBu' } },
+  style: { inset: 0.5 },
+});
+
+chart.render();
+```
+
 ## 常见错误与修正
 
 ### 错误 1：transform 写成对象而非数组
@@ -169,5 +202,32 @@ chart.options({
 chart.options({
   encode: { x: 'category' },    // 不需要 y
   transform: [{ type: 'groupX', y: 'count' }],
+});
+```
+
+### 错误 3：Cell 图表未正确使用 Group 聚合
+```javascript
+// ❌ 错误：没有对重复的 x/y 组合做聚合，导致渲染异常
+chart.options({
+  type: 'cell',
+  data: weatherData,
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max'
+  },
+  transform: []  // 缺少必要的 group 聚合
+});
+
+// ✅ 正确：使用 group 并指定 color 聚合方式
+chart.options({
+  type: 'cell',
+  data: weatherData,
+  encode: {
+    x: (d) => new Date(d.date).getUTCDate(),
+    y: (d) => new Date(d.date).getUTCMonth(),
+    color: 'temp_max'
+  },
+  transform: [{ type: 'group', color: 'max' }]  // 必须聚合 color 通道
 });
 ```

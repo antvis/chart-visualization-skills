@@ -108,7 +108,7 @@ chart.options({
 // 相关性分析热力图（-1 到 1 的发散色阶）
 chart.options({
   type: 'cell',
-   correlationData,  // [{ x: '变量A', y: '变量B', corr: 0.75 }, ...]
+  data: correlationData,  // [{ x: '变量A', y: '变量B', corr: 0.75 }, ...]
   encode: {
     x: 'x',
     y: 'y',
@@ -135,7 +135,7 @@ chart.options({
 // 每天活跃度的日历视图
 chart.options({
   type: 'cell',
-   dailyData,   // [{ date: '2024-01-01', weekday: 'Mon', week: 1, value: 5 }, ...]
+  data: dailyData,   // [{ date: '2024-01-01', weekday: 'Mon', week: 1, value: 5 }, ...]
   encode: {
     x: 'week',      // 第几周（1-53）
     y: 'weekday',   // 周几
@@ -179,5 +179,63 @@ const chart = new Chart({
   container: 'container',
   width: xCategories.length * 40,    // 每格 40px
   height: yCategories.length * 40,
+});
+```
+
+### 错误 3：未正确使用 transform.group 导致数据重复或缺失
+```javascript
+// ❌ 问题：当 x/y 通道存在重复组合时，未使用 group 聚合会导致多个格子重叠或数据丢失
+chart.options({
+  type: 'cell',
+  data: [
+    { day: 1, month: 0, temp: 10 },
+    { day: 1, month: 0, temp: 15 }, // 同一天同一月有两个温度记录
+  ],
+  encode: {
+    x: 'day',
+    y: 'month',
+    color: 'temp'
+  }
+});
+// 上述代码可能只显示其中一个值，或出现多个重叠格子
+
+// ✅ 正确：使用 transform.group 对重复数据进行聚合（如取最大值、平均值等）
+chart.options({
+  type: 'cell',
+  data: [
+    { day: 1, month: 0, temp: 10 },
+    { day: 1, month: 0, temp: 15 },
+  ],
+  encode: {
+    x: 'day',
+    y: 'month',
+    color: 'temp'
+  },
+  transform: [{
+    type: 'group',
+    color: 'max'  // 对相同 x/y 组合的数据，取 temp 的最大值
+  }]
+});
+```
+
+### 错误 4：未正确设置 scale.type 为 sequential 导致颜色映射异常
+```javascript
+// ❌ 问题：color 通道未显式设置 scale.type 为 'sequential'，可能导致颜色映射不符合预期
+chart.options({
+  type: 'cell',
+  encode: { x: 'a', y: 'b', color: 'value' },
+  scale: { color: { palette: 'Blues' } } // 仅设置 palette，未设置 type
+});
+
+// ✅ 正确：明确指定 scale.type 为 'sequential'
+chart.options({
+  type: 'cell',
+  encode: { x: 'a', y: 'b', color: 'value' },
+  scale: { 
+    color: { 
+      type: 'sequential',  // 明确指定为顺序色阶
+      palette: 'Blues' 
+    } 
+  }
 });
 ```

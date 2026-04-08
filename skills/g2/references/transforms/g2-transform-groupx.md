@@ -219,3 +219,47 @@ chart.options({
   encode: { x: 'x', y: 'y', color: 'x', size: 'size' }
 });
 ```
+
+### 错误 4：在 density 图中错误配置 encode 映射字段
+```javascript
+// ❌ 错误示例：未正确使用 kde 输出的字段
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{
+      type: 'kde',
+      field: 'y',
+      groupBy: ['x']
+    }]
+  },
+  encode: {
+    x: 'x',
+    y: 'y',        // ❌ 应该使用 kde 输出的 y 字段（默认为 'y'）
+    color: 'x',
+    size: 'size'   // ❌ 应该使用 kde 输出的 size 字段（默认为 'size'）
+  }
+});
+
+// ✅ 正确做法：确保 encode 中使用的字段与 kde 输出字段一致
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{
+      type: 'kde',
+      field: 'y',
+      groupBy: ['x'],
+      as: ['kde_y', 'kde_size']  // ✅ 自定义输出字段名
+    }]
+  },
+  encode: {
+    x: 'x',
+    y: 'kde_y',      // ✅ 使用自定义的 y 字段名
+    color: 'x',
+    size: 'kde_size' // ✅ 使用自定义的 size 字段名
+  }
+});
+```

@@ -4929,7 +4929,7 @@
         "g2-scale-threshold",
         "g2-mark-cell-heatmap"
       ],
-      "embedding_text": "Title: G2 顺序比例尺（sequential）\nDescription:  sequential 比例尺将连续数值映射到颜色渐变，\nTags: sequential, 顺序比例尺, 颜色渐变, 连续颜色, palette, scale\nUse Cases: 热力图颜色渐变（低值→高值）; 地图按数值着色（choropleth）; 散点图气泡颜色按数值渐变\nAnti-patterns: \n## 最小可运行示例（热力图）\n\n```javascript\nimport { Chart } from '@antv/g2';\n\nconst chart = new Chart({ container: 'container', width: 640, height: 400 });\n\nchart.options({\n  type: 'cell',\n  data: heatmapData,\n  encode: { x: 'hour', y: 'day', color: 'value' },\n  scale: {\n    color: {\n      type: 'sequential',\n      palette: 'blues',   // 内置色板：从浅蓝到深蓝\n    },\n  },\n  style: { lineWidth: 0.5, stroke: '#fff' },\n});\n\nchart.render();\n```\n\n\n## 常见错误与修正\n"
+      "embedding_text": "Title: G2 顺序比例尺（sequential）\nDescription:  sequential 比例尺将连续数值映射到颜色渐变，\nTags: sequential, 顺序比例尺, 颜色渐变, 连续颜色, palette, scale\nUse Cases: 热力图颜色渐变（低值→高值）; 地图按数值着色（choropleth）; 散点图气泡颜色按数值渐变\nAnti-patterns: \n## 最小可运行示例（热力图）\n\n```javascript\nimport { Chart } from '@antv/g2';\n\nconst chart = new Chart({ container: 'container', width: 640, height: 400 });\n\nchart.options({\n  type: 'cell',\n  data: {\n    type: 'fetch',\n    value: 'https://assets.antv.antgroup.com/g2/seattle-weather.json',\n  },\n  encode: {\n    x: (d) => new Date(d.date).getUTCDate(),\n    y: (d) => new Date(d.date).getUTCMonth(),\n    color: 'temp_max',\n  },\n  transform: [{ type: 'group', color: 'max' }],\n  scale: {\n    color: {\n      type: 'sequential',\n      palette: 'gnBu',   // 内置色板：从浅蓝到深蓝\n    },\n  },\n  style: { inset: 0.5 },\n});\n\nchart.render();\n```\n\n\n## 常见错误与修正\n"
     },
     {
       "id": "g2-scale-threshold",
