@@ -53,10 +53,12 @@ source_url: "https://g2.antv.antgroup.com/examples/bar/basic"
 Interval Mark 将数据映射为矩形区间：
 - 在直角坐标系中：柱形（竖向）或条形（横向）
 - 在极坐标系中：扇形（饼图）或玫瑰图
+- 在径向坐标系中：玉珏图（Radial Bar Chart）
 
 **关键 encode 通道：**
 - `x`：分类轴，通常映射分类字段，自动使用 Band Scale
 - `y`：数值轴，映射数值字段，使用 Linear Scale
+- `y1`：区间终点，用于表示区间范围（如甘特图）
 - `color`：颜色，用于视觉区分
 
 ## 最小可运行示例
@@ -191,6 +193,30 @@ chart.options({
 });
 ```
 
+### 径向柱状图（玉珏图）
+
+```javascript
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: { x: 'genre', y: 'sold' },
+  coordinate: { type: 'radial', innerRadius: 0.2 },  // 径向坐标系
+});
+```
+
+### 带交互效果的柱状图
+
+```javascript
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: { x: 'genre', y: 'sold' },
+  interaction: {
+    elementHighlight: true,  // 元素高亮交互
+  },
+});
+```
+
 ## Spec 完整结构速查
 
 ```javascript
@@ -205,6 +231,7 @@ chart.options({
   encode: {
     x: 'genre',           // x 轴字段
     y: 'sold',            // y 轴字段
+    y1: 'endValue',       // 区间终点字段（如甘特图）
     color: 'genre',       // 颜色字段
     shape: 'rect',        // 形状：'rect' | 'hollow'
   },
@@ -216,7 +243,11 @@ chart.options({
   },
 
   // 坐标系变换
-  coordinate: { transform: [{ type: 'transpose' }] },
+  coordinate: { 
+    type: 'radial', 
+    innerRadius: 0.2,
+    transform: [{ type: 'transpose' }] 
+  },
 
   // 样式
   style: {
@@ -235,6 +266,16 @@ chart.options({
     x: { title: '游戏类型' },
     y: { title: '销量' },
   },
+
+  // 图例
+  legend: {
+    color: { position: 'right' }
+  },
+
+  // 交互
+  interaction: {
+    elementHighlight: true
+  }
 });
 ```
 
@@ -248,6 +289,7 @@ interface IntervalSpec {
   encode?: {
     x?: string | ((d: any) => any);
     y?: string | ((d: any) => any);
+    y1?: string | ((d: any) => any); // 区间终点通道
     color?: string | ((d: any) => any);
     shape?: 'rect' | 'hollow' | 'funnel' | 'pyramid' | string;
     size?: string | number | ((d: any) => any);
@@ -259,7 +301,14 @@ interface IntervalSpec {
     y?: ScaleOption;
     color?: ScaleOption;
   };
-  coordinate?: { type: string; [key: string]: any };
+  coordinate?: { 
+    type?: 'polar' | 'cartesian' | 'radial';
+    innerRadius?: number;
+    outerRadius?: number;
+    startAngle?: number;
+    endAngle?: number;
+    transform?: Array<{ type: string; [key: string]: any }>;
+  };
   style?: {
     radius?: number;
     radiusTopLeft?: number;
@@ -275,6 +324,9 @@ interface IntervalSpec {
   tooltip?: TooltipOption;
   axis?: { x?: AxisOption; y?: AxisOption };
   legend?: { color?: LegendOption };
+  interaction?: { 
+    elementHighlight?: boolean | { background?: boolean; region?: boolean }; 
+  };
 }
 ```
 
@@ -336,5 +388,141 @@ chart.options({
   data: dataWithNegatives,
   encode: { x: 'genre', y: 'value' },
   scale: { y: { domain: [-100, 300] } },
+});
+```
+
+### 错误 6：径向坐标系使用不当
+```javascript
+// ❌ 错误：在径向坐标系中 x/y 映射顺序颠倒
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: { x: 'value', y: 'genre' },  // 应该是 x: genre, y: value
+  coordinate: { type: 'radial' }
+});
+
+// ✅ 正确：径向坐标系中 x 对应角度方向，y 对应半径方向
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: { x: 'genre', y: 'value' },
+  coordinate: { type: 'radial' }
+});
+```
+
+### 错误 7：复合视图中未正确组织 children 结构
+```javascript
+// ❌ 错误：没有使用 view 的 children 属性来组合多个 mark
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: {...}
+});
+
+// ✅ 正确：使用 view 包含多个 children mark
+chart.options({
+  type: 'view',
+  children: [
+    {
+      type: 'interval',
+      data: [...],
+      encode: {...}
+    },
+    {
+      type: 'image',
+      data: [{ src: '...' }],
+      encode: { src: 'src' }
+    }
+  ]
+});
+```
+
+### 错误 8：image mark 使用错误的编码字段
+```javascript
+// ❌ 错误：image mark 使用了 x/y 映射图像 URL
+chart.options({
+  type: 'image',
+  data: [{ url: 'https://example.com/image.png' }],
+  encode: { x: () => 0, y: () => 0, src: 'url' }  // 不应该用 x/y 来定位图像
+});
+
+// ✅ 正确：image mark 使用 src 字段映射图像地址，配合 style 设置尺寸和位置
+chart.options({
+  type: 'image',
+  data: [{ url: 'https://example.com/image.png' }],
+  encode: { src: 'url' },
+  style: {
+    x: '50%',   // 相对于容器的位置
+    y: '50%',
+    width: 80,
+    height: 80
+  }
+});
+```
+
+### 错误 9：交互配置位置错误
+```javascript
+// ❌ 错误：将交互配置放在 mark 级别之外
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: {...},
+  elementHighlight: true  // 放错位置
+});
+
+// ✅ 正确：交互配置应放在 interaction 对象中
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: {...},
+  interaction: {
+    elementHighlight: true
+  }
+});
+```
+
+### 错误 10：区间图未正确使用 y1 通道
+```javascript
+// ❌ 错误：将区间起点和终点都映射到 y 通道
+chart.options({
+  type: 'interval',
+  data: [{ start: 1, end: 5 }],
+  encode: { x: 'name', y: ['start', 'end'] }  // 错误方式
+});
+
+// ✅ 正确：使用 y 和 y1 通道分别映射起点和终点
+chart.options({
+  type: 'interval',
+  data: [{ start: 1, end: 5 }],
+  encode: { x: 'name', y: 'start', y1: 'end' }
+});
+```
+
+### 错误 11：坐标轴标签格式化配置错误
+```javascript
+// ❌ 错误：使用不存在的 axis.labelFormatter 配置
+chart.options({
+  type: 'interval',
+  data: [...],
+  axis: {
+    x: {
+      labelFormatter: (task, item) => {
+        const datum = item.data;
+        return `${datum.stage}\n${task}`;
+      }
+    }
+  }
+});
+
+// ✅ 正确：使用正确的 label 配置方式
+chart.options({
+  type: 'interval',
+  data: [...],
+  axis: {
+    x: {
+      labelTransform: 'rotate(30)',
+      labelAutoWrap: true
+    }
+  }
 });
 ```

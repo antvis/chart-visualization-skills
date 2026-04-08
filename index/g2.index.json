@@ -1,8 +1,8 @@
 {
   "library": "g2",
   "version": "5.x",
-  "generated": "2026-04-02",
-  "total": 181,
+  "generated": "2026-04-08",
+  "total": 183,
   "skills": [
     {
       "id": "g2-animation-intro",
@@ -4396,7 +4396,7 @@
         "g2-mark-boxplot",
         "g2-mark-density"
       ],
-      "embedding_text": "Title: G2 Violin Plot Mark\nDescription:  小提琴图 Mark。使用 density 和 boxplot 组合，结合核密度估计展示数据分布形状。\nTags: 小提琴图, violin, 密度分布, 统计分析\nUse Cases: 多组数据分布比较; 数据分布模式探索; 异常值检测\nAnti-patterns: 数据量少（<20）应使用箱形图; 离散数据不适合\n## 最小可运行示例\n\n```javascript\nimport { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  theme: 'classic',\n});\n\nchart.options({\n  type: 'view',\n   {\n    type: 'fetch',\n    value: 'https://assets.antv.antgroup.com/g2/species.json',\n  },\n  children: [\n    {\n      type: 'density',\n      data: {\n        transform: [\n          { type: 'kde', field: 'y', groupBy: ['x', 'species'] },\n        ],\n      },\n      encode: {\n        x: 'x',\n        y: 'y',\n        series: 'species',\n        color: 'species',\n        size: 'size',\n      },\n      tooltip: false,\n    },\n    {\n      type: 'boxplot',\n      encode: {\n        x: 'x',\n        y: 'y',\n        series: 'species',\n        color: 'species',\n        shape: 'violin',\n      },\n      style: {\n        opacity: 0.5,\n        strokeOpacity: 0.5,\n        point: false,\n      },\n    },\n  ],\n});\n\nchart.render();\n```\n\n\n## 常见错误与修正\n"
+      "embedding_text": "Title: G2 Violin Plot Mark\nDescription:  小提琴图 Mark。使用 density 和 boxplot 组合，结合核密度估计展示数据分布形状。\nTags: 小提琴图, violin, 密度分布, 统计分析\nUse Cases: 多组数据分布比较; 数据分布模式探索; 异常值检测\nAnti-patterns: 数据量少（<20）应使用箱形图; 离散数据不适合\n## 最小可运行示例\n\n```javascript\nimport { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  theme: 'classic',\n});\n\nchart.options({\n  type: 'view',\n  data: {\n    type: 'fetch',\n    value: 'https://assets.antv.antgroup.com/g2/species.json',\n  },\n  children: [\n    {\n      type: 'density',\n      data: {\n        transform: [\n          { type: 'kde', field: 'y', groupBy: ['x', 'species'] },\n        ],\n      },\n      encode: {\n        x: 'x',\n        y: 'y',\n        series: 'species',\n        color: 'species',\n        size: 'size',\n      },\n      tooltip: false,\n    },\n    {\n      type: 'boxplot',\n      encode: {\n        x: 'x',\n        y: 'y',\n        series: 'species',\n        color: 'species',\n        shape: 'violin',\n      },\n      style: {\n        opacity: 0.5,\n        strokeOpacity: 0.5,\n        point: false,\n      },\n    },\n  ],\n});\n\nchart.render();\n```\n\n\n## 常见错误与修正\n"
     },
     {
       "id": "g2-mark-wordcloud",
@@ -4490,6 +4490,65 @@
         "g2-theme-builtin"
       ],
       "embedding_text": "Title: G2 Category20 调色板\nDescription:  AntV 经典 20 色调色板，用于分类数据的颜色映射。\nTags: 调色板, palette, 颜色, 分类, 20色\nUse Cases: 超过 10 个类别的颜色映射; 需要更多颜色区分的场景; 复杂分类数据可视化\nAnti-patterns: 类别较少时建议使用 Category10\n## 最小可运行示例\n\n```javascript\nimport { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nchart.options({\n  type: 'interval',\n  data: [\n    { category: 'A', value: 100 },\n    { category: 'B', value: 150 },\n    // ... 更多类别\n  ],\n  encode: {\n    x: 'category',\n    y: 'value',\n    color: 'category',\n  },\n  scale: {\n    color: {\n      type: 'ordinal',\n      range: 'category20',\n    },\n  },\n});\n\nchart.render();\n```\n\n\n## 常见错误与修正\n"
+    },
+    {
+      "id": "g2-pattern-performance",
+      "title": "G2 大数据量性能优化",
+      "description": "G2 处理大量数据时的性能优化策略：数据预聚合、LTTB 降采样、",
+      "library": "g2",
+      "version": "5.x",
+      "category": "patterns",
+      "subcategory": "",
+      "tags": [
+        "性能优化",
+        "performance",
+        "大数据",
+        "Canvas",
+        "降采样",
+        "聚合"
+      ],
+      "difficulty": "advanced",
+      "path": "skills/g2/references/patterns/g2-pattern-performance.md",
+      "use_cases": [
+        "图表数据量超过万条时的优化",
+        "实时数据流的高频更新场景"
+      ],
+      "anti_patterns": [],
+      "related": [
+        "g2-core-chart-init",
+        "g2-data-transform-patterns"
+      ],
+      "embedding_text": "Title: G2 大数据量性能优化\nDescription:  G2 处理大量数据时的性能优化策略：数据预聚合、LTTB 降采样、\nTags: 性能优化, performance, 大数据, Canvas, 降采样, 聚合\nUse Cases: 图表数据量超过万条时的优化; 实时数据流的高频更新场景\nAnti-patterns: \n## 常见错误与修正\n\n```javascript\n// ❌ 10 万行数据直接传给 G2，页面卡死\nchart.options({ data: tenThousandRows });\n\n// ✅ 先聚合/降采样到合理数量（< 1000 点）\nchart.options({ data: aggregateTimeSeries(tenThousandRows, 'date', 'value') });\n```"
+    },
+    {
+      "id": "g2-pattern-responsive",
+      "title": "G2 响应式图表适配",
+      "description": "在不同屏幕尺寸和容器大小下自适应图表宽高、字体、边距等配置。",
+      "library": "g2",
+      "version": "5.x",
+      "category": "patterns",
+      "subcategory": "",
+      "tags": [
+        "响应式",
+        "responsive",
+        "自适应",
+        "autoFit",
+        "resize",
+        "移动端",
+        "容器尺寸"
+      ],
+      "difficulty": "intermediate",
+      "path": "skills/g2/references/patterns/g2-pattern-responsive.md",
+      "use_cases": [
+        "图表随浏览器窗口/容器大小变化自动调整",
+        "移动端和桌面端共用同一图表组件",
+        "嵌入弹框/侧边栏等动态尺寸容器"
+      ],
+      "anti_patterns": [],
+      "related": [
+        "g2-core-chart-init"
+      ],
+      "embedding_text": "Title: G2 响应式图表适配\nDescription:  在不同屏幕尺寸和容器大小下自适应图表宽高、字体、边距等配置。\nTags: 响应式, responsive, 自适应, autoFit, resize, 移动端, 容器尺寸\nUse Cases: 图表随浏览器窗口/容器大小变化自动调整; 移动端和桌面端共用同一图表组件; 嵌入弹框/侧边栏等动态尺寸容器\nAnti-patterns: \n## 常见错误与修正\n"
     },
     {
       "id": "g2-pattern-v4-to-v5",

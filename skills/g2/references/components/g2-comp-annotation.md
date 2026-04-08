@@ -55,8 +55,7 @@ chart.options({
     // 标注：y=60 的水平参考线
     {
       type: 'lineY',
-       [{ value: 60 }],
-      encode: { y: 'value' },
+      data: [60],
       style: {
         stroke: '#f5222d',
         strokeDasharray: '4 4',
@@ -82,8 +81,7 @@ chart.render();
 // 标记某个特殊时间点
 {
   type: 'lineX',
-  data: [{ date: new Date('2024-03-01') }],
-  encode: { x: 'date' },
+  data: [new Date('2024-03-01')],
   style: { stroke: '#722ed1', strokeDasharray: '4 4', lineWidth: 1.5 },
   labels: [
     { text: '版本发布', position: 'top', style: { fill: '#722ed1' } },
@@ -102,7 +100,7 @@ chart.options({
     {
       // 用 point + text 标注最大值
       type: 'point',
-       data,
+      data,
       encode: { x: 'month', y: 'value' },
       transform: [{ type: 'select', channel: 'y', selector: 'max' }],  // 只选最大值点
       style: { fill: '#f5222d', r: 5 },
@@ -124,8 +122,7 @@ chart.options({
 // 高亮某个 y 值范围（如正常区间）
 {
   type: 'rangeY',
-  data: [{ min: 40, max: 80 }],
-  encode: { y: 'min', y1: 'max' },
+  data: [{ y: [40, 80] }],
   style: {
     fill: '#52c41a',
     fillOpacity: 0.08,
@@ -158,6 +155,31 @@ chart.options({
 }
 ```
 
+## 图片标注（image mark）
+
+```javascript
+// 在图表中心添加图片标注
+{
+  type: 'image',
+  data: [{
+    src: 'https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg',
+    x: '50%',
+    y: '50%'
+  }],
+  encode: { 
+    x: 'x', 
+    y: 'y', 
+    src: 'src' 
+  },
+  style: {
+    width: 80,
+    height: 80,
+    textAlign: 'center',
+    textBaseline: 'middle'
+  }
+}
+```
+
 ## 常见错误与修正
 
 ### 错误：在非 view 容器中直接叠加标注
@@ -175,4 +197,41 @@ chart.options({
     { type: 'lineY', ... },
   ],
 });
+```
+
+### 错误：image 标注未正确设置位置和编码
+```javascript
+// ❌ 错误：使用函数返回固定坐标，未绑定到数据通道
+{
+  type: 'image',
+  data: [{ url: 'https://example.com/image.png' }],
+  encode: {
+    x: () => 0, // 固定在中心
+    y: () => 0  // 固定在中心
+  },
+  style: {
+    img: (d) => d.url,
+    width: 80,
+    height: 80
+  }
+}
+
+// ✅ 正确：使用相对百分比坐标并正确映射 src 通道
+{
+  type: 'image',
+  data: [{
+    src: 'https://example.com/image.png',
+    x: '50%',
+    y: '50%'
+  }],
+  encode: { 
+    x: 'x', 
+    y: 'y', 
+    src: 'src' 
+  },
+  style: {
+    width: 80,
+    height: 80
+  }
+}
 ```

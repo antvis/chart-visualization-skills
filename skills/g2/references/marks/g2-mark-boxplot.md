@@ -114,6 +114,26 @@ chart.options({
 });
 ```
 
+## 小提琴图（Violin Shape）
+
+```javascript
+chart.options({
+  type: 'boxplot',
+  data,
+  encode: {
+    x: 'category',
+    y: 'value',
+    color: 'category',
+    shape: 'violin',  // 设置 shape 为 violin 实现小提琴图效果
+  },
+  style: {
+    opacity: 0.5,
+    strokeOpacity: 0.5,
+    point: false,     // 隐藏离群点
+  },
+});
+```
+
 ## 常见错误与修正
 
 ### 错误：用 box 替代 boxplot 但不提供统计字段
@@ -121,7 +141,7 @@ chart.options({
 // ❌ 错误：box mark 需要手动提供 Q1/median/Q3/min/max 字段
 chart.options({
   type: 'box',
-   rawDetailData,   // 原始明细数据
+  data: rawDetailData,   // 原始明细数据
   encode: { x: 'group', y: 'value' },  // ❌ box 需要 y 为 [min, Q1, median, Q3, max]
 });
 
@@ -130,5 +150,77 @@ chart.options({
   type: 'boxplot',
   data: rawDetailData,
   encode: { x: 'group', y: 'value' },  // ✅ boxplot 自动计算
+});
+```
+
+### 错误：绘制小提琴图时未正确组合 density 和 boxplot
+```javascript
+// ❌ 错误：单独使用 boxplot 并设置 shape: 'violin' 无法实现真正的密度轮廓
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    {
+      type: 'boxplot',
+      encode: {
+        x: 'x',
+        y: 'y',
+        color: 'species',
+        shape: 'violin',
+      },
+      style: {
+        opacity: 0.5,
+        strokeOpacity: 0.5,
+        point: false,
+      },
+    },
+  ],
+});
+
+// ✅ 正确做法：使用 density + boxplot 组合实现小提琴图
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    // 密度估计曲线 (KDE)
+    {
+      type: 'density',
+      data: {
+        transform: [
+          {
+            type: 'kde',
+            field: 'y',
+            groupBy: ['x', 'species'],
+          },
+        ],
+      },
+      encode: {
+        x: 'x',
+        y: 'y',
+        color: 'species',
+        size: 'size',
+        series: 'species',
+      },
+      style: {
+        fillOpacity: 0.7,
+      },
+      tooltip: false,
+    },
+    // 小提琴形状的箱线图（仅显示统计信息）
+    {
+      type: 'boxplot',
+      encode: {
+        x: 'x',
+        y: 'y',
+        color: 'species',
+        shape: 'violin',
+      },
+      style: {
+        opacity: 0.8,
+        strokeOpacity: 0.6,
+        point: false,
+      },
+    },
+  ],
 });
 ```

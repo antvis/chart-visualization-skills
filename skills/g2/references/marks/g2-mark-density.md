@@ -40,7 +40,7 @@ source_url: "https://g2.antv.antgroup.com/manual/core/mark/density"
 **density mark 必须配合 KDE 数据变换使用**：
 
 - KDE 是**数据变换（Data Transform）**，配置在 `data.transform` 中
-- density mark 需要的 encode 通道：`x`、`y`、`size`（均必选）
+- density mark 需要的 encode 通道：`x`、`y`、`size`、`series`（均必选）
 
 **关键配置结构**：
 ```javascript
@@ -55,7 +55,7 @@ chart.options({
     x: 'x',
     y: 'y',       // ← KDE 输出字段（默认 'y'），不是原始 field 名！
     size: 'size', // ← KDE 输出字段（默认 'size'）
-    series: 'species',
+    series: 'species', // 必选：系列分组
   },
 });
 ```
@@ -206,7 +206,7 @@ chart.options({
 // ❌ 错误：field: 'value' 是 KDE 的输入；但 encode.y 要用 KDE 的输出字段
 chart.options({
   type: 'density',
-   {
+  data: {
     type: 'inline',
     value: rawData,
     transform: [{ type: 'kde', field: 'value', groupBy: ['group'] }],
@@ -223,7 +223,7 @@ chart.options({
 // ✅ 正确：encode.y 对应 KDE 输出字段（默认 as[0] = 'y'）
 chart.options({
   type: 'density',
-   {
+  data: {
     type: 'inline',
     value: rawData,
     transform: [{ type: 'kde', field: 'value', groupBy: ['group'] }],
@@ -287,6 +287,75 @@ chart.options({
 });
 ```
 
+### 错误 6：在组合视图中未正确传递数据
+
+在组合视图 (`type: 'view'`) 中，如果 `children` 子图没有显式声明 `data`，会继承父级数据。但若子图需要特定的数据变换（如 KDE），必须显式声明自己的 `data` 配置。
+
+```javascript
+// ❌ 错误：子图未声明 data，无法应用 KDE 变换
+chart.options({
+  type: 'view',
+  data: rawData,
+  children: [{
+    type: 'density',
+    // 缺少 data 配置，transform 无效
+    encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
+  }]
+});
+
+// ✅ 正确：子图显式声明 data 并应用 KDE 变换
+chart.options({
+  type: 'view',
+  data: rawData,
+  children: [{
+    type: 'density',
+    data: {
+      // 显式声明 data，即使与父级相同
+      type: 'inline',
+      value: rawData,
+      transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }],
+    },
+    encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
+  }]
+});
+```
+
+### 错误 7：KDE 分组字段配置不当导致数据不足
+
+当 `groupBy` 字段划分过细，导致某些分组内的数据点过少（如小于等于1个），KDE 无法计算有效的密度分布，该分组不会被渲染。
+
+```javascript
+// ❌ 错误：groupBy 包含过多字段，导致某些分组只有一个数据点
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{ 
+      type: 'kde', 
+      field: 'y', 
+      groupBy: ['x', 'species', 'extraCategory'] // 分组过细，可能造成某些组只有一个点
+    }],
+  },
+  encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
+});
+
+// ✅ 正确：合理选择 groupBy 字段，保证每组有足够的数据点
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: rawData,
+    transform: [{ 
+      type: 'kde', 
+      field: 'y', 
+      groupBy: ['x', 'species'] // 合理分组，保证每组数据充足
+    }],
+  },
+  encode: { x: 'x', y: 'y', size: 'size', series: 'species' },
+});
+```
+
 ## 配置项
 
 ### encode 通道
@@ -305,3 +374,4 @@ chart.options({
 |------------|--------------|------------------|
 | 直角坐标系 | `'cartesian'` | 默认，和密度图等 |
 | 极坐标系   | `'polar'`     | 极坐标小提琴图等 |
+| 对称坐标系 | `'transpose'` | 对称小提琴图等   |

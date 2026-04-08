@@ -87,6 +87,7 @@ function buildRefTools(refs) {
 
   const tools = [
     {
+      type: 'function',
       function: {
         name: 'list_directory',
         description:
@@ -104,6 +105,7 @@ function buildRefTools(refs) {
       }
     },
     {
+      type: 'function',
       function: {
         name: 'read_file',
         description:
@@ -117,6 +119,32 @@ function buildRefTools(refs) {
             }
           },
           required: ['file_path']
+        }
+      }
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'grep_files',
+        description:
+          '在文档或源码目录中递归搜索包含指定关键词的文件及匹配行，用于快速定位相关 API 或配置说明，避免逐层浏览目录。',
+        parameters: {
+          type: 'object',
+          properties: {
+            pattern: {
+              type: 'string',
+              description: '要搜索的关键词或正则表达式（传给 grep -E）'
+            },
+            search_dir: {
+              type: 'string',
+              description: '搜索的根目录绝对路径，必须在允许的 refs 目录内'
+            },
+            file_glob: {
+              type: 'string',
+              description: '文件名 glob 过滤，例如 "*.md" 或 "*.ts"，默认不过滤'
+            }
+          },
+          required: ['pattern', 'search_dir']
         }
       }
     }
@@ -143,6 +171,36 @@ function buildRefTools(refs) {
         const content = fs.readFileSync(file_path, 'utf-8');
         // Cap single file reads to 12 KB to avoid context explosion
         return { file_path, content: content.slice(0, 12000) };
+      } catch (e) {
+        return { error: e.message };
+      }
+    },
+    grep_files({ pattern, search_dir, file_glob }) {
+      try {
+        assertAllowed(search_dir);
+        if (!fs.existsSync(search_dir)) return { error: `Path not found: ${search_dir}` };
+
+        const { execFileSync } = require('child_process');
+        const args = ['-rn', '-E', '--include', file_glob || '*', pattern, search_dir];
+        let raw = '';
+        try {
+          raw = execFileSync('grep', args, { encoding: 'utf-8', maxBuffer: 1024 * 1024 });
+        } catch (e) {
+          // grep exits with code 1 when no matches are found; that's not an error
+          if (e.status === 1) return { pattern, search_dir, matches: [] };
+          return { error: e.message };
+        }
+
+        const lines = raw.split('\n').filter(Boolean);
+        // Cap at 100 lines to avoid flooding context
+        const capped = lines.slice(0, 100);
+        return {
+          pattern,
+          search_dir,
+          total: lines.length,
+          shown: capped.length,
+          matches: capped
+        };
       } catch (e) {
         return { error: e.message };
       }
@@ -279,21 +337,142 @@ ${errorContext}
   console.log(`    Saved: ${skillPath}`);
 }
 
+// ── New skill creator ─────────────────────────────────────────────────────────
+
+/**
+ * Ask the LLM to create one or more new skill files for orphan error cases
+ * (cases that had no matching skill to blame). The LLM may decide to create
+ * one skill per distinct topic or merge related cases into fewer files.
+ *
+ * @param {object[]} orphanCases  - error cases with no resolvable skill
+ * @param {string} provider       - AI provider id
+ * @param {string} model          - model id
+ * @param {string} skillsBaseDir  - absolute path to the skills/<library>/references dir
+ * @param {string} [libraryId]    - library id for reference lookup
+ * @returns {string[]} paths of newly created skill files
+ */
+async function createNewSkills(orphanCases, provider, model, skillsBaseDir, libraryId) {
+  if (orphanCases.length === 0) return [];
+
+  console.log(`\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`);
+
+  const errorContext = orphanCases
+    .map((c, i) => {
+      const renderInfo =
+        c.renderStatus === 'blank'
+          ? '渲染白屏（图表容器为空或画布无内容）'
+          : c.renderStatus === 'error'
+            ? `渲染报错：${c.renderError || '未知错误'}`
+            : c.error || 'unknown';
+
+      return [
+        `#### Case ${i + 1}: ${c.id}`,
+        `Query: ${c.query}`,
+        `Render Result: ${renderInfo}`,
+        `Generated Code:\n\`\`\`javascript\n${c.generatedCode || '(none)'}\n\`\`\``,
+        `Expected Code:\n\`\`\`javascript\n${c.expectedCode || '(none)'}\n\`\`\``
+      ].join('\n');
+    })
+    .join('\n\n');
+
+  const refs = getLibraryRefs(libraryId);
+  const refHint = refs
+    ? [
+        refs.docsDir ? `- 官方文档目录：${refs.docsDir}` : '',
+        refs.srcDir ? `- 源码目录：${refs.srcDir}` : ''
+      ]
+        .filter(Boolean)
+        .join('\n')
+    : '';
+
+  const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
+${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}
+你的任务是为没有现有 skill 覆盖的错误案例创建新的 skill 文档。
+
+输出格式：每个新 skill 文档用以下分隔符包裹：
+<<<SKILL_START:文件名（不含扩展名，如 g2-mark-text）>>>
+（完整的 skill 文档内容，以 --- 开头）
+<<<SKILL_END>>>
+
+如果多个 case 属于同一主题，合并为一个 skill。不要输出任何解释文字，只输出上述格式的内容。`;
+
+  const userMessage = `以下是没有现有 skill 文档覆盖的错误案例：
+
+${errorContext}
+
+请分析这些错误的共同主题，按需查阅参考文档，然后创建必要的新 skill 文档。要求：
+1. YAML Front Matter 必须包含：id、title、description、library、version、category、tags
+2. 文档语言与现有 skill 保持一致（中文说明 + 代码示例）
+3. 必须包含「最小可运行示例」章节，代码可直接运行
+4. 必须包含「常见错误与修正」章节，收录上述 case 的错误模式`;
+
+  const { tools, toolHandlers } = refs
+    ? buildRefTools(refs)
+    : { tools: [], toolHandlers: {} };
+
+  const loop = new AgentLoop({
+    provider,
+    model,
+    maxRounds: 8,
+    tools,
+    toolHandlers
+  });
+
+  const result = await loop.run(systemPrompt, userMessage);
+
+  if (!result?.content) {
+    console.warn(`    LLM returned empty response for new skill creation, skipping.`);
+    return [];
+  }
+
+  // Parse skill blocks from response
+  const created = [];
+  const blockRe = /<<<SKILL_START:([^>]+)>>>([\s\S]*?)<<<SKILL_END>>>/g;
+  let match;
+  while ((match = blockRe.exec(result.content)) !== null) {
+    const filename = match[1].trim();
+    let content = match[2].trim();
+
+    const fmIdx = content.indexOf('---');
+    if (fmIdx > 0) content = content.slice(fmIdx);
+    if (!content.startsWith('---')) {
+      console.warn(`    Skipping "${filename}": no YAML front matter found.`);
+      continue;
+    }
+
+    const filePath = path.join(skillsBaseDir, `${filename}.md`);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, content);
+    console.log(`    Created: ${filePath}`);
+    created.push(filePath);
+  }
+
+  if (created.length === 0) {
+    console.warn(`    No valid skill blocks parsed from LLM response.`);
+  }
+
+  return created;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Run the optimize agent over all skills that had errors.
+ * Run the optimize agent over all skills that had errors,
+ * and optionally create new skills for orphan cases.
  *
  * @param {Map<string,object[]>} skillToErrors - map from skill path to error cases
  * @param {object} opts
- * @param {string} opts.provider     - AI provider id
- * @param {string} opts.model        - model id
- * @param {string} opts.rootDir      - project root (for log path display)
- * @param {boolean} [opts.dryRun]    - if true, write log only, do not modify files
- * @param {string} [opts.logFile]    - path to dry-run log file
- * @param {number} [opts.iteration]  - current iteration number (for log header)
+ * @param {string} opts.provider       - AI provider id
+ * @param {string} opts.model          - model id
+ * @param {string} opts.rootDir        - project root (for log path display)
+ * @param {boolean} [opts.dryRun]      - if true, write log only, do not modify files
+ * @param {string} [opts.logFile]      - path to dry-run log file
+ * @param {number} [opts.iteration]    - current iteration number (for log header)
  * @param {object[]} [opts.allErrorCases] - all error cases (for dry-run log)
- * @param {string} [opts.libraryId]  - library id for reference doc injection (e.g. 'g2')
+ * @param {object[]} [opts.orphanCases]   - error cases with no skill refs (for new skill creation)
+ * @param {string} [opts.libraryId]    - library id for reference doc injection (e.g. 'g2')
+ * @param {string} [opts.skillsRefDir] - absolute path to skills/<library>/references dir
+ * @returns {string[]} paths of newly created skill files (empty in dry-run)
  */
 async function run(
   skillToErrors,
@@ -305,19 +484,34 @@ async function run(
     logFile,
     iteration = 0,
     allErrorCases = [],
-    libraryId
+    orphanCases = [],
+    libraryId,
+    skillsRefDir
   }
 ) {
   if (dryRun) {
     writeErrorLog(logFile, iteration, allErrorCases, skillToErrors, rootDir);
     console.log('\n[dry-run] Skipping skill optimization and index rebuild.');
-    return;
+    return [];
   }
 
-  console.log(`\nOptimizing ${skillToErrors.size} skill(s)...`);
-  for (const [skillPath, cases] of skillToErrors) {
-    await optimizeSkill(skillPath, cases, provider, model, libraryId);
+  const created = [];
+
+  if (skillToErrors.size > 0) {
+    console.log(`\nOptimizing ${skillToErrors.size} skill(s)...`);
+    for (const [skillPath, cases] of skillToErrors) {
+      await optimizeSkill(skillPath, cases, provider, model, libraryId);
+    }
   }
+
+  if (orphanCases.length > 0 && skillsRefDir) {
+    const newFiles = await createNewSkills(orphanCases, provider, model, skillsRefDir, libraryId);
+    created.push(...newFiles);
+  } else if (orphanCases.length > 0) {
+    console.warn(`  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`);
+  }
+
+  return created;
 }
 
-module.exports = { run, writeErrorLog };
+module.exports = { run, writeErrorLog, createNewSkills };

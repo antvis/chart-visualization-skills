@@ -72,7 +72,11 @@ class SkillRetriever {
    */
   retrieve(query, options = {}) {
     const { library = null, topK = 7 } = options;
-    return this._retrieveBM25(query, library, topK);
+    const results = this._retrieveBM25(query, library, topK);
+    if (results.length === 0) {
+      return this._retrieveGrep(query, library, topK);
+    }
+    return results;
   }
 
   /**
@@ -83,6 +87,57 @@ class SkillRetriever {
     const index = this._getBM25Index(library);
     const results = index.search(query, topK);
     return results.map(({ skill }) => skill);
+  }
+
+  /**
+   * Grep full-text fallback retrieval.
+   * Searches skill markdown files for query terms when BM25 returns nothing.
+   * Files are scored by the number of distinct query terms they contain.
+   *
+   * @private
+   */
+  _retrieveGrep(query, library, topK) {
+    const { execFileSync } = require('child_process');
+    const packageRoot = path.resolve(__dirname, '..');
+
+    // Load index to map relative paths back to skill metadata
+    const { skills } = this.loadIndex(library);
+    const pathToSkill = new Map(skills.map((s) => [s.path, s]));
+
+    // Split query into terms, skip very short tokens
+    const terms = query
+      .toLowerCase()
+      .split(/[\s\-_/]+/)
+      .filter((t) => t.length >= 2);
+    if (terms.length === 0) return [];
+
+    // Score files by number of distinct terms matched
+    const fileScores = new Map();
+    for (const term of terms) {
+      let raw = '';
+      try {
+        raw = execFileSync(
+          'grep',
+          ['-ril', '--include=*.md', '-E', term, this.skillsDir],
+          { encoding: 'utf-8', maxBuffer: 2 * 1024 * 1024 }
+        );
+      } catch (e) {
+        if (e.status !== 1) continue; // status 1 = no matches, anything else is unexpected
+      }
+      for (const filePath of raw.split('\n').filter(Boolean)) {
+        fileScores.set(filePath, (fileScores.get(filePath) || 0) + 1);
+      }
+    }
+
+    // Sort by score descending, map to skill metadata
+    return [...fileScores.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, topK)
+      .map(([filePath]) => {
+        const rel = path.relative(packageRoot, filePath);
+        return pathToSkill.get(rel);
+      })
+      .filter(Boolean);
   }
 
   /**

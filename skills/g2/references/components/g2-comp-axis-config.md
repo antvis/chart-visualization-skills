@@ -491,6 +491,7 @@ axis: {
     labelFormatter: (v) => `${v / 1000}K`,  // ✅ 文字格式化在 axis
   },
 }
+```
 
 ### 错误 6：labelFormatter 用 d3-format 字符串拼接单位
 
@@ -515,4 +516,47 @@ axis: {
   x: { labelFormatter: ',.0f' },  // ✅ 千分位整数
   z: { labelFormatter: '.1%' },   // ✅ 百分比
 }
+```
+
+### 错误 7：labelFormatter 回调函数签名错误
+
+`labelFormatter` 的回调函数签名应为 `(datum, index, array) => string`，其中：
+
+- `datum`: 当前刻度值（通常是数值或字符串）
+- `index`: 当前刻度索引
+- `array`: 所有刻度值组成的数组
+
+```javascript
+// ❌ 错误：参数顺序错误或使用了不存在的参数
+axis: {
+  x: {
+    labelFormatter: (task, item) => {  // ❌ item 参数不存在
+      return `${item.data.stage}-${task}`;
+    }
+  }
+}
+
+// ✅ 正确：使用正确的参数签名
+axis: {
+  x: {
+    labelFormatter: (datum, index, array) => {
+      // 注意：此时 datum 是原始数据中的字段值，不是整个数据项
+      return `${datum}`;  // 返回字符串即可
+    }
+  }
+}
+
+// ✅ 更推荐的做法：在 encode 中预处理复合标签
+chart.options({
+  encode: {
+    x: (d) => `${d.stage} - ${d.task}`,  // 在 encode 中构造复合标签
+    y: 'start',
+    y1: 'end'
+  },
+  axis: {
+    x: {
+      labelTransform: 'rotate(30)'  // 如需旋转标签防止重叠
+    }
+  }
+});
 ```

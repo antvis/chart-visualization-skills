@@ -123,6 +123,34 @@ chart.options({
 });
 ```
 
+## 密度图中的 KDE 分组说明
+
+在使用 `density` 图表类型配合 `kde` 变换时，需要注意 `kde` 变换本身不依赖 `groupX`，而是通过 `groupBy` 参数指定分组字段。例如：
+
+```javascript
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: irisData,
+    transform: [{
+      type: 'kde',
+      field: 'y',
+      groupBy: ['x', 'species'],  // 按 x 和 species 字段分组进行 KDE 计算
+    }],
+  },
+  encode: {
+    x: 'x',
+    y: 'y',
+    color: 'species',
+    size: 'size',
+    series: 'species',
+  },
+});
+```
+
+在这种情况下，`kde` 变换会自动完成分组和密度计算，无需额外添加 `groupX`。
+
 ## 常见错误与修正
 
 ### 错误 1：encode.y 写成实际字段名——groupX 应用后 y 通道被覆盖
@@ -159,5 +187,35 @@ chart.options({
 chart.options({
   encode: { x: 'age', y: '★' },
   transform: [{ type: 'binX', y: 'count', thresholds: 10 }],  // ✅ 分 10 个桶
+});
+```
+
+### 错误 3：在 density 图中错误使用 groupX 与 kde 结合
+```javascript
+// ❌ 错误示例：在 density 图中混用 groupX 和 kde
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: irisData,
+    transform: [
+      { type: 'kde', field: 'y', groupBy: ['x'] },
+      { type: 'groupX', y: 'mean' }  // ❌ kde 已经完成了分组和聚合，不需要再用 groupX
+    ]
+  },
+  encode: { x: 'x', y: 'y', color: 'x' }
+});
+
+// ✅ 正确做法：只使用 kde 并通过 groupBy 指定分组字段
+chart.options({
+  type: 'density',
+  data: {
+    type: 'inline',
+    value: irisData,
+    transform: [
+      { type: 'kde', field: 'y', groupBy: ['x'] }  // ✅ 仅使用 kde 变换
+    ]
+  },
+  encode: { x: 'x', y: 'y', color: 'x', size: 'size' }
 });
 ```

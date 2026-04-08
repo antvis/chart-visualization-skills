@@ -55,9 +55,7 @@ chart.options({
     { genre: 'Other',    sold: 150 },
   ],
   encode: { x: 'genre', y: 'sold' },
-  interaction: [
-    { type: 'elementHighlight' },   // 悬停高亮当前柱子
-  ],
+  interaction: { elementHighlight: true },   // 悬停高亮当前柱子
 });
 
 chart.render();
@@ -70,13 +68,12 @@ chart.options({
   type: 'interval',
   data,
   encode: { x: 'genre', y: 'sold', color: 'genre' },
-  interaction: [
-    {
-      type: 'elementHighlight',
+  interaction: {
+    elementHighlight: {
       background: true,              // 是否显示高亮背景
       backgroundFill: '#f0f0f0',    // 背景填充色
     },
-  ],
+  },
 });
 ```
 
@@ -87,10 +84,9 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'month', y: 'value', color: 'series' },
-  interaction: [
-    { type: 'elementHighlight' },        // 悬停高亮当前折线
-    { type: 'legendHighlight' },         // 点击图例高亮对应系列
-  ],
+  interaction: {
+    elementHighlight: true,        // 悬停高亮当前折线
+  },
 });
 ```
 
@@ -103,9 +99,9 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'dodgeX' }],
-  interaction: [
-    { type: 'elementHighlightByColor' },   // 高亮同系列所有柱子
-  ],
+  interaction: {
+    elementHighlightByColor: true,   // 高亮同系列所有柱子
+  },
 });
 ```
 
@@ -118,9 +114,9 @@ chart.options({
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
-  interaction: [
-    { type: 'elementHighlightByX' },    // 高亮同组（同 x 位置）的所有元素
-  ],
+  interaction: {
+    elementHighlightByX: true,    // 高亮同组（同 x 位置）的所有元素
+  },
 });
 ```
 
@@ -132,10 +128,10 @@ chart.options({
   data,
   encode: { x: 'month', y: 'revenue', color: 'product' },
   transform: [{ type: 'dodgeX' }],
-  interaction: [
-    { type: 'elementHighlight' },    // 元素高亮
-    { type: 'tooltip' },             // Tooltip 提示
-  ],
+  interaction: {
+    elementHighlight: true,    // 元素高亮
+    tooltip: true,             // Tooltip 提示
+  },
   tooltip: {
     title: 'month',
     items: [
@@ -162,14 +158,14 @@ chart.on('element:unhighlight', () => {
 
 ### 错误：interaction 写成对象
 ```javascript
-// ❌ 错误：interaction 必须是数组
+// ❌ 错误：interaction 必须是数组（旧版写法）
 chart.options({
   interaction: { type: 'elementHighlight' },
 });
 
-// ✅ 正确
+// ✅ 正确（新版支持对象形式）
 chart.options({
-  interaction: [{ type: 'elementHighlight' }],
+  interaction: { elementHighlight: true },
 });
 ```
 
@@ -177,10 +173,10 @@ chart.options({
 ```javascript
 // ❌ 同时使用会导致重复响应
 chart.options({
-  interaction: [
-    { type: 'elementHighlight' },
-    { type: 'elementHighlightByColor' },
-  ],
+  interaction: {
+    elementHighlight: true,
+    elementHighlightByColor: true,
+  },
 });
 
 // ✅ 根据需求选择一种
@@ -188,3 +184,52 @@ chart.options({
 // - elementHighlightByColor: 高亮同颜色（系列）的所有元素
 // - elementHighlightByX: 高亮同 x 位置的所有元素
 ```
+
+### 错误：在 view 的 children 中嵌套 view 导致白屏
+```javascript
+// ❌ 错误：在 children 中嵌套 view 会导致渲染失败
+chart.options({
+  type: 'view',
+  children: [
+    {
+      type: 'view', // 不允许嵌套 view
+      children: [...]
+    }
+  ]
+});
+
+// ✅ 正确：使用顶层容器或单一 view 结构
+chart.options({
+  type: 'view',
+  children: [
+    { type: 'interval', ... },
+    { type: 'image', ... }
+  ]
+});
+```
+
+### 错误：未正确设置 image 标记导致无法显示
+```javascript
+// ❌ 错误：缺少必要的 encode 和 style 配置
+{
+  type: 'image',
+  data: [{ url: '...' }],
+  encode: { x: () => 0, y: () => 0 } // 不适用于居中显示
+}
+
+// ✅ 正确：使用 style 设置固定位置和尺寸
+{
+  type: 'image',
+  style: {
+    x: '50%', // 居中
+    y: '50%',
+    width: 80,
+    height: 80
+  },
+  encode: {
+    src: 'url'
+  }
+}
+```
+
+</skill>

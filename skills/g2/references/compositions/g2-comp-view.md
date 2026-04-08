@@ -131,7 +131,7 @@ chart.options({
     },
     {
       type: 'line',
-       [{ x: 0, y: 50 }, { x: 1, y: 150 }],
+      data: [{ x: 0, y: 50 }, { x: 1, y: 150 }],
       encode: { x: 'x', y: 'y' },
       scale: { x: { type: 'identity' }, y: { domain: [0, 200] } },
     },
@@ -234,6 +234,76 @@ chart.options({
   type: 'view',
   children: [
     { type: 'line', data, encode: { x: 'a', y: 'b' } },
+  ],
+});
+```
+
+### 错误 4：density 和 boxplot 使用不当导致白屏
+
+```javascript
+// ❌ 错误：density 和 boxplot 的数据格式不正确
+// density 需要经过 KDE 转换后的数据，包含 y 和 size 字段
+// boxplot 需要原始数据进行内部统计计算
+chart.options({
+  type: 'view',
+  data: rawData,
+  children: [
+    {
+      type: 'density',
+      encode: { x: 'category', y: 'value', size: 'size' },
+    },
+    {
+      type: 'boxplot',
+      encode: { x: 'category', y: 'value' },
+    },
+  ],
+});
+
+// ✅ 正确：使用 transform 进行 KDE 转换，确保数据格式正确
+chart.options({
+  type: 'view',
+  data: {
+    type: 'inline',
+    value: rawData,
+  },
+  children: [
+    {
+      type: 'density',
+      data: {
+        transform: [
+          {
+            type: 'kde',
+            field: 'value',
+            groupBy: ['category'],
+            size: 50, // 控制密度曲线的精细程度
+          },
+        ],
+      },
+      encode: {
+        x: 'category',
+        y: 'value',
+        size: 'size',
+        series: 'category',
+      },
+      style: {
+        fillOpacity: 0.7,
+      },
+      tooltip: false,
+    },
+    {
+      type: 'boxplot',
+      encode: {
+        x: 'category',
+        y: 'value',
+        series: 'category',
+        shape: 'violin', // 可选，用于小提琴图
+      },
+      style: {
+        opacity: 0.8,
+        strokeOpacity: 0.6,
+        point: false, // 可选，隐藏异常点
+      },
+    },
   ],
 });
 ```

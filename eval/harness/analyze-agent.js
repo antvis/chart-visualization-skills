@@ -62,10 +62,13 @@ function resolveSkillPath(ref, rootDir, skillsDir) {
  * @param {object} opts
  * @param {string} opts.rootDir  - project root directory
  * @param {string} opts.skillsDir - absolute path to skills directory
- * @returns {Map<string, object[]>} map from skill file path to error cases
+ * @returns {{ skillToErrors: Map<string, object[]>, orphanCases: object[] }}
+ *   skillToErrors: map from skill file path to error cases
+ *   orphanCases: error cases with no resolvable skill refs (candidates for new skill creation)
  */
 function run(errorCases, { rootDir, skillsDir }) {
   const skillToErrors = new Map();
+  const orphanCases = [];
 
   for (const errorCase of errorCases) {
     const refs = [
@@ -74,10 +77,12 @@ function run(errorCases, { rootDir, skillsDir }) {
     ];
 
     if (refs.length === 0) {
-      console.log(`  No skill refs for: ${errorCase.id} — skipping optimization`);
+      console.log(`  No skill refs for: ${errorCase.id} — queued for new skill creation`);
+      orphanCases.push(errorCase);
       continue;
     }
 
+    let resolved = false;
     for (const ref of refs) {
       const skillPath = resolveSkillPath(ref, rootDir, skillsDir);
       if (!skillPath) {
@@ -86,10 +91,16 @@ function run(errorCases, { rootDir, skillsDir }) {
       }
       if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
       skillToErrors.get(skillPath).push(errorCase);
+      resolved = true;
+    }
+
+    if (!resolved) {
+      console.log(`  All refs unresolved for: ${errorCase.id} — queued for new skill creation`);
+      orphanCases.push(errorCase);
     }
   }
 
-  return skillToErrors;
+  return { skillToErrors, orphanCases };
 }
 
 module.exports = { run, resolveSkillPath, findSkillByBasename };

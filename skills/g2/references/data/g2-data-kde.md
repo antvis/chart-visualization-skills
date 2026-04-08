@@ -228,3 +228,108 @@ encode: { y: 'y', size: 'size' },  // ✅ 使用默认输出字段
 },
 encode: { y: 'density', size: 'density_size' },  // ✅ 匹配自定义字段
 ```
+
+### 错误 5：数据量不足导致 KDE 结果为空或无效
+
+KDE 需要足够的数据点才能生成有效的密度估计。如果某个分组内的数据点太少（如小于等于 1 个），KDE 无法计算出有效的结果，可能导致该分组不显示。
+
+```javascript
+// ❌ 问题：某些分组数据量不足
+const data = [
+  { species: 'setosa', x: 'SepalLength', y: 5.1 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.0 },
+  { species: 'virginica', x: 'SepalLength' }, // 缺失 y 值
+];
+
+// ✅ 解决方案：确保每个分组有足够的有效数据
+const validData = [
+  { species: 'setosa', x: 'SepalLength', y: 5.1 },
+  { species: 'setosa', x: 'SepalLength', y: 5.0 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.0 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.2 },
+  { species: 'virginica', x: 'SepalLength', y: 6.5 },
+  { species: 'virginica', x: 'SepalLength', y: 6.3 },
+];
+```
+
+### 错误 6：未正确设置图表类型或编码导致渲染失败
+
+在组合视图中使用 KDE 时，必须确保每个子图表都正确设置了类型和编码，特别是 `series` 映射。
+
+```javascript
+// ❌ 错误：缺少必要的 encode 字段或类型设置不当
+children: [
+  {
+    type: 'density',
+    data: { transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }] },
+    encode: { x: 'x', y: 'y', color: 'species', size: 'size' },
+  },
+  {
+    type: 'boxplot',
+    encode: { x: 'x', y: 'y', color: 'species', shape: 'violin' }, // 缺少 series 映射
+  }
+]
+
+// ✅ 正确：确保所有必要字段都被正确映射
+children: [
+  {
+    type: 'density',
+    data: { transform: [{ type: 'kde', field: 'y', groupBy: ['x', 'species'] }] },
+    encode: { x: 'x', y: 'y', series: 'species', color: 'species', size: 'size' },
+  },
+  {
+    type: 'boxplot',
+    encode: { x: 'x', y: 'y', series: 'species', color: 'species', shape: 'violin' },
+  }
+]
+```
+
+### 错误 7：KDE 分组后数据点过少导致渲染空白
+
+KDE 需要每个分组有足够的数据点才能生成有效的密度估计。如果分组后的数据点过少（如每组少于 2 个有效值），KDE 无法计算出有效的结果，可能导致整个图表渲染为空白。
+
+```javascript
+// ❌ 问题：分组后每组数据点太少
+const insufficientData = [
+  { species: 'setosa', x: 'SepalLength', y: 5.1 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.0 },
+  { species: 'virginica', x: 'SepalLength', y: 6.5 },
+];
+
+// ✅ 解决方案：确保每个分组有足够多的有效数据点
+const sufficientData = [
+  { species: 'setosa', x: 'SepalLength', y: 5.1 },
+  { species: 'setosa', x: 'SepalLength', y: 5.0 },
+  { species: 'setosa', x: 'SepalLength', y: 5.2 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.0 },
+  { species: 'versicolor', x: 'SepalLength', y: 6.2 },
+  { species: 'versicolor', x: 'SepalLength', y: 5.9 },
+  { species: 'virginica', x: 'SepalLength', y: 6.5 },
+  { species: 'virginica', x: 'SepalLength', y: 6.3 },
+  { species: 'virginica', x: 'SepalLength', y: 6.7 },
+];
+```
+
+### 错误 8：KDE 与 density 图表类型配合使用时未正确设置 encode
+
+使用 KDE 作为数据变换时，必须确保 `encode` 中正确引用了 KDE 生成的字段（默认为 `y` 和 `size`），否则图表可能无法正确渲染。
+
+```javascript
+// ❌ 错误：未正确引用 KDE 生成的字段
+chart.options({
+  type: 'density',
+  data: {
+    transform: [{ type: 'kde', field: 'y', groupBy: ['x'] }]
+  },
+  encode: { x: 'x', y: 'originalY', size: 'originalSize' } // 错误字段名
+});
+
+// ✅ 正确：引用 KDE 生成的字段
+chart.options({
+  type: 'density',
+  data: {
+    transform: [{ type: 'kde', field: 'y', groupBy: ['x'] }]
+  },
+  encode: { x: 'x', y: 'y', size: 'size' } // 正确字段名
+});
+```

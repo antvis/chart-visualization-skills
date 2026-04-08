@@ -103,6 +103,39 @@ chart.options({
 });
 ```
 
+## 横向区间图（甘特图风格）
+
+```javascript
+chart.options({
+  type: 'interval',
+  autoFit: true,
+  data: [
+    { stage: 'Phase 1', task: '原型', start: 1, end: 3 },
+    { stage: 'Phase 1', task: '验证', start: 3, end: 5 },
+    { stage: 'Phase 2', task: '开发', start: 4, end: 10 },
+    { stage: 'Phase 2', task: '单元测试', start: 8, end: 11 },
+    { stage: 'Phase 3', task: '集成', start: 10, end: 13 },
+    { stage: 'Phase 3', task: '压测', start: 12, end: 15 }
+  ],
+  encode: {
+    x: (d) => `${d.stage} - ${d.task}`,  // 组合标签字段
+    y: 'start',                          // 起始时间映射到 y 轴
+    y1: 'end',                           // 结束时间映射到 y1 通道
+    color: 'stage'                       // 阶段映射到颜色
+  },
+  coordinate: { transform: [{ type: 'transpose' }] },  // 转置坐标系
+  axis: {
+    x: {
+      title: '阶段与任务',
+      labelTransform: 'rotate(30)'       // 标签倾斜防止重叠
+    },
+    y: { title: '时间（周）' }            // 时间轴标题
+  }
+});
+
+chart.render();
+```
+
 ## 常见错误与修正
 
 ### 错误：转置后轴标题配置未调整
@@ -123,5 +156,40 @@ chart.options({
     x: { title: 'GDP（万亿）' },   // ✅ 数值轴
     y: { title: null },             // ✅ 分类轴（分类名已经在左侧，无需标题）
   },
+});
+```
+
+### 错误：横向区间图标签处理不当
+```javascript
+// ❌ 错误示例：使用 labelFormatter 处理组合标签易出错
+chart.options({
+  encode: {
+    x: 'task',
+    y: 'start',
+    y1: 'end'
+  },
+  axis: {
+    x: {
+      labelFormatter: (task, item) => {
+        const datum = item.data;
+        return `${datum.stage}\n${task}`;
+      }
+    }
+  }
+});
+
+// ✅ 正确做法：在数据预处理阶段构造组合字段
+chart.options({
+  encode: {
+    x: (d) => `${d.stage} - ${d.task}`,  // 使用函数构造组合标签
+    y: 'start',
+    y1: 'end'
+  },
+  axis: {
+    x: {
+      title: '阶段与任务',
+      labelTransform: 'rotate(30)'        // 适当旋转标签避免重叠
+    }
+  }
 });
 ```

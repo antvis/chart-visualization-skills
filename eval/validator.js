@@ -133,12 +133,12 @@ async function main() {
     consecutivePasses = 0;
 
     // ── Step 3: Attribute errors to skill files ────────────────────────────────
-    const skillToErrors = analyzeAgent.run(errorCases, {
+    const { skillToErrors, orphanCases } = analyzeAgent.run(errorCases, {
       rootDir: ROOT_DIR,
       skillsDir: SKILLS_DIR
     });
 
-    if (skillToErrors.size === 0) {
+    if (skillToErrors.size === 0 && orphanCases.length === 0) {
       console.log(
         '\nNo skills to optimize. Counting as pass to avoid infinite loop.'
       );
@@ -147,6 +147,7 @@ async function main() {
     }
 
     // ── Step 4: Optimize skills (or log in dry-run) ───────────────────────────
+    const skillsRefDir = path.join(SKILLS_DIR, libConfig.skillsPath);
     await optimizeAgent.run(skillToErrors, {
       provider: PROVIDER,
       model: MODEL,
@@ -155,7 +156,9 @@ async function main() {
       logFile: LOG_FILE,
       iteration,
       allErrorCases: errorCases,
-      libraryId: LIBRARY_ID
+      orphanCases,
+      libraryId: LIBRARY_ID,
+      skillsRefDir
     });
 
     if (DRY_RUN) {
@@ -163,8 +166,8 @@ async function main() {
       break;
     }
 
-    // ── Step 5: Rebuild index ─────────────────────────────────────────────────
-    indexAgent.run({ buildCmd: libConfig.buildCmd, cwd: ROOT_DIR });
+    // ── Step 5: Rebuild index via tool calls ──────────────────────────────────
+    await indexAgent.run({ libraryId: LIBRARY_ID, rootDir: ROOT_DIR });
   }
 
   console.log('\n' + '='.repeat(60));
@@ -177,4 +180,7 @@ main()
     console.error('Fatal:', err.message);
     process.exit(1);
   })
-  .finally(() => closeBrowser());
+  .finally(async () => {
+    await closeBrowser();
+    process.exit(0);
+  });

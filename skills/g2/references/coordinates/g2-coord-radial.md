@@ -141,3 +141,74 @@ chart.options({
   coordinate: { type: 'radial' },
 });
 ```
+
+### 错误：中心图片未正确显示
+```javascript
+// ❌ 错误：使用固定坐标 (0,0) 显示图片无法保证其位于中心
+chart.options({
+  type: 'image',
+  data: [{ url: 'https://example.com/logo.png' }],
+  encode: {
+    x: () => 0,
+    y: () => 0
+  },
+  style: {
+    img: (d) => d.url,
+    width: 80,
+    height: 80
+  }
+});
+
+// ✅ 正确：使用 style.x 和 style.y 设置相对位置，确保图片居中
+chart.options({
+  type: 'image',
+  data: [{ src: 'https://example.com/logo.png' }],
+  style: {
+    x: '50%',      // 相对于容器宽度的 50%
+    y: '50%',      // 相对于容器高度的 50%
+    width: 80,
+    height: 80
+  }
+});
+```
+
+### 错误：多个视图叠加导致坐标系冲突
+```javascript
+// ❌ 错误：在 view 中重复定义 coordinate 导致渲染异常
+chart.options({
+  type: 'view',
+  children: [
+    {
+      type: 'interval',
+      coordinate: { type: 'radial' }  // 子视图中定义坐标系可能导致冲突
+    },
+    {
+      type: 'image',
+      coordinate: { type: 'radial' }  // 图片标记不需要坐标系
+    }
+  ]
+});
+
+// ✅ 正确：在顶层 view 定义 coordinate，子元素继承即可
+chart.options({
+  type: 'view',
+  coordinate: { type: 'radial', innerRadius: 0.3 },
+  children: [
+    {
+      type: 'interval',
+      data,
+      encode: { x: 'type', y: 'value' }
+    },
+    {
+      type: 'image',
+      data: [{ src: 'https://example.com/logo.png' }],
+      style: {
+        x: '50%',
+        y: '50%',
+        width: 80,
+        height: 80
+      }
+    }
+  ]
+});
+```
