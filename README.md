@@ -89,7 +89,7 @@ chart-visualization-cli retrieve "bar chart" --library g2 --topk 10
 chart-visualization-cli list --library g2 --category core
 ```
 
-** Usage for the command**:
+**Usage for the command**:
 
 ```
 Usage: chart-visualization-cli [options] [command]
