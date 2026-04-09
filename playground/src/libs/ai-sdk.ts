@@ -86,7 +86,12 @@ async function callOpenAICompat({
   timeout?: number;
   debug?: boolean;
 }): Promise<AIResponse> {
-  const client = createOpenAIClient(config!);
+  const client = createOpenAIClient({
+    apiKey: config!.apiKey!,
+    endpoint: config!.endpoint,
+    path: config!.path,
+    extraHeaders: config!.extraHeaders
+  });
 
   const params: OpenAI.Chat.ChatCompletionCreateParams = {
     model,
@@ -153,7 +158,10 @@ async function callAnthropic({
   timeout?: number;
   debug?: boolean;
 }): Promise<AIResponse> {
-  const client = createAnthropicClient(config!);
+  const client = createAnthropicClient({
+    apiKey: config!.apiKey!,
+    endpoint: config!.endpoint
+  });
 
   const systemMessage = messages.find((m) => m.role === 'system');
   const userMessages = messages
@@ -342,11 +350,10 @@ export class AgentLoop {
     (args: unknown) => unknown | Promise<unknown>
   >;
   private debug: boolean;
-  private messages: Array<{
-    role: string;
-    content: string;
-    tool_calls?: unknown[];
-  }> = [];
+  private messages: Array<
+    | { role: string; content: string; tool_calls?: unknown[] }
+    | { role: 'tool'; tool_call_id: string; content: string }
+  > = [];
   public toolCallsLog: Array<{
     round: number;
     tool: string;

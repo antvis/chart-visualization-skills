@@ -43,7 +43,8 @@ function resolveProviderModel(
   const model =
     reqModel ||
     process.env.AI_MODEL ||
-    PROVIDERS[provider]?.defaultModel ||
+    PROVIDERS[provider]?.models?.find((m) => m.isDefault)?.id ||
+    PROVIDERS[provider]?.models?.[0]?.id ||
     'qwen3-coder-480b-a35b-instruct';
   return { provider, model };
 }
@@ -111,8 +112,8 @@ async function generateWithToolCall(
     maxRounds: 6,
     debug: false,
     toolHandlers: {
-      list_references: toolListReferences,
-      read_skills: toolReadSkills
+      list_references: toolListReferences as (args: unknown) => unknown,
+      read_skills: toolReadSkills as (args: unknown) => unknown
     }
   });
 
@@ -120,7 +121,7 @@ async function generateWithToolCall(
   const code = extractCodeFromMarkdown(result.content);
   const loadedSkillPaths = result.toolCallsLog
     .filter((l) => l.tool === 'read_skills')
-    .flatMap((l) => l.args.paths || []);
+    .flatMap((l) => (l.args as { paths?: string[] }).paths || []);
 
   console.log(
     `   Tool calls: ${result.toolCallsLog.length}, loaded: ${loadedSkillPaths.map((p) => path.basename(p, '.md')).join(', ')}`

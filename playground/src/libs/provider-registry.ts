@@ -190,9 +190,17 @@ export function hasApiKey(providerId: string): boolean {
   );
 }
 
+export function listProviders() {
+  return Object.values(PROVIDERS).map((p) => ({
+    ...p,
+    hasApiKey: hasApiKey(p.id)
+  }));
+}
+
 export default {
   PROVIDERS,
   getRuntimeConfig,
   hasProvider,
-  hasApiKey
+  hasApiKey,
+  listProviders
 };
