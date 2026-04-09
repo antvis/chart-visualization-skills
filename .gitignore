@@ -58,3 +58,6 @@ harness/result/
 
 # lock files
 pnpm-lock.yaml
+
+# skills index
+src/index/
