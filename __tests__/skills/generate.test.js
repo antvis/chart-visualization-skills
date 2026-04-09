@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../skills/chart-visualization/scripts/generate.js';
+import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../../skills/chart-visualization/scripts/generate.js';
 
 describe('generate.js - Chart Visualization Script', () => {
   describe('CHART_TYPE_MAP', () => {

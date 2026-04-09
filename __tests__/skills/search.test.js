@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { searchIcons } from '../skills/icon-retrieval/scripts/search.js';
+import { searchIcons } from '../../skills/icon-retrieval/scripts/search.js';
 
 describe('search.js - Icon Retrieval Script', () => {
   describe('searchIcons - Real API Tests', () => {
