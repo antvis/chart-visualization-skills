@@ -15,7 +15,7 @@ const {
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt
-} = require('../../utils/skill-tools');
+} = require('../utils/skill-tools');
 const ParallelExecutor = require('./parallel-executor');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');

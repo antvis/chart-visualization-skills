@@ -6,22 +6,11 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "node bin/skills-antv.js build",
-    "validate": "node bin/skills-antv.js validate",
-    "retrieve": "node bin/skills-antv.js retrieve",
-    "web": "node web/server.js",
-    "web:dev": "nodemon --watch web --watch utils --watch skills --ext js,md web/server.js",
-    "eval:llm": "node eval/cli.js eval",
-    "eval:llm:bm25": "node eval/cli.js eval --retrieval=bm25",
-    "eval:llm:tool-call": "node eval/cli.js eval --retrieval=tool-call",
-    "eval:llm:context7": "node eval/cli.js eval --retrieval=context7",
-    "eval:server": "node eval/server.js",
-    "eval:server:dev": "node eval/server.js --dev",
-    "eval:loop": "node eval/auto-loop.js --dry-run",
-    "eval:loop:bm25": "node eval/auto-loop.js --dry-run --retrieval=bm25",
-    "eval:cli": "node eval/cli.js",
-    "eval:compare": "node eval/cli.js compare",
-    "test:antv-skills": "node test/antv-skills.test.js"
+    "build": "node cli/skills-antv.js build",
+    "web": "nodemon --watch web --watch utils --watch skills --ext js,md web/server.js",
+    "eval:server": "nodemon --watch eval/result --ext js eval/result/server.js",
+    "harness": "node harness/controller.js --library=g2 --passes=3 --max-iterations=20 --concurrency=10",
+    "eval:cli": "node eval/eval-cli/index.js --model=qwen3-coder-480b-a35b-instruct --dataset=g2-dataset-174.json --sample=10 --concurrency=5 --retrieval=tool-call"
   },
   "keywords": [],
   "dependencies": {

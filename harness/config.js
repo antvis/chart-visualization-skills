@@ -17,10 +17,9 @@ const LIBRARY_REGISTRY = {
     windowGlobal: 'G2',
     entry: 'Chart',
     skillsPath: 'g2/references', // relative to skills/
-    systemPromptFile: 'g2-system-prompt.md',
     buildCmd: 'node bin/skills-antv.js build',
     detectPattern: '@antv/g2', // pattern to detect library in generated code
-    defaultDataset: 'dataset-200.json',
+    defaultDataset: 'g2-dataset-174.json ',
     // Local reference paths for optimize-agent context injection
     refs: {
       srcDir: '/Users/liufu/publicWorkspace/G2/src',
@@ -35,10 +34,9 @@ const LIBRARY_REGISTRY = {
     windowGlobal: 'G6',
     entry: 'Graph',
     skillsPath: 'g6/references',
-    systemPromptFile: 'g6-system-prompt.md',
     buildCmd: 'node bin/skills-antv.js build',
     detectPattern: '@antv/g6',
-    defaultDataset: 'dataset-200.json'
+    defaultDataset: 'g2-dataset-174.json '
   }
 };
 

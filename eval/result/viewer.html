@@ -1097,6 +1097,8 @@
           <div class="search-filters">
             <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">All</button>
             <button class="filter-btn" data-filter="bad" onclick="setFilter('bad')">Bad Cases</button>
+            <button class="filter-btn" data-filter="blank" onclick="setFilter('blank')">Blank Screen</button>
+            <button class="filter-btn" data-filter="render_error" onclick="setFilter('render_error')">Render Errors</button>
             <button class="filter-btn" data-filter="g2" onclick="setFilter('g2')">G2</button>
             <button class="filter-btn" data-filter="g6" onclick="setFilter('g6')">G6</button>
             <span class="filter-count" id="filterCount"></span>
@@ -1578,9 +1580,14 @@
           library.includes(searchQuery);
         
         // Check filter match
+        const renderState = renderResults[result.id || `test-${index}`];
         let matchesFilter = true;
         if (currentFilter === 'bad') {
           matchesFilter = isBadCase;
+        } else if (currentFilter === 'blank') {
+          matchesFilter = renderState === 'blank';
+        } else if (currentFilter === 'render_error') {
+          matchesFilter = renderState === 'error';
         } else if (currentFilter === 'g2') {
           matchesFilter = library === 'g2';
         } else if (currentFilter === 'g6') {

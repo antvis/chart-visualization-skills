@@ -8,13 +8,13 @@
  * Stops after MAX_PASSES consecutive clean evaluations.
  *
  * Usage:
- *   node eval/validator.js
- *   node eval/validator.js --library=g2 --sample=10 --retrieval=bm25
- *   node eval/validator.js --passes=3 --max-iterations=20 --concurrency=10
- *   node eval/validator.js --dry-run                      # log errors only, skip optimization
- *   node eval/validator.js --dry-run --log=my.log         # custom log file path
- *   node eval/validator.js --skip-score                   # skip VL visual scoring
- *   node eval/validator.js --score-threshold=0.7          # treat visualScore < 0.7 as failure
+ *   node harness/controller.js
+ *   node harness/controller.js --library=g2 --sample=10 --retrieval=bm25
+ *   node harness/controller.js --passes=3 --max-iterations=20 --concurrency=10
+ *   node harness/controller.js --dry-run                      # log errors only, skip optimization
+ *   node harness/controller.js --dry-run --log=my.log         # custom log file path
+ *   node harness/controller.js --skip-score                   # skip VL visual scoring
+ *   node harness/controller.js --score-threshold=0.7          # treat visualScore < 0.7 as failure
  *
  * Agent responsibilities:
  *   eval-agent     — invoke CLI eval, return result file path
@@ -27,16 +27,16 @@
 require('dotenv').config({ override: true });
 
 const path = require('path');
-const { parseArgs } = require('./utils/eval-utils');
-const { detectProviderFromModel } = require('./utils/ai-sdk');
-const { getLibraryConfig } = require('./harness/config');
-const evalAgent = require('./harness/eval-agent');
-const renderAgent = require('./harness/render-agent');
-const analyzeAgent = require('./harness/analyze-agent');
-const optimizeAgent = require('./harness/optimize-agent');
-const indexAgent = require('./harness/index-agent');
-const { closeBrowser } = require('./utils/render-tester');
-const worktreeManager = require('./utils/worktree');
+const { parseArgs } = require('../eval/utils/eval-utils');
+const { detectProviderFromModel } = require('../eval/utils/ai-sdk');
+const { getLibraryConfig } = require('./config');
+const evalAgent = require('./eval-agent');
+const renderAgent = require('./render-agent');
+const analyzeAgent = require('./analyze-agent');
+const optimizeAgent = require('./optimize-agent');
+const indexAgent = require('./index-agent');
+const { closeBrowser } = require('../eval/utils/render-tester');
+const worktreeManager = require('../eval/utils/worktree');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');

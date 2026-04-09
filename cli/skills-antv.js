@@ -18,9 +18,9 @@
 require('dotenv').config({ override: true });
 
 const fs = require('fs');
-const { SkillBuilder } = require('../utils/builder');
-const { SkillRetriever } = require('../utils/retriever');
-const { SkillValidator } = require('../utils/validator');
+const { SkillBuilder } = require('./utils/builder');
+const { SkillRetriever } = require('./utils/retriever');
+const { SkillValidator } = require('./utils/validator');
 
 const pkg = require('../package.json');
 

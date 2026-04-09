@@ -9,7 +9,7 @@
  */
 
 const fs = require('fs');
-const { testAllResults } = require('../utils/render-tester');
+const { testAllResults } = require('../eval/utils/render-tester');
 
 /**
  * Run render tests on all results in a result file.
@@ -21,7 +21,10 @@ const { testAllResults } = require('../utils/render-tester');
  * @param {number}  [opts.scoreThreshold=0.6] - visualScore below this is treated as a quality failure
  * @returns {object[]} array of failed/low-quality result objects
  */
-async function run(resultPath, { concurrency = 5, skipScore = false, scoreThreshold = 0.6 } = {}) {
+async function run(
+  resultPath,
+  { concurrency = 5, skipScore = false, scoreThreshold = 0.6 } = {}
+) {
   const data = JSON.parse(fs.readFileSync(resultPath, 'utf-8'));
   const allResults = data.results || [];
   const total = allResults.length;
@@ -38,7 +41,10 @@ async function run(resultPath, { concurrency = 5, skipScore = false, scoreThresh
         const tag = result.renderStatus.toUpperCase();
         const detail = result.renderError ? ` — ${result.renderError}` : '';
         console.log(`  [${done}/${t}] [${tag}] ${result.id}${detail}`);
-      } else if (result.visualScore != null && result.visualScore < scoreThreshold) {
+      } else if (
+        result.visualScore != null &&
+        result.visualScore < scoreThreshold
+      ) {
         console.log(
           `  [${done}/${t}] [LOW-SCORE] ${result.id}  visualScore=${result.visualScore.toFixed(2)}`
         );
@@ -59,7 +65,10 @@ async function run(resultPath, { concurrency = 5, skipScore = false, scoreThresh
     ? scored.reduce((s, r) => s + r.visualScore, 0) / scored.length
     : null;
   const lowQuality = testedResults.filter(
-    (r) => r.renderStatus === 'success' && r.visualScore != null && r.visualScore < scoreThreshold
+    (r) =>
+      r.renderStatus === 'success' &&
+      r.visualScore != null &&
+      r.visualScore < scoreThreshold
   );
 
   console.log(
@@ -76,7 +85,9 @@ async function run(resultPath, { concurrency = 5, skipScore = false, scoreThresh
     (r) =>
       r.renderStatus === 'error' ||
       r.renderStatus === 'blank' ||
-      (r.renderStatus === 'success' && r.visualScore != null && r.visualScore < scoreThreshold)
+      (r.renderStatus === 'success' &&
+        r.visualScore != null &&
+        r.visualScore < scoreThreshold)
   );
 }
 

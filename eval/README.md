@@ -5,32 +5,24 @@
 ## Quick Start
 
 ```bash
-# Start web server
-npm run eval:server
-
 # Run evaluation
-node eval/cli.js eval --sample=10
+node eval/eval-cli/index.js --sample=10
 
-# View results
-open eval/viewer.html
+# Helps
+node eval/eval-cli/index.js help
 ```
 
 ## CLI Usage
 
 ```bash
 # Run evaluation (default: tool-call retrieval)
-node eval/cli.js eval --sample=10
-node eval/cli.js eval --full --model=claude-3-opus
+node eval/eval-cli/index.js --sample=10
+node eval/eval-cli/index.js --full --model=claude-3-opus
 
 # Specify retrieval strategy
-node eval/cli.js eval --sample=20 --retrieval=tool-call  # default
-node eval/cli.js eval --sample=20 --retrieval=bm25
-node eval/cli.js eval --sample=20 --retrieval=context7
-
-# Manage results
-node eval/cli.js results list
-node eval/cli.js compare result1.json result2.json
-node eval/cli.js compare r1.json r2.json r3.json
+node eval/eval-cli/index.js --sample=20 --retrieval=tool-call  # default
+node eval/eval-cli/index.js --sample=20 --retrieval=bm25
+node eval/eval-cli/index.js --sample=20 --retrieval=context7
 ```
 
 ### Retrieval Strategies
@@ -57,15 +49,9 @@ eval-context7-dataset-200-claude-sonnet-4-6-2026-04-01.json
 To fairly compare strategies, run them with the same sample size and model:
 
 ```bash
-node eval/cli.js eval --sample=20 --retrieval=tool-call
-node eval/cli.js eval --sample=20 --retrieval=bm25
-node eval/cli.js eval --sample=20 --retrieval=context7
-
-node eval/cli.js compare \
-  eval/result/eval-tool-call-dataset-200-<model>-<date>.json \
-  eval/result/eval-bm25-dataset-200-<model>-<date>.json \
-  eval/result/eval-context7-dataset-200-<model>-<date>.json \
-  --output=comparison.md
+node eval/eval-cli/index.js --sample=20 --retrieval=tool-call
+node eval/eval-cli/index.js --sample=20 --retrieval=bm25
+node eval/eval-cli/index.js --sample=20 --retrieval=context7
 ```
 
 ---
@@ -84,16 +70,10 @@ BM25 hyperparameter tuning.
 node eval/_tune-bm25.js
 ```
 
-### viewer.html
-Browser-based result viewer.
-```bash
-open eval/viewer.html
-```
-
 ## Test Dataset
 
-### eval-dataset-200.json
-200 labeled test cases covering G2, G6, components, and transforms.
+### eval-g2-dataset-174.json 
+174 labeled test cases covering G2, G6, components, and transforms.
 
 ### bad-case.json
 Focused failure cases for regression testing.

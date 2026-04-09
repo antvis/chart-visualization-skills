@@ -12,9 +12,10 @@ const path = require('path');
 class SkillBuilder {
   constructor(options = {}) {
     // Resolve paths relative to package root
-    const packageRoot = path.resolve(__dirname, '..');
+    const packageRoot = path.resolve(__dirname, '../..');
     this.skillsDir = options.skillsDir || path.join(packageRoot, 'skills');
-    this.indexDir = options.indexDir || path.join(packageRoot, 'index');
+    this.indexDir =
+      options.indexDir || path.join(path.resolve(__dirname), '..', 'index');
     // New structure: g2/references, g6/references, common-concepts/references
     this.libraryPaths = options.libraryPaths || {
       g2: 'g2/references',
@@ -166,7 +167,7 @@ class SkillBuilder {
         }
 
         const relativePath = path.relative(
-          path.resolve(__dirname, '..'),
+          path.resolve(__dirname, '../..'),
           fullPath
         );
 

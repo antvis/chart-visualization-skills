@@ -65,7 +65,7 @@ chart.options({
     color: {
       position: 'right',
       length: 200,
-      labelFormatter: (v) => v.toFixed(0),
+      labelFormatter: (v) => Number(v).toFixed(0),  // 注意：v 可能是 string，需先转换
     },
   },
 });
@@ -97,7 +97,7 @@ chart.options({
       titleFontSize: 12,
 
       // ── 标签 ─────────────────────────────────
-      labelFormatter: (v) => v.toFixed(1),  // 格式化函数
+      labelFormatter: (v) => Number(v).toFixed(1),  // 注意：v 可能是 string，需先转换
       labelAlign: 'value',     // 'value' | 'range'
 
       // ── 样式 ─────────────────────────────────
@@ -169,7 +169,7 @@ chart.options({
   legend: {
     color: {
       position: 'right',
-      labelFormatter: (v) => `${v}°C`,
+      labelFormatter: (v) => `${Number(v)}°C`,  // 注意：v 可能是 string，需先转换
     },
   },
 });
@@ -232,14 +232,18 @@ encode: { color: 'category' }  // 分类数据
 // G2 会根据数据类型自动选择图例类型
 ```
 
-### 错误 2：labelFormatter 返回非字符串
+### 错误 2：labelFormatter 参数类型错误
 
 ```javascript
-// ❌ 问题：labelFormatter 返回数字
-labelFormatter: (v) => v * 100  // ❌ 返回数字
+// ❌ 问题：labelFormatter 的参数 v 可能是 string 类型（不是 number）
+// G2 连续图例传入的刻度值为字符串，直接调用 .toFixed() 会报错
+labelFormatter: (v) => v.toFixed(1)   // ❌ TypeError: v.toFixed is not a function
+labelFormatter: (v) => v * 100        // ❌ 返回数字而不是字符串
 
-// ✅ 正确：返回字符串
-labelFormatter: (v) => `${(v * 100).toFixed(0)}%`  // ✅ 返回字符串
+// ✅ 正确：先转换为数字，再格式化，最终返回字符串
+labelFormatter: (v) => Number(v).toFixed(1)          // ✅ 保留 1 位小数
+labelFormatter: (v) => `${(Number(v) * 100).toFixed(0)}%`  // ✅ 百分比格式
+labelFormatter: (v) => `${parseFloat(v).toFixed(0)}m`      // ✅ 带单位
 ```
 
 ### 错误 3：length 设置过小

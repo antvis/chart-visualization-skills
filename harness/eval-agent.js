@@ -13,8 +13,8 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
-const RESULT_DIR = path.join(__dirname, '../result');
+const ROOT_DIR = path.resolve(__dirname, '..');
+const RESULT_DIR = path.join(__dirname, './result');
 
 /**
  * Run an evaluation pass.
@@ -36,7 +36,9 @@ function run({ sample, retrieval, dataset }) {
       : []
   );
 
-  const parts = [`node eval/cli.js eval --sample=${sample} --retrieval=${retrieval}`];
+  const parts = [
+    `node eval/eval-cli/index.js eval --sample=${sample} --retrieval=${retrieval}`
+  ];
   if (dataset) parts.push(`--dataset=${dataset}`);
   const cmd = parts.join(' ');
 
@@ -52,7 +54,10 @@ function run({ sample, retrieval, dataset }) {
 
   // Fallback: most recently modified
   const sorted = after
-    .map((f) => ({ name: f, mtime: fs.statSync(path.join(RESULT_DIR, f)).mtimeMs }))
+    .map((f) => ({
+      name: f,
+      mtime: fs.statSync(path.join(RESULT_DIR, f)).mtimeMs
+    }))
     .sort((a, b) => b.mtime - a.mtime);
   return path.join(RESULT_DIR, sorted[0].name);
 }

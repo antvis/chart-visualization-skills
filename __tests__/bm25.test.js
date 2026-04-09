@@ -6,7 +6,7 @@ import {
   cleanQuery,
   termFrequency,
   detectPrimaryChartTokens
-} from '../utils/bm25.js';
+} from '../cli/utils/bm25.js';
 
 // ─── cleanQuery ───────────────────────────────────────────────────────────────
 

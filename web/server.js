@@ -31,7 +31,7 @@ app.use(express.json({ limit: '10mb' }));
 
 // ── Skill retriever ───────────────────────────────────────────────────────────
 
-const { SkillRetriever } = require('../utils/retriever');
+const { SkillRetriever } = require('../cli/utils/retriever');
 
 const retriever = new SkillRetriever();
 
@@ -179,7 +179,7 @@ const {
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt: buildToolCallSystemPrompt
-} = require('../utils/skill-tools');
+} = require('../eval/utils/skill-tools');
 
 function extractCodeFromMarkdown(text) {
   const m = text.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
@@ -275,12 +275,10 @@ async function generateWithToolCall(
 // ── Static files ──────────────────────────────────────────────────────────────
 
 app.use(express.static(WEB_DIR));
-app.use('/index', express.static(path.join(ROOT_DIR, 'index')));
-app.use('/prompts', express.static(path.join(ROOT_DIR, 'prompts')));
+app.use('/cli/index', express.static(path.join(ROOT_DIR, 'cli', 'index')));
 app.use('/skills', express.static(path.join(ROOT_DIR, 'skills')));
 app.use('/g2', express.static(path.join(ROOT_DIR, 'skills', 'g2')));
 app.use('/g6', express.static(path.join(ROOT_DIR, 'skills', 'g6')));
-app.use('/common', express.static(path.join(ROOT_DIR, 'skills', 'common')));
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 

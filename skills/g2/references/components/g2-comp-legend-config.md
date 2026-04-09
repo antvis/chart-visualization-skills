@@ -304,7 +304,7 @@ chart.options({
     color: {
       position: 'right',
       length: 200,
-      labelFormatter: (v) => v.toFixed(0),
+      labelFormatter: (v) => Number(v).toFixed(0),  // 注意：v 可能是 string，需先转换为数字
     },
   },
 });

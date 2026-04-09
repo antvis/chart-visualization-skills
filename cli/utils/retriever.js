@@ -12,10 +12,9 @@ const { BM25Index } = require('./bm25');
 
 class SkillRetriever {
   constructor(options = {}) {
-    const packageRoot = path.resolve(__dirname, '..');
-    this.indexDir = options.indexDir || path.join(packageRoot, 'index');
+    const packageRoot = path.resolve(__dirname, '../..');
+    this.indexDir = options.indexDir || path.join(__dirname, '../index');
     this.skillsDir = options.skillsDir || path.join(packageRoot, 'skills');
-    this.promptsDir = options.promptsDir || path.join(packageRoot, 'prompts');
 
     // BM25 parameters (tuned via eval/_tune-bm25.js grid search)
     // k1=1.8, b=0.5 yields R@5=92.9%, MRR=0.7779 on dataset-200
@@ -98,7 +97,7 @@ class SkillRetriever {
    */
   _retrieveGrep(query, library, topK) {
     const { execFileSync } = require('child_process');
-    const packageRoot = path.resolve(__dirname, '..');
+    const packageRoot = path.resolve(__dirname, '../..');
 
     // Load index to map relative paths back to skill metadata
     const { skills } = this.loadIndex(library);
@@ -184,7 +183,7 @@ class SkillRetriever {
    * Load skill content from file
    */
   loadSkillContent(skillPath) {
-    const fullPath = path.join(path.resolve(__dirname, '..'), skillPath);
+    const fullPath = path.join(path.resolve(__dirname, '../..'), skillPath);
     if (!fs.existsSync(fullPath)) return '';
     return fs.readFileSync(fullPath, 'utf-8');
   }
@@ -281,14 +280,7 @@ class SkillRetriever {
       }
     }
 
-    // Load system prompt template
-    const promptFile = path.join(
-      this.promptsDir,
-      `${library}-system-prompt.md`
-    );
-    let systemPrompt = fs.existsSync(promptFile)
-      ? fs.readFileSync(promptFile, 'utf-8')
-      : `You are an AntV ${library.toUpperCase()} v5 expert.`;
+    const systemPrompt = `You are an AntV ${library.toUpperCase()} v5 expert.`;
 
     // Replace placeholder
     const finalPrompt = systemPrompt.replace(

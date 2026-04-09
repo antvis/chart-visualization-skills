@@ -3,7 +3,7 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { SkillRetriever } from '../utils/retriever.js';
+import { SkillRetriever } from '../cli/utils/retriever.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -20,9 +20,9 @@ const cors = require('cors');
 const { WebSocketServer } = require('ws');
 const { v4: uuidv4 } = require('uuid');
 
-const EvaluationManager = require('./utils/eval-manager');
-const WebSocketHandler = require('./utils/websocket');
-const ProviderRegistry = require('./utils/provider-registry');
+const EvaluationManager = require('../utils/eval-manager');
+const WebSocketHandler = require('../utils/websocket');
+const ProviderRegistry = require('../utils/provider-registry');
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -51,7 +51,7 @@ if (IS_DEV) {
 // Serve eval directory static files (viewer.html, data/, result/)
 app.use(express.static(__dirname));
 app.use('/data', express.static(path.join(__dirname, 'data')));
-app.use('/result', express.static(path.join(__dirname, 'result')));
+app.use('/result', express.static(path.join(__dirname)));
 
 // ── Core Components ───────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ app.get('/api/datasets', (req, res) => {
 // GET /api/results - List evaluation result files
 app.get('/api/results', (req, res) => {
   const fs = require('fs');
-  const resultDir = path.join(__dirname, 'result');
+  const resultDir = path.join(__dirname);
 
   try {
     if (!fs.existsSync(resultDir)) {
@@ -147,7 +147,7 @@ app.get('/api/results', (req, res) => {
 // GET /api/results/:filename - Get specific result JSON
 app.get('/api/results/:filename', (req, res) => {
   const fs = require('fs');
-  const filePath = path.join(__dirname, 'result', req.params.filename);
+  const filePath = path.join(__dirname, req.params.filename);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Result file not found' });
@@ -164,7 +164,7 @@ app.get('/api/results/:filename', (req, res) => {
 // DELETE /api/results/:filename - Delete a result file
 app.delete('/api/results/:filename', async (req, res) => {
   const fs = require('fs').promises;
-  const filePath = path.join(__dirname, 'result', req.params.filename);
+  const filePath = path.join(__dirname, req.params.filename);
 
   try {
     await fs.unlink(filePath);
@@ -201,7 +201,7 @@ app.post('/api/eval', async (req, res) => {
       id: evalId,
       provider,
       model: model || ProviderRegistry.getDefaultModel(provider),
-      dataset: options.dataset || 'dataset-200.json',
+      dataset: options.dataset || 'g2-dataset-174.json ',
       sample: options.sample || null,
       full: options.full || false,
       concurrency: options.concurrency || 1,
@@ -247,8 +247,8 @@ app.get('/api/compare/:file1/:file2', (req, res) => {
   const fs = require('fs');
   const { file1, file2 } = req.params;
 
-  const filePath1 = path.join(__dirname, 'result', file1);
-  const filePath2 = path.join(__dirname, 'result', file2);
+  const filePath1 = path.join(__dirname, file1);
+  const filePath2 = path.join(__dirname, file2);
 
   if (!fs.existsSync(filePath1) || !fs.existsSync(filePath2)) {
     return res

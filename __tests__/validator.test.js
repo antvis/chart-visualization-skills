@@ -3,7 +3,7 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { SkillValidator } from '../utils/validator.js';
+import { SkillValidator } from '../cli/utils/validator.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

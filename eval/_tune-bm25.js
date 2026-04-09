@@ -11,10 +11,10 @@ require('dotenv').config({ override: true });
 
 const fs = require('fs');
 const path = require('path');
-const { BM25Index } = require('../utils/bm25');
+const { BM25Index } = require('../cli/utils/bm25');
 
 const dataset = JSON.parse(
-  fs.readFileSync(path.join(__dirname, 'data/dataset-200.json'), 'utf-8')
+  fs.readFileSync(path.join(__dirname, 'data/g2-dataset-174.json'), 'utf-8')
 );
 
 function loadIndex(library) {

@@ -264,7 +264,7 @@ function inferExpectedCategory(id, description) {
 
 function evaluateRecall() {
   // 加载测试数据集
-  const datasetPath = path.join(__dirname, 'dataset-200.json');
+  const datasetPath = path.join(__dirname, 'g2-dataset-174.json ');
   const dataset = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
 
   console.log('\n' + '='.repeat(60));

@@ -13,7 +13,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { AgentLoop } = require('../utils/ai-sdk');
+const { AgentLoop } = require('../eval/utils/ai-sdk');
 const { getLibraryConfig } = require('./config');
 
 // ── Dry-run log writer ────────────────────────────────────────────────────────
@@ -81,7 +81,9 @@ function buildRefTools(refs) {
   function assertAllowed(filePath) {
     const resolved = path.resolve(filePath);
     if (!allowedRoots.some((r) => resolved.startsWith(path.resolve(r)))) {
-      throw new Error(`Access denied: ${filePath} is outside allowed ref paths.`);
+      throw new Error(
+        `Access denied: ${filePath} is outside allowed ref paths.`
+      );
     }
   }
 
@@ -154,11 +156,14 @@ function buildRefTools(refs) {
     list_directory({ dir_path }) {
       try {
         assertAllowed(dir_path);
-        if (!fs.existsSync(dir_path)) return { error: `Path not found: ${dir_path}` };
-        const entries = fs.readdirSync(dir_path, { withFileTypes: true }).map((e) => ({
-          name: e.name,
-          type: e.isDirectory() ? 'directory' : 'file'
-        }));
+        if (!fs.existsSync(dir_path))
+          return { error: `Path not found: ${dir_path}` };
+        const entries = fs
+          .readdirSync(dir_path, { withFileTypes: true })
+          .map((e) => ({
+            name: e.name,
+            type: e.isDirectory() ? 'directory' : 'file'
+          }));
         return { dir_path, entries };
       } catch (e) {
         return { error: e.message };
@@ -167,7 +172,8 @@ function buildRefTools(refs) {
     read_file({ file_path }) {
       try {
         assertAllowed(file_path);
-        if (!fs.existsSync(file_path)) return { error: `File not found: ${file_path}` };
+        if (!fs.existsSync(file_path))
+          return { error: `File not found: ${file_path}` };
         const content = fs.readFileSync(file_path, 'utf-8');
         // Cap single file reads to 12 KB to avoid context explosion
         return { file_path, content: content.slice(0, 12000) };
@@ -178,13 +184,24 @@ function buildRefTools(refs) {
     grep_files({ pattern, search_dir, file_glob }) {
       try {
         assertAllowed(search_dir);
-        if (!fs.existsSync(search_dir)) return { error: `Path not found: ${search_dir}` };
+        if (!fs.existsSync(search_dir))
+          return { error: `Path not found: ${search_dir}` };
 
         const { execFileSync } = require('child_process');
-        const args = ['-rn', '-E', '--include', file_glob || '*', pattern, search_dir];
+        const args = [
+          '-rn',
+          '-E',
+          '--include',
+          file_glob || '*',
+          pattern,
+          search_dir
+        ];
         let raw = '';
         try {
-          raw = execFileSync('grep', args, { encoding: 'utf-8', maxBuffer: 1024 * 1024 });
+          raw = execFileSync('grep', args, {
+            encoding: 'utf-8',
+            maxBuffer: 1024 * 1024
+          });
         } catch (e) {
           // grep exits with code 1 when no matches are found; that's not an error
           if (e.status === 1) return { pattern, search_dir, matches: [] };
@@ -239,7 +256,13 @@ function getLibraryRefs(libraryId) {
  * @param {string} model        - model id
  * @param {string} [libraryId]  - library id for reference lookup
  */
-async function optimizeSkill(skillPath, errorCases, provider, model, libraryId) {
+async function optimizeSkill(
+  skillPath,
+  errorCases,
+  provider,
+  model,
+  libraryId
+) {
   const skillContent = fs.readFileSync(skillPath, 'utf-8');
   const skillName = path.basename(skillPath, '.md');
 
@@ -351,10 +374,18 @@ ${errorContext}
  * @param {string} [libraryId]    - library id for reference lookup
  * @returns {string[]} paths of newly created skill files
  */
-async function createNewSkills(orphanCases, provider, model, skillsBaseDir, libraryId) {
+async function createNewSkills(
+  orphanCases,
+  provider,
+  model,
+  skillsBaseDir,
+  libraryId
+) {
   if (orphanCases.length === 0) return [];
 
-  console.log(`\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`);
+  console.log(
+    `\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`
+  );
 
   const errorContext = orphanCases
     .map((c, i) => {
@@ -421,7 +452,9 @@ ${errorContext}
   const result = await loop.run(systemPrompt, userMessage);
 
   if (!result?.content) {
-    console.warn(`    LLM returned empty response for new skill creation, skipping.`);
+    console.warn(
+      `    LLM returned empty response for new skill creation, skipping.`
+    );
     return [];
   }
 
@@ -505,10 +538,18 @@ async function run(
   }
 
   if (orphanCases.length > 0 && skillsRefDir) {
-    const newFiles = await createNewSkills(orphanCases, provider, model, skillsRefDir, libraryId);
+    const newFiles = await createNewSkills(
+      orphanCases,
+      provider,
+      model,
+      skillsRefDir,
+      libraryId
+    );
     created.push(...newFiles);
   } else if (orphanCases.length > 0) {
-    console.warn(`  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`);
+    console.warn(
+      `  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`
+    );
   }
 
   return created;

@@ -3,7 +3,7 @@ import assert from 'assert';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { SkillBuilder } from '../utils/builder.js';
+import { SkillBuilder } from '../cli/utils/builder.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

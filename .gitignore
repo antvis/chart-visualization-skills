@@ -47,11 +47,14 @@ Thumbs.db
 .env
 
 # Eval results (local runs, not for review)
-eval/result/
+# eval/result/
 logs
 
 # Validator state directory
-eval/.validator/
+eval/temp/
+
+# harness
+harness/result/
 
 # lock files
 pnpm-lock.yaml

@@ -10,7 +10,7 @@ const path = require('path');
 
 class SkillValidator {
   constructor(options = {}) {
-    const packageRoot = path.resolve(__dirname, '..');
+    const packageRoot = path.resolve(__dirname, '../..');
     this.skillsDir = options.skillsDir || path.join(packageRoot, 'skills');
     this.libraries = options.libraries || ['g2', 'g6', 'common'];
 
