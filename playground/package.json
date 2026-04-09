@@ -9,11 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.82.0",
     "@antv/g2": "^5.4.8",
     "@antv/g6": "^5.0.42",
     "@monaco-editor/react": "^4.6.0",
     "chart-visualization-skills": "workspace:*",
     "next": "^15.2.4",
+    "openai": "^4.104.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

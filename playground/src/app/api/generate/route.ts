@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
-import { SkillRetriever } from '@/lib/retriever';
-import { callAI, AgentLoop } from '@/lib/ai-sdk';
+import { SkillRetriever } from '@/libs/retriever';
+import { callAI, AgentLoop } from '@/libs/ai-sdk';
 import {
   TOOLS,
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt
-} from '@/lib/skill-tools';
+} from '@/libs/skill-tools';
 import {
   detectIntent,
   buildMessages,
   extractCodeFromMarkdown
-} from '@/lib/intent';
-import ProviderRegistry, { PROVIDERS } from '@/lib/provider-registry';
+} from '@/libs/intent';
+import ProviderRegistry, { PROVIDERS } from '@/libs/provider-registry';
 
 // Initialize retriever
 const retriever = new SkillRetriever();

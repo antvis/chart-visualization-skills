@@ -11,15 +11,19 @@
  *   buildSystemPrompt   - Build tool-call system prompt with SKILL.md overview
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
+// Calculate ROOT_DIR - in Next.js, use process.cwd() to get project root
+// Assumes playground is running from the workspace root or playground directory
+const ROOT_DIR = process.cwd().includes('playground')
+  ? path.resolve(process.cwd(), '..')
+  : path.resolve(process.cwd());
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
-const TOOLS = [
+export const TOOLS = [
   {
     type: 'function',
     function: {
@@ -70,11 +74,14 @@ const TOOLS = [
 
 /**
  * Load a skill markdown file and strip YAML front matter.
- * @param {string} skillPath - absolute or relative-to-ROOT_DIR path
- * @param {boolean} verbose
- * @returns {string|null}
+ * @param skillPath - absolute or relative-to-ROOT_DIR path
+ * @param verbose
+ * @returns file content or null
  */
-function loadSkillFile(skillPath, verbose = false) {
+export function loadSkillFile(
+  skillPath: string,
+  verbose = false
+): string | null {
   const fullPath = skillPath.startsWith('/')
     ? skillPath
     : path.join(ROOT_DIR, skillPath);
@@ -87,10 +94,10 @@ function loadSkillFile(skillPath, verbose = false) {
 
 /**
  * Load the main SKILL.md for a library (strips front matter).
- * @param {string} library - 'g2' | 'g6'
- * @returns {string}
+ * @param library - 'g2' | 'g6'
+ * @returns file content
  */
-function loadMainSkill(library) {
+export function loadMainSkill(library: string): string {
   return loadSkillFile(path.join(SKILLS_DIR, library, 'SKILL.md')) || '';
 }
 
@@ -113,16 +120,16 @@ const TARGET_SECTIONS = [
  * Sub-headings (###) are collected into their parent section rather than
  * terminating it — only a same-level or higher heading ends the section.
  *
- * @param {string} content - raw markdown (front matter already stripped)
- * @param {number} [maxChars=5000]
- * @returns {string}
+ * @param content - raw markdown (front matter already stripped)
+ * @param maxChars - maximum characters to return
+ * @returns extracted content
  */
-function extractKeySections(content, maxChars = 5000) {
+export function extractKeySections(content: string, maxChars = 5000): string {
   const lines = content.split('\n');
-  const sections = [];
+  const sections: string[] = [];
   let inSection = false;
   let sectionLevel = 0;
-  let currentLines = [];
+  let currentLines: string[] = [];
 
   for (const line of lines) {
     const headingMatch = line.match(/^(#{1,3})\s+(.+)/);
@@ -161,17 +168,29 @@ function extractKeySections(content, maxChars = 5000) {
 
 // ── Tool handlers ─────────────────────────────────────────────────────────────
 
+interface ReferenceResult {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  path: string;
+}
+
 /**
  * list_references tool handler.
- * @param {{ library: string, category?: string }} args
- * @param {boolean} verbose
+ * @param args - { library: string, category?: string }
+ * @param verbose
+ * @returns list of reference documents
  */
-function toolListReferences(args, verbose = false) {
+export function toolListReferences(
+  args: { library: string; category?: string },
+  verbose = false
+): ReferenceResult[] {
   const { library, category } = args;
   const referencesDir = path.join(SKILLS_DIR, library, 'references');
   if (!fs.existsSync(referencesDir)) return [];
 
-  const results = [];
+  const results: ReferenceResult[] = [];
   const categories = category ? [category] : fs.readdirSync(referencesDir);
 
   for (const cat of categories) {
@@ -183,7 +202,7 @@ function toolListReferences(args, verbose = false) {
       .filter((f) => f.endsWith('.md'))) {
       const raw = fs.readFileSync(path.join(catDir, file), 'utf-8');
       const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
-      let meta = {};
+      let meta: { id?: string; title?: string; description?: string } = {};
       if (yamlMatch) {
         const yaml = yamlMatch[1];
         const idMatch = yaml.match(/^id:\s*["']?([^'"\n]+)["']?/m);
@@ -199,6 +218,9 @@ function toolListReferences(args, verbose = false) {
       }
       results.push({
         ...meta,
+        id: meta.id || file.replace('.md', ''),
+        title: meta.title || file,
+        description: meta.description || '',
         category: cat,
         path: `skills/${library}/references/${cat}/${file}`
       });
@@ -209,16 +231,28 @@ function toolListReferences(args, verbose = false) {
   return results;
 }
 
+interface SkillReadResult {
+  id: string;
+  path: string;
+  content?: string;
+  error?: string;
+}
+
 /**
  * read_skills tool handler.
- * @param {{ paths: string[] }} args
- * @param {boolean} verbose
+ * @param args - { paths: string[] }
+ * @param verbose
+ * @returns list of skill contents
  */
-function toolReadSkills(args, verbose = false) {
+export function toolReadSkills(
+  args: { paths: string[] },
+  verbose = false
+): SkillReadResult[] {
   return args.paths.slice(0, 4).map((skillPath) => {
     const content = loadSkillFile(skillPath, verbose);
     const fileName = path.basename(skillPath, '.md');
-    if (!content) return { path: skillPath, error: 'File not found' };
+    if (!content)
+      return { path: skillPath, error: 'File not found', id: fileName };
     const extracted = extractKeySections(content).slice(0, 10000);
     if (verbose)
       console.log(`   📖 加载: ${fileName} (${extracted.length} 字符)`);
@@ -231,11 +265,12 @@ function toolReadSkills(args, verbose = false) {
 /**
  * Build the tool-call system prompt for a given library.
  * Injects the library's SKILL.md as an overview.
- * @param {string} library - 'g2' | 'g6'
- * @returns {string}
+ * @param library - 'g2' | 'g6'
+ * @returns system prompt string
  */
-function buildSystemPrompt(library) {
+export function buildSystemPrompt(library: string): string {
   const skillContent = loadMainSkill(library);
+
   return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
 ## 工具使用（必须遵循）
@@ -256,15 +291,3 @@ function buildSystemPrompt(library) {
 
 ${skillContent}`;
 }
-
-// ── Exports ───────────────────────────────────────────────────────────────────
-
-module.exports = {
-  TOOLS,
-  loadSkillFile,
-  loadMainSkill,
-  extractKeySections,
-  toolListReferences,
-  toolReadSkills,
-  buildSystemPrompt
-};
