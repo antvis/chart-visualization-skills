@@ -147,6 +147,7 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
+        document: body,
         embedding_text: buildEmbeddingText(meta, body),
       });
     }

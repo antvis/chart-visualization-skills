@@ -12,6 +12,7 @@ export interface Skill {
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
+  document: string;
   embedding_text: string;
 }
 
