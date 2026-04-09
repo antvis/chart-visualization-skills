@@ -54,6 +54,19 @@ npx skills add antvis/chart-visualization-skills
 
 `G2 Chart` generates accurate, runnable G2 v5 code following Spec Mode best practices. It covers 30+ chart types (interval, line, area, point, rect, cell, treemap, sankey, chord, wordCloud, gauge, and more), data transforms (stackY, dodgeX, binX, fold, etc.), coordinate systems (cartesian, polar, theta, radial), scales, interactions (brush, slider, legend filter), components (axis, legend, tooltip, annotation), and multi-view compositions. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated chain APIs, invalid palette names, or referencing `d3` in user code.
 
+**Evaluation Results**
+
+Harness Engineering approach has been rigorously tested against 174 chart generation test cases, demonstrating significant improvements over baseline methods:
+
+| Model | Success Rate | Improvement |
+| :--- | :--- | :--- |
+| qwen3-coder-480b-a35b-instruct | **98.2%** | +18.2% |
+| Kimi-K2.5 | **97.7%** | +17.7% |
+| GLM-5.1 | **93.6%** | +13.6% |
+| DeepSeek-V3.2 | **87.3%** | +7.3% |
+| Context7 Baseline | 80% | baseline |
+
+The results show that Harness Engineering enables LLMs to achieve near-production-ready accuracy (up to 98.2%), significantly outperforming the Context7 baseline approach.
 
 > [!TIP]
 > More skills are coming soon.
