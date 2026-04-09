@@ -50,7 +50,10 @@ function createOpenAIClient(config: {
 
   return new OpenAI({
     apiKey: config.apiKey,
-    baseURL: `${config.endpoint}${config.path ? config.path.replace('/chat/completions', '') : '/v1'}`,
+    baseURL: new URL(
+      config.path ? config.path.replace('/chat/completions', '') : '/v1',
+      config.endpoint
+    ).toString(),
     defaultHeaders: Object.keys(extraHeaders).length ? extraHeaders : undefined
   });
 }

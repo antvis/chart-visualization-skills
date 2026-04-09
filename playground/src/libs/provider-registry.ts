@@ -31,10 +31,7 @@ export const PROVIDERS: Record<
         id: 'qwen3-coder-480b-a35b-instruct',
         name: 'Qwen Coder Plus',
         isDefault: true
-      },
-      { id: 'qwen-turbo', name: 'Qwen Turbo' },
-      { id: 'qwen-plus', name: 'Qwen Plus' },
-      { id: 'qwen-max', name: 'Qwen Max' }
+      }
     ],
     apiKeyEnv: 'QWEN_API_KEY',
     endpointEnv: 'QWEN_API_ENDPOINT',
@@ -97,13 +94,10 @@ export const PROVIDERS: Record<
     type: 'anthropic',
     models: [
       {
-        id: 'claude-sonnet-4-6-20250514',
+        id: 'claude-sonnet',
         name: 'Claude Sonnet 4.6',
         isDefault: true
-      },
-      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
-      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
-      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' }
+      }
     ],
     apiKeyEnv: 'ANTHROPIC_API_KEY',
     fallbackApiKeyEnv: 'AI_API_KEY',
@@ -117,13 +111,7 @@ export const PROVIDERS: Record<
     id: 'openai',
     name: 'OpenAI',
     type: 'openai-compatible',
-    models: [
-      { id: 'gpt-4', name: 'GPT-4', isDefault: true },
-      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
-      { id: 'gpt-4o', name: 'GPT-4o' },
-      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-      { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' }
-    ],
+    models: [{ id: 'gpt-5', name: 'GPT-5', isDefault: true }],
     apiKeyEnv: 'OPENAI_API_KEY',
     endpointEnv: 'OPENAI_API_ENDPOINT',
     modelEnv: 'OPENAI_MODEL',

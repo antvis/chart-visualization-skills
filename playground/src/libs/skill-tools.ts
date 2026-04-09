@@ -132,7 +132,7 @@ export function extractKeySections(content: string, maxChars = 5000): string {
   let currentLines: string[] = [];
 
   for (const line of lines) {
-    const headingMatch = line.match(/^(#{1,3})\s+(.+)/);
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     if (headingMatch) {
       const level = headingMatch[1].length;
       const title = headingMatch[2];

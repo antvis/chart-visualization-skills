@@ -125,7 +125,7 @@ function extractKeySections(content, maxChars = 5000) {
   let currentLines = [];
 
   for (const line of lines) {
-    const headingMatch = line.match(/^(#{1,3})\s+(.+)/);
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     if (headingMatch) {
       const level = headingMatch[1].length;
       const title = headingMatch[2];
