@@ -105,7 +105,7 @@ function buildEmbeddingText(meta: Record<string, any>, body: string): string {
     '核心概念', '最小可运行示例', 'API 速查', '常见错误',
   ]);
 
-  if (coreContent) parts.push(coreContent.slice(0, 1000));
+  if (coreContent) parts.push(coreContent);
 
   return parts.filter(Boolean).join('\n');
 }
@@ -147,7 +147,6 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
-        document: body,
         embedding_text: buildEmbeddingText(meta, body),
       });
     }

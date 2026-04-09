@@ -8,9 +8,6 @@ describe('retrieve API', () => {
     expect(results.length).toBeLessThanOrEqual(7);
     expect(results[0]).toHaveProperty('id');
     expect(results[0]).toHaveProperty('title');
-    expect(results[0]).toHaveProperty('document');
-    expect(typeof results[0].document).toBe('string');
-    expect(results[0].document.length).toBeGreaterThan(0);
   });
 
   it('should respect topk parameter', () => {
