@@ -14,8 +14,8 @@ const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 
 const LIBRARY_PATHS: Record<string, string> = {
-  g2: 'g2/references',
-  g6: 'g6/references',
+  g2: 'antv-g2-chart/references',
+  g6: 'antv-g6-graph/references',
 };
 
 function parseFrontMatter(content: string): FrontMatter {
