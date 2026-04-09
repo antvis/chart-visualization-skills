@@ -116,9 +116,7 @@ chart.options({
     y: 'count',
     color: 'metric',
   },
-  scale: {
-    x: { type: 'time' },          // 字符串日期需显式声明
-  },
+  // 无需 scale.x.type，data 中已使用 new Date()，G2 自动识别
   labels: [
     {
       text: 'metric',
@@ -178,9 +176,6 @@ chart.options({
       style: { lineWidth: 2 },
     },
   ],
-  scale: {
-    x: { type: 'time' },
-  },
   axis: {
     x: { labelFormatter: 'YYYY-MM' },
     y: { labelFormatter: (v) => `${(v/10000).toFixed(1)}万` },
@@ -238,9 +233,9 @@ chart.options({
 
 ## 常见错误与修正
 
-### 错误：字符串日期未声明 time scale 导致排序错乱
+### 错误：日期用字符串而非 Date 对象，导致排序错乱
 ```javascript
-// ❌ 错误：字符串日期默认被当作分类，按数据原始顺序排列
+// ❌ 错误：字符串日期在数据乱序时 x 轴按原始顺序渲染
 chart.options({
   type: 'line',
   data: [
@@ -248,15 +243,16 @@ chart.options({
     { date: '2024-01', value: 100 },   // 乱序数据
   ],
   encode: { x: 'date', y: 'value' },
-  // 缺少 scale: { x: { type: 'time' } }，x 轴会按数据顺序显示
 });
 
-// ✅ 正确：声明 time scale，G2 自动按时间排序
+// ✅ 正确：转为 Date 对象并排序，G2 自动按时间处理，无需 scale.x.type
+const data = rawData
+  .map(d => ({ ...d, date: new Date(d.date) }))
+  .sort((a, b) => a.date - b.date);
 chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value' },
-  scale: { x: { type: 'time' } },   // ✅ 字符串日期需要显式声明
 });
 ```
 

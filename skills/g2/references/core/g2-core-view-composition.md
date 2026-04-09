@@ -30,6 +30,7 @@ use_cases:
 
 anti_patterns:
   - "只有单个 Mark 时不需要 view 容器，直接用对应 type 即可"
+  - "children 中嵌套 type: 'view'——当某个子 Mark 需要独立数据时，直接在该 Mark 上指定 data 字段，而非再套一层 view + children"
 
 difficulty: "intermediate"
 completeness: "full"
@@ -159,7 +160,54 @@ chart.options({
 });
 ```
 
-### 错误 2：子 Mark 的 encode 字段名与数据不匹配
+### 错误 2：children 中嵌套 view（为子 Mark 单独变换数据时的常见误区）
+
+```javascript
+// ❌ 错误：在 children 里再套一层 type:'view' + children
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    { type: 'line', encode: { x: 'time', y: 'value' } },
+    {
+      type: 'view',                        // ❌ 不必要的嵌套 view
+      data: data.map(d => ({              // 只是想用派生数据
+        time: d.time,
+        min: d.value - 0.1,
+        max: d.value + 0.1,
+      })),
+      children: [
+        { type: 'rangeY', encode: { x: 'time', y: 'min', y1: 'max' } },
+      ],
+    },
+  ],
+});
+
+// ✅ 正确：直接在子 Mark 上指定 data，无需嵌套 view
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    { type: 'line', encode: { x: 'time', y: 'value' } },
+    {
+      type: 'rangeY',
+      data: data.map(d => ({             // ✅ 直接在 Mark 上声明独立 data
+        time: d.time,
+        min: d.value - 0.1,
+        max: d.value + 0.1,
+      })),
+      encode: { x: 'time', y: 'min', y1: 'max' },
+      style: { fillOpacity: 0.1 },
+    },
+  ],
+});
+```
+
+**规则**：`children` 数组的每个元素必须是 Mark（`line`/`point`/`interval` 等），
+当某个 Mark 需要独立或派生数据时，在该 Mark 节点上直接写 `data`，而不是再包一层 `view`。
+G2 不支持在 `children` 内嵌套 `view`。
+
+### 错误 3：子 Mark 的 encode 字段名与数据不匹配
 ```javascript
 // ❌ 错误：父级和子级 encode 的字段名应保持一致
 chart.options({

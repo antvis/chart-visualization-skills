@@ -168,11 +168,8 @@ function buildMessages(query, systemPrompt, intent, currentCode) {
 
 // ── AI SDK (unified) ──────────────────────────────────────────────────────────
 
-const {
-  callAI,
-  AgentLoop,
-  PROVIDER_CONFIG: SDK_PROVIDER_CONFIG
-} = require('../eval/utils/ai-sdk');
+const { callAI, AgentLoop } = require('../eval/utils/ai-sdk');
+const { PROVIDERS } = require('../eval/utils/provider-registry');
 const ProviderRegistry = require('../eval/utils/provider-registry');
 const {
   TOOLS,
@@ -191,7 +188,7 @@ function resolveProviderModel(reqProvider, reqModel) {
   const model =
     reqModel ||
     process.env.AI_MODEL ||
-    SDK_PROVIDER_CONFIG[provider]?.defaultModel ||
+    PROVIDERS[provider]?.defaultModel ||
     'qwen3-coder-480b-a35b-instruct';
   return { provider, model };
 }

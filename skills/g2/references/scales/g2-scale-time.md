@@ -99,40 +99,61 @@ chart.options({
 });
 ```
 
-## 字符串日期需显式声明 type
+## 字符串日期（推荐转为 Date 对象）
+
+G2 v5 对 `YYYY-MM-DD` 格式的字符串有一定自动识别能力，但行为依赖内部推断，**不稳定**。
+推荐在数据预处理阶段统一转为 `Date` 对象，避免歧义：
 
 ```javascript
-// 数据中日期是字符串格式
-const data = [
+// ✅ 推荐：预处理时转为 Date 对象
+const rawData = [
   { date: '2024-01-01', value: 100 },
   { date: '2024-02-01', value: 130 },
 ];
+const data = rawData.map(d => ({ ...d, date: new Date(d.date) }));
 
 chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value' },
-  scale: {
-    x: { type: 'time' },   // 必须显式声明，否则被当作 ordinal scale
-  },
+  // 无需 scale.x.type，G2 自动识别 Date 对象为 Time Scale
 });
 ```
 
+**不要**在字符串日期上显式写 `scale: { x: { type: 'time' } }`，这是多余的配置，
+且在某些场景（如 fold 后数据类型变化）会引发渲染异常。
+
 ## 常见错误与修正
 
-### 错误 1：日期字符串未声明 time scale 导致排序错误
+### 错误 1：显式声明 type: 'time'（不必要且有风险）
 ```javascript
-// ❌ 错误：字符串日期不声明 type: 'time'，会被当作分类数据，顺序可能错乱
+// ❌ 不推荐：在字符串日期上显式写 type: 'time'
+chart.options({
+  type: 'line',
+  data: [{ date: '2024-01-01', value: 100 }],
+  encode: { x: 'date', y: 'value' },
+  scale: { x: { type: 'time' } },   // ❌ 多余，可能引发异常
+});
+
+// ✅ 正确：转为 Date 对象，让 G2 自动处理
+const data = rawData.map(d => ({ ...d, date: new Date(d.date) }));
+chart.options({
+  type: 'line',
+  data,
+  encode: { x: 'date', y: 'value' },
+});
+```
+
+### 错误 2：数据乱序导致折线错乱
+```javascript
+// ❌ 错误：数据顺序混乱，折线会连错
 const data = [
-  { date: '2024-03-01', value: 110 },
-  { date: '2024-01-01', value: 100 },  // 数据无序
+  { date: new Date('2024-03-01'), value: 110 },
+  { date: new Date('2024-01-01'), value: 100 },  // 时间倒序
 ];
-chart.options({ type: 'line', data, encode: { x: 'date', y: 'value' } });
-// 结果：x 轴顺序是数据原始顺序，不按时间排序
 
-// ✅ 方案 1：将字符串转为 Date 对象（推荐）
-const processedData = data.map(d => ({ ...d, date: new Date(d.date) }));
-
-// ✅ 方案 2：显式声明 time scale
-chart.options({ scale: { x: { type: 'time' } } });
+// ✅ 正确：按时间排序后再传入
+const data = rawData
+  .map(d => ({ ...d, date: new Date(d.date) }))
+  .sort((a, b) => a.date - b.date);
 ```

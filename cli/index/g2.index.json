@@ -1187,14 +1187,15 @@
         "在图表中添加标注层"
       ],
       "anti_patterns": [
-        "只有单个 Mark 时不需要 view 容器，直接用对应 type 即可"
+        "只有单个 Mark 时不需要 view 容器，直接用对应 type 即可",
+        "children 中嵌套 type: 'view'——当某个子 Mark 需要独立数据时，直接在该 Mark 上指定 data 字段，而非再套一层 view + children"
       ],
       "related": [
         "g2-core-chart-init",
         "g2-comp-annotation",
         "g2-comp-facet-rect"
       ],
-      "embedding_text": "Title: G2 视图组合（view + children）\nDescription:  G2 v5 通过 type: 'view' 容器和 children 数组实现多 Mark 叠加、\nTags: view, children, 视图组合, 多Mark叠加, layer, 复合图表, spec\nUse Cases: 在同一坐标系中叠加多种图形（折线+散点、面积+折线）; 为多个子 Mark 共享数据源; 在图表中添加标注层\nAnti-patterns: 只有单个 Mark 时不需要 view 容器，直接用对应 type 即可\n## 核心概念\n\n```\nchart.options({\n  type: 'view',      // 容器类型\n   [...],       // 父级数据（子 Mark 可继承）\n  encode: {...},     // 父级编码（子 Mark 可继承）\n  children: [        // 子 Mark 列表（按顺序渲染，后面的在上层）\n    { type: 'area', ... },\n    { type: 'line', ... },\n    { type: 'point', ... },\n  ],\n});\n```\n\n**数据继承规则**：\n- 子 Mark 若未指定 `data`，继承父级 `data`\n- 子 Mark 若未指定 `encode`，继承父级 `encode` 中对应通道\n\n\n## 常见错误与修正\n"
+      "embedding_text": "Title: G2 视图组合（view + children）\nDescription:  G2 v5 通过 type: 'view' 容器和 children 数组实现多 Mark 叠加、\nTags: view, children, 视图组合, 多Mark叠加, layer, 复合图表, spec\nUse Cases: 在同一坐标系中叠加多种图形（折线+散点、面积+折线）; 为多个子 Mark 共享数据源; 在图表中添加标注层\nAnti-patterns: 只有单个 Mark 时不需要 view 容器，直接用对应 type 即可; children 中嵌套 type: 'view'——当某个子 Mark 需要独立数据时，直接在该 Mark 上指定 data 字段，而非再套一层 view + children\n## 核心概念\n\n```\nchart.options({\n  type: 'view',      // 容器类型\n   [...],       // 父级数据（子 Mark 可继承）\n  encode: {...},     // 父级编码（子 Mark 可继承）\n  children: [        // 子 Mark 列表（按顺序渲染，后面的在上层）\n    { type: 'area', ... },\n    { type: 'line', ... },\n    { type: 'point', ... },\n  ],\n});\n```\n\n**数据继承规则**：\n- 子 Mark 若未指定 `data`，继承父级 `data`\n- 子 Mark 若未指定 `encode`，继承父级 `encode` 中对应通道\n\n\n## 常见错误与修正\n"
     },
     {
       "id": "g2-data-ema",
