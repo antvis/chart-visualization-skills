@@ -50,9 +50,9 @@ npx skills add antvis/chart-visualization-skills
 
 `AntV S2 Expert` helps users develop with the S2 multi-dimensional cross-analysis table engine. It provides comprehensive guidance on `@antv/s2` core engine, `@antv/s2-react` and `@antv/s2-vue` framework bindings, `@antv/s2-react-components` advanced analysis components, and `@antv/s2-ssr` server-side rendering. Covers pivot tables, table sheets, custom cells, theming, events, interactions, sorting, totals, tooltips, frozen rows/columns, icons, pagination, and more.
 
-- 📈 **g2-chart**: G2 v5 chart code generator. Use when users need to generate G2 charts — bar charts, line charts, pie charts, scatter plots, area charts, heatmaps, and any statistical data visualization with the G2 library.
+- 📈 **antv-g2-chart**: G2 v5 chart code generator. Use when users need to generate G2 charts — bar charts, line charts, pie charts, scatter plots, area charts, heatmaps, and any statistical data visualization with the G2 library.
 
-`G2 Chart` generates accurate, runnable G2 v5 code following Spec Mode best practices. It covers 30+ chart types (interval, line, area, point, rect, cell, treemap, sankey, chord, wordCloud, gauge, and more), data transforms (stackY, dodgeX, binX, fold, etc.), coordinate systems (cartesian, polar, theta, radial), scales, interactions (brush, slider, legend filter), components (axis, legend, tooltip, annotation), and multi-view compositions. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated chain APIs, invalid palette names, or referencing `d3` in user code.
+`AntV G2 Chart` generates accurate, runnable G2 v5 code following Spec Mode best practices. It covers 30+ chart types (interval, line, area, point, rect, cell, treemap, sankey, chord, wordCloud, gauge, and more), data transforms (stackY, dodgeX, binX, fold, etc.), coordinate systems (cartesian, polar, theta, radial), scales, interactions (brush, slider, legend filter), components (axis, legend, tooltip, annotation), and multi-view compositions. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated chain APIs, invalid palette names, or referencing `d3` in user code.
 
 **Evaluation Results**
 
@@ -70,6 +70,55 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 
 > [!TIP]
 > More skills are coming soon.
+
+## CLI Usage
+
+We also provide a CLI tool for easy usage in your terminal, Install globally:
+
+```bash
+npm install -g chart-visualization-skills
+```
+
+**Retrieve or list skills by query**:
+
+```bash
+# Retrieve skills by query
+chart-visualization-cli retrieve "bar chart" --library g2 --topk 10
+
+# List all available skills
+chart-visualization-cli list --library g2 --category core
+```
+
+** Usage for the command**:
+
+```
+Usage: chart-visualization-cli [options] [command]
+
+CLI tool for AntV chart visualization skills retrieval
+
+Options:
+  -V, --version               output the version number
+  -h, --help                  display help for command
+
+Commands:
+  retrieve [options] <query>  Search for skills matching a query
+  list [options]              List all available skills
+  help [command]              display help for command
+```
+
+## API Usage
+
+```typescript
+import { retrieve } from 'chart-visualization-skills';
+
+const skills = retrieve('bar chart', 'g2', 5);
+```
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `query` | `string` | — | Search query |
+| `library` | `string` | `'g2'` | Library filter (`g2` or `g6`) |
+| `topk` | `number` | `7` | Number of results |
 
 ## License
 
