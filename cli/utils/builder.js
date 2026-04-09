@@ -19,8 +19,7 @@ class SkillBuilder {
     // New structure: g2/references, g6/references, common-concepts/references
     this.libraryPaths = options.libraryPaths || {
       g2: 'g2/references',
-      g6: 'g6/references',
-      common: 'common-concepts/references'
+      g6: 'g6/references'
     };
   }
 
