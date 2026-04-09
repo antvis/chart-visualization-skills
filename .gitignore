@@ -59,6 +59,9 @@ harness/result/
 # lock files
 pnpm-lock.yaml
 
+# skills index
+src/index/
+
 # Playground (Next.js)
 playground/.next/
 playground/node_modules/

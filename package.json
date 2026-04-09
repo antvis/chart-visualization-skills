@@ -1,32 +1,30 @@
 {
   "name": "chart-visualization-skills",
-  "version": "1.0.0",
-  "description": "Chart visualization and icon retrieval skills",
+  "version": "0.1.0",
+  "description": "Chart visualization skills for AntV, can be used in various scenarios such as data analysis, business intelligence, and dashboard development. Skills and CLI are included.",
   "type": "commonjs",
+  "main": "dist/api.js",
+  "types": "dist/api.d.ts",
+  "bin": {
+    "chart-visualization-cli": "dist/index.js"
+  },
   "scripts": {
+    "build": "tsc && npm run build:index && cp -r src/index dist/index",
+    "build:index": "node dist/scripts/build.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "node cli/skills-antv.js build",
-    "web": "nodemon --watch web --watch utils --watch skills --ext js,md web/server.js",
-    "eval:server": "nodemon --watch eval/result --ext js eval/result/server.js",
-    "harness": "node harness/controller.js --library=g2 --passes=3 --max-iterations=20 --concurrency=10",
-    "eval:cli": "node eval/eval-cli/index.js --model=qwen3-coder-480b-a35b-instruct --dataset=g2-dataset-174.json --sample=10 --concurrency=5 --retrieval=tool-call"
+    "precommit": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.2.0"
   },
   "keywords": [],
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.82.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "openai": "^6.33.0",
-    "uuid": "^9.0.0",
-    "ws": "^8.14.0"
-  },
-  "author": "",
+  "author": "AntV AI Team",
   "license": "MIT",
-  "devDependencies": {
-    "nodemon": "^3.0.0",
-    "playwright": "^1.59.1",
-    "vitest": "^1.2.0"
-  }
+  "repository": "git@github.com:antvis/chart-visualization-skills.git"
 }
