@@ -176,7 +176,7 @@ const {
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt: buildToolCallSystemPrompt
-} = require('../eval/utils/skill-tools');
+} = require('../cli/utils/skill-tools');
 
 function extractCodeFromMarkdown(text) {
   const m = text.match(/```(?:javascript|js)?\n([\s\S]*?)```/);

@@ -15,7 +15,7 @@ const {
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt
-} = require('../utils/skill-tools');
+} = require('../../cli/utils/skill-tools');
 const ParallelExecutor = require('./parallel-executor');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
@@ -115,7 +115,7 @@ function formatContext7Docs(data, maxResults = 6) {
 // ── BM25 ──────────────────────────────────────────────────────────────────────
 
 function loadRetriever() {
-  const { SkillRetriever } = require(path.join(ROOT_DIR, 'lib/retriever'));
+  const { SkillRetriever } = require('../../cli/utils/retriever');
   return new SkillRetriever();
 }
 
