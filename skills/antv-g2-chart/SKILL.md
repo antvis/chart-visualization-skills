@@ -1,5 +1,5 @@
 ---
-name: g2-chart
+name: antv-g2-chart
 description: Generate G2 v5 chart code. Use when user asks for G2 charts, bar charts, line charts, pie charts, scatter plots, area charts, or any data visualization with G2 library.
 ---
 
