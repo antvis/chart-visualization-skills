@@ -1,194 +1,100 @@
 /**
  * Provider Registry
- *
- * Single source of truth for all provider metadata and env var names.
  */
 
-export const PROVIDERS: Record<
-  string,
-  {
-    id: string;
-    name: string;
-    type: string;
-    models: Array<{ id: string; name: string; isDefault?: boolean }>;
-    apiKeyEnv: string;
-    fallbackApiKeyEnv?: string;
-    endpointEnv: string;
-    fallbackEndpointEnv?: string;
-    pathEnv?: string;
-    modelEnv?: string;
-    defaultEndpoint: string;
-    defaultPath: string;
-    extraHeaderEnvs?: Record<string, string>;
-  }
-> = {
+export interface Provider {
+  id: string;
+  name: string;
+  apiKey: string | undefined;
+  endpoint: string;
+  path: string;
+  model: string;
+  models: Array<{ id: string; name: string }>;
+  extraHeaders?: Record<string, string>;
+}
+
+export const PROVIDERS: Record<string, Provider> = {
   qwen: {
     id: 'qwen',
     name: 'Qwen',
-    type: 'openai-compatible',
+    apiKey: process.env.QWEN_API_KEY,
+    endpoint: process.env.QWEN_API_ENDPOINT || 'https://dashscope.aliyuncs.com',
+    path: process.env.QWEN_API_PATH || '/compatible-mode/v1/chat/completions',
+    model: process.env.QWEN_MODEL || 'qwen3-coder-480b-a35b-instruct',
     models: [
-      {
-        id: 'qwen3-coder-480b-a35b-instruct',
-        name: 'Qwen Coder Plus',
-        isDefault: true
-      }
-    ],
-    apiKeyEnv: 'QWEN_API_KEY',
-    endpointEnv: 'QWEN_API_ENDPOINT',
-    pathEnv: 'QWEN_API_PATH',
-    modelEnv: 'QWEN_MODEL',
-    defaultEndpoint: 'https://dashscope.aliyuncs.com',
-    defaultPath: '/compatible-mode/v1/chat/completions'
+      { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen Coder Plus' },
+      { id: 'qwen-turbo', name: 'Qwen Turbo' },
+      { id: 'qwen-plus', name: 'Qwen Plus' },
+      { id: 'qwen-max', name: 'Qwen Max' }
+    ]
   },
   deepseek: {
     id: 'deepseek',
     name: 'DeepSeek',
-    type: 'openai-compatible',
-    models: [{ id: 'DeepSeek-V3.2', name: 'DeepSeek V3.2', isDefault: true }],
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
-    endpointEnv: 'DEEPSEEK_API_ENDPOINT',
-    pathEnv: 'DEEPSEEK_API_PATH',
-    modelEnv: 'DEEPSEEK_MODEL',
-    defaultEndpoint: 'https://api.deepseek.com',
-    defaultPath: '/v1/chat/completions',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
+    apiKey: process.env.DEEPSEEK_API_KEY,
+    endpoint: process.env.DEEPSEEK_API_ENDPOINT || 'https://api.deepseek.com',
+    path: process.env.DEEPSEEK_API_PATH || '/v1/chat/completions',
+    model: process.env.DEEPSEEK_MODEL || 'DeepSeek-V3.2',
+    models: [{ id: 'DeepSeek-V3.2', name: 'DeepSeek V3.2' }],
+    extraHeaders: Object.fromEntries(
+      Object.entries({
+        'SOFA-TraceId': process.env.SOFA_TRACE_ID,
+        'SOFA-RpcId': process.env.SOFA_RPC_ID
+      }).filter((e): e is [string, string] => e[1] != null)
+    )
   },
   kimi: {
     id: 'kimi',
     name: 'Kimi',
-    type: 'openai-compatible',
-    models: [{ id: 'Kimi-K2.5', name: 'Kimi-K2.5', isDefault: true }],
-    apiKeyEnv: 'KIMI_API_KEY',
-    endpointEnv: 'KIMI_API_ENDPOINT',
-    pathEnv: 'KIMI_API_PATH',
-    modelEnv: 'KIMI_MODEL',
-    defaultPath: '/v1/chat/completions',
-    defaultEndpoint: '',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
+    apiKey: process.env.KIMI_API_KEY,
+    endpoint: process.env.KIMI_API_ENDPOINT || '',
+    path: process.env.KIMI_API_PATH || '/v1/chat/completions',
+    model: process.env.KIMI_MODEL || 'Kimi-K2.5',
+    models: [{ id: 'Kimi-K2.5', name: 'Kimi-K2.5' }],
+    extraHeaders: Object.fromEntries(
+      Object.entries({
+        'SOFA-TraceId': process.env.SOFA_TRACE_ID,
+        'SOFA-RpcId': process.env.SOFA_RPC_ID
+      }).filter((e): e is [string, string] => e[1] != null)
+    )
   },
   glm: {
     id: 'glm',
     name: 'GLM',
-    type: 'openai-compatible',
-    models: [{ id: 'GLM-5.1', name: 'GLM-5.1', isDefault: true }],
-    apiKeyEnv: 'GLM_API_KEY',
-    endpointEnv: 'GLM_API_ENDPOINT',
-    pathEnv: 'GLM_API_PATH',
-    modelEnv: 'GLM_MODEL',
-    defaultPath: '/v1/chat/completions',
-    defaultEndpoint: '',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
-  },
-  anthropic: {
-    id: 'anthropic',
-    name: 'Anthropic Claude',
-    type: 'anthropic',
-    models: [
-      {
-        id: 'claude-sonnet',
-        name: 'Claude Sonnet 4.6',
-        isDefault: true
-      }
-    ],
-    apiKeyEnv: 'ANTHROPIC_API_KEY',
-    fallbackApiKeyEnv: 'AI_API_KEY',
-    endpointEnv: 'ANTHROPIC_API_ENDPOINT',
-    fallbackEndpointEnv: 'ANTHROPIC_BASE_URL',
-    modelEnv: 'ANTHROPIC_MODEL',
-    defaultEndpoint: 'https://api.anthropic.com',
-    defaultPath: '/v1/messages'
+    apiKey: process.env.GLM_API_KEY,
+    endpoint: process.env.GLM_API_ENDPOINT || '',
+    path: process.env.GLM_API_PATH || '/v1/chat/completions',
+    model: process.env.GLM_MODEL || 'GLM-5.1',
+    models: [{ id: 'GLM-5.1', name: 'GLM-5.1' }],
+    extraHeaders: Object.fromEntries(
+      Object.entries({
+        'SOFA-TraceId': process.env.SOFA_TRACE_ID,
+        'SOFA-RpcId': process.env.SOFA_RPC_ID
+      }).filter((e): e is [string, string] => e[1] != null)
+    )
   },
   openai: {
     id: 'openai',
     name: 'OpenAI',
-    type: 'openai-compatible',
-    models: [{ id: 'gpt-5', name: 'GPT-5', isDefault: true }],
-    apiKeyEnv: 'OPENAI_API_KEY',
-    endpointEnv: 'OPENAI_API_ENDPOINT',
-    modelEnv: 'OPENAI_MODEL',
-    defaultEndpoint: 'https://api.openai.com',
-    defaultPath: '/v1/chat/completions'
+    apiKey: process.env.OPENAI_API_KEY,
+    endpoint: process.env.OPENAI_API_ENDPOINT || 'https://api.openai.com',
+    path: '/v1/chat/completions',
+    model: process.env.OPENAI_MODEL || 'gpt-5',
+    models: [
+      { id: 'gpt-5', name: 'GPT-5' },
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-4o-mini', name: 'GPT-4o Mini' }
+    ]
   }
 };
 
-export interface RuntimeConfig {
-  apiKey: string | null;
-  endpoint: string;
-  path: string;
-  defaultModel: string;
-  extraHeaders?: Record<string, string | undefined>;
+/** Returns providers that have an API key configured, with their model list. */
+export function getAvailableModels(): Array<{
+  provider: string;
+  name: string;
+  models: Array<{ id: string; name: string }>;
+}> {
+  return Object.values(PROVIDERS)
+    .filter((p) => p.apiKey)
+    .map((p) => ({ provider: p.id, name: p.name, models: p.models }));
 }
-
-export function getRuntimeConfig(providerId: string): RuntimeConfig | null {
-  const p = PROVIDERS[providerId];
-  if (!p) return null;
-
-  const apiKey =
-    (p.apiKeyEnv && process.env[p.apiKeyEnv]) ||
-    (p.fallbackApiKeyEnv && process.env[p.fallbackApiKeyEnv]) ||
-    process.env.AI_API_KEY ||
-    null;
-
-  const endpoint =
-    (p.endpointEnv && process.env[p.endpointEnv]) ||
-    (p.fallbackEndpointEnv && process.env[p.fallbackEndpointEnv]) ||
-    p.defaultEndpoint;
-
-  const path = (p.pathEnv && process.env[p.pathEnv]) || p.defaultPath;
-
-  const defaultModelId =
-    p.models.find((m) => m.isDefault)?.id || p.models[0]?.id;
-  const defaultModel =
-    (p.modelEnv && process.env[p.modelEnv]) || defaultModelId;
-
-  const config: RuntimeConfig = { apiKey, endpoint, path, defaultModel };
-
-  if (p.extraHeaderEnvs) {
-    config.extraHeaders = Object.fromEntries(
-      Object.entries(p.extraHeaderEnvs).map(([header, envVar]) => [
-        header,
-        process.env[envVar]
-      ])
-    );
-  }
-
-  return config;
-}
-
-export function hasProvider(providerId: string): boolean {
-  return providerId in PROVIDERS;
-}
-
-export function hasApiKey(providerId: string): boolean {
-  const p = PROVIDERS[providerId];
-  if (!p) return false;
-  return !!(
-    process.env[p.apiKeyEnv] ||
-    (p.fallbackApiKeyEnv && process.env[p.fallbackApiKeyEnv]) ||
-    process.env.AI_API_KEY
-  );
-}
-
-export function listProviders() {
-  return Object.values(PROVIDERS).map((p) => ({
-    ...p,
-    hasApiKey: hasApiKey(p.id)
-  }));
-}
-
-export default {
-  PROVIDERS,
-  getRuntimeConfig,
-  hasProvider,
-  hasApiKey,
-  listProviders
-};

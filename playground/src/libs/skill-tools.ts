@@ -21,6 +21,15 @@ const ROOT_DIR = process.cwd().includes('playground')
   : path.resolve(process.cwd());
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
+// Mapping from library index key → actual skills directory name
+const LIBRARY_DIR: Record<string, string> = {
+  g2: 'antv-g2-chart'
+};
+
+function resolveLibraryDir(library: string): string {
+  return LIBRARY_DIR[library] ?? library;
+}
+
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
 export const TOOLS = [
@@ -35,8 +44,8 @@ export const TOOLS = [
         properties: {
           library: {
             type: 'string',
-            description: '库：g2、g6',
-            enum: ['g2', 'g6']
+            description: '库名，如 antv-g2-chart',
+            enum: ['antv-g2-chart']
           },
           category: {
             type: 'string',
@@ -60,7 +69,7 @@ export const TOOLS = [
             type: 'array',
             items: { type: 'string' },
             description:
-              'Skill 文件路径列表，如 ["skills/g2/references/marks/g2-mark-interval-basic.md"]',
+              'Skill 文件路径列表，如 ["skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"]',
             maxItems: 4
           }
         },
@@ -94,11 +103,12 @@ export function loadSkillFile(
 
 /**
  * Load the main SKILL.md for a library (strips front matter).
- * @param library - 'g2' | 'g6'
+ * @param library - index key, e.g. 'g2'
  * @returns file content
  */
 export function loadMainSkill(library: string): string {
-  return loadSkillFile(path.join(SKILLS_DIR, library, 'SKILL.md')) || '';
+  const dir = resolveLibraryDir(library);
+  return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) || '';
 }
 
 // ── Section extraction ────────────────────────────────────────────────────────
@@ -187,7 +197,8 @@ export function toolListReferences(
   verbose = false
 ): ReferenceResult[] {
   const { library, category } = args;
-  const referencesDir = path.join(SKILLS_DIR, library, 'references');
+  const dir = resolveLibraryDir(library);
+  const referencesDir = path.join(SKILLS_DIR, dir, 'references');
   if (!fs.existsSync(referencesDir)) return [];
 
   const results: ReferenceResult[] = [];
@@ -222,7 +233,7 @@ export function toolListReferences(
         title: meta.title || file,
         description: meta.description || '',
         category: cat,
-        path: `skills/${library}/references/${cat}/${file}`
+        path: `skills/${dir}/references/${cat}/${file}`
       });
     }
   }
@@ -265,27 +276,14 @@ export function toolReadSkills(
 /**
  * Build the tool-call system prompt for a given library.
  * Injects the library's SKILL.md as an overview.
- * @param library - 'g2' | 'g6'
+ * @param library - index key, e.g. 'g2'
  * @returns system prompt string
  */
 export function buildSystemPrompt(library: string): string {
+  const dir = resolveLibraryDir(library);
   const skillContent = loadMainSkill(library);
 
-  return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
-
-## 工具使用（必须遵循）
-
-你有两个工具可以查阅详细参考文档：
-
-1. **list_references(library, category?)** - 列出参考文档目录，返回文件路径和标题
-2. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
-
-**工作流程**：
-1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
-2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
-3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
-4. 参考文档路径格式：\`skills/${library}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
-5. 生成代码时严格参考文档中的示例写法
+  return `你是 AntV G2 v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
 --- 知识库概览 ---
 

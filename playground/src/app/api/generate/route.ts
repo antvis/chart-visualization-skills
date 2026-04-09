@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
-import { SkillRetriever } from '@/libs/retriever';
+import { buildPrompt } from '@/libs/retriever';
 import { callAI, AgentLoop } from '@/libs/ai-sdk';
 import {
   TOOLS,
@@ -8,31 +8,8 @@ import {
   toolReadSkills,
   buildSystemPrompt
 } from '@/libs/skill-tools';
-import {
-  detectIntent,
-  buildMessages,
-  extractCodeFromMarkdown
-} from '@/libs/intent';
-import ProviderRegistry, { PROVIDERS } from '@/libs/provider-registry';
-
-// Initialize retriever
-const retriever = new SkillRetriever();
-
-// Load skills index on first request
-let skillsLoaded = false;
-function ensureSkillsLoaded() {
-  if (!skillsLoaded) {
-    try {
-      const { skills } = retriever.loadIndex();
-      console.log(`✅ Loaded ${skills.length} skills from index`);
-      skillsLoaded = true;
-    } catch (e) {
-      console.error(
-        '❌ Skills index not found. Run: node cli/skills-antv.js build'
-      );
-    }
-  }
-}
+import { buildMessages, extractCodeFromMarkdown } from '@/libs/intent';
+import { PROVIDERS } from '@/libs/provider-registry';
 
 // Resolve provider and model from request
 function resolveProviderModel(
@@ -43,8 +20,7 @@ function resolveProviderModel(
   const model =
     reqModel ||
     process.env.AI_MODEL ||
-    PROVIDERS[provider]?.models?.find((m) => m.isDefault)?.id ||
-    PROVIDERS[provider]?.models?.[0]?.id ||
+    PROVIDERS[provider]?.model ||
     'qwen3-coder-480b-a35b-instruct';
   return { provider, model };
 }
@@ -57,16 +33,13 @@ async function generateWithBM25(
   provider: string,
   model: string
 ) {
-  const selectedLibrary =
-    library === 'auto' ? retriever.detectLibrary(query) : library;
+  const selectedLibrary = library;
 
-  const { systemPrompt, primarySkills, extraSkills } = retriever.buildPrompt(
-    query,
-    { library: selectedLibrary, topK: 5, maxExtra: 2 }
-  );
-  const retrievedSkills = [...primarySkills, ...extraSkills];
-  const intent = detectIntent(query, currentCode);
-  const messages = buildMessages(query, systemPrompt, intent, currentCode);
+  const { systemPrompt, retrievedSkills } = buildPrompt(query, {
+    library: selectedLibrary,
+    topK: 5
+  });
+  const messages = buildMessages(query, systemPrompt, currentCode);
 
   const response = await callAI({
     provider,
@@ -79,8 +52,7 @@ async function generateWithBM25(
   return {
     code: extractCodeFromMarkdown(response.content),
     selectedLibrary,
-    retrievedSkills,
-    intent
+    retrievedSkills
   };
 }
 
@@ -92,14 +64,12 @@ async function generateWithToolCall(
   provider: string,
   model: string
 ) {
-  const selectedLibrary =
-    library === 'auto' ? retriever.detectLibrary(query) : library;
+  const selectedLibrary = library;
 
   const systemPrompt = buildSystemPrompt(selectedLibrary);
-  const intent = detectIntent(query, currentCode);
 
   let userMessage = `请根据以下描述生成 AntV ${selectedLibrary.toUpperCase()} 代码，只输出一个完整的 javascript 代码块：\n\n${query}`;
-  if (intent === 'tune') {
+  if (currentCode) {
     userMessage =
       `当前图表代码：\n\`\`\`javascript\n${currentCode}\n\`\`\`\n\n` +
       `请基于上面的代码，${query}。只输出修改后的完整 javascript 代码块。`;
@@ -136,8 +106,6 @@ async function generateWithToolCall(
 }
 
 export async function POST(request: NextRequest) {
-  ensureSkillsLoaded();
-
   const body = await request.json();
   const {
     query,
@@ -154,13 +122,13 @@ export async function POST(request: NextRequest) {
 
   const { provider, model } = resolveProviderModel(reqProvider, reqModel);
 
-  if (!ProviderRegistry.hasProvider(provider)) {
+  if (!PROVIDERS[provider]) {
     return NextResponse.json(
       { error: `Unknown provider: ${provider}` },
       { status: 400 }
     );
   }
-  if (!ProviderRegistry.hasApiKey(provider)) {
+  if (!PROVIDERS[provider].apiKey) {
     return NextResponse.json(
       { error: `Missing API key for provider: ${provider}` },
       { status: 400 }
@@ -196,11 +164,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { code, selectedLibrary, retrievedSkills, intent } =
-      await generateWithBM25(query, library, currentCode, provider, model);
+    const { code, selectedLibrary, retrievedSkills } = await generateWithBM25(
+      query,
+      library,
+      currentCode,
+      provider,
+      model
+    );
 
     console.log(
-      `[bm25] ${selectedLibrary.toUpperCase()} [${intent}], skills: ${retrievedSkills.length}`
+      `[bm25] ${selectedLibrary.toUpperCase()}, skills: ${retrievedSkills.length}`
     );
 
     return NextResponse.json({
@@ -209,8 +182,7 @@ export async function POST(request: NextRequest) {
       mode: 'bm25',
       provider,
       model,
-      skills: retrievedSkills.map((s) => ({ id: s.id, title: s.title })),
-      intent
+      skills: retrievedSkills.map((s) => ({ id: s.id, title: s.title }))
     });
   } catch (error) {
     console.error('Generation error:', error);

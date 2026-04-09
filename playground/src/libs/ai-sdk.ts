@@ -1,14 +1,12 @@
 /**
  * AI SDK Unified Adapter Layer
- * Supports multiple AI providers: Qwen, Anthropic, OpenAI, DeepSeek, Kimi, GLM
+ * Supports multiple AI providers: Qwen, OpenAI, DeepSeek, Kimi, GLM
  *
- * OpenAI compatible format (qwen/deepseek/openai/kimi/glm) uses openai package
- * Anthropic format uses @anthropic-ai/sdk
+ * All providers use OpenAI-compatible format via the openai package.
  */
 
 import OpenAI from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
-import { getRuntimeConfig } from './provider-registry';
+import { PROVIDERS, type Provider } from './provider-registry';
 
 // Retry status codes
 const RETRY_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
@@ -22,7 +20,6 @@ interface CallAIOptions {
   temperature?: number;
   maxTokens?: number;
   timeout?: number;
-  debug?: boolean;
 }
 
 interface AIResponse {
@@ -58,16 +55,6 @@ function createOpenAIClient(config: {
   });
 }
 
-function createAnthropicClient(config: { apiKey: string; endpoint: string }) {
-  return new Anthropic({
-    apiKey: config.apiKey,
-    baseURL:
-      config.endpoint !== 'https://api.anthropic.com'
-        ? config.endpoint
-        : undefined
-  });
-}
-
 async function callOpenAICompat({
   config,
   model,
@@ -76,10 +63,9 @@ async function callOpenAICompat({
   toolChoice,
   temperature,
   maxTokens,
-  timeout,
-  debug
+  timeout
 }: {
-  config: ReturnType<typeof getRuntimeConfig>;
+  config: Provider;
   model: string;
   messages: Array<{ role: string; content: string }>;
   tools?: unknown[];
@@ -87,13 +73,12 @@ async function callOpenAICompat({
   temperature?: number;
   maxTokens?: number;
   timeout?: number;
-  debug?: boolean;
 }): Promise<AIResponse> {
   const client = createOpenAIClient({
-    apiKey: config!.apiKey!,
-    endpoint: config!.endpoint,
-    path: config!.path,
-    extraHeaders: config!.extraHeaders
+    apiKey: config.apiKey!,
+    endpoint: config.endpoint,
+    path: config.path,
+    extraHeaders: config.extraHeaders
   });
 
   const params: OpenAI.Chat.ChatCompletionCreateParams = {
@@ -110,21 +95,7 @@ async function callOpenAICompat({
         toolChoice as OpenAI.Chat.ChatCompletionToolChoiceOption;
   }
 
-  if (debug) {
-    console.log(
-      '   📤 Request:',
-      JSON.stringify(params, null, 2).slice(0, 500)
-    );
-  }
-
   const response = await client.chat.completions.create(params, { timeout });
-
-  if (debug) {
-    console.log(
-      '   📥 Response:',
-      JSON.stringify(response, null, 2).slice(0, 500)
-    );
-  }
 
   const choice = response.choices?.[0];
   if (!choice) throw new Error('Invalid response format: no choices');
@@ -142,102 +113,6 @@ async function callOpenAICompat({
   };
 }
 
-async function callAnthropic({
-  config,
-  model,
-  messages,
-  tools,
-  temperature,
-  maxTokens,
-  timeout,
-  debug
-}: {
-  config: ReturnType<typeof getRuntimeConfig>;
-  model: string;
-  messages: Array<{ role: string; content: string }>;
-  tools?: unknown[];
-  temperature?: number;
-  maxTokens?: number;
-  timeout?: number;
-  debug?: boolean;
-}): Promise<AIResponse> {
-  const client = createAnthropicClient({
-    apiKey: config!.apiKey!,
-    endpoint: config!.endpoint
-  });
-
-  const systemMessage = messages.find((m) => m.role === 'system');
-  const userMessages = messages
-    .filter((m) => m.role !== 'system')
-    .map((m) => ({
-      role: m.role === 'assistant' ? ('assistant' as const) : ('user' as const),
-      content: m.content
-    }));
-
-  const params: Anthropic.MessageCreateParams = {
-    model,
-    messages: userMessages,
-    temperature: temperature ?? 0.3,
-    max_tokens: maxTokens ?? 2000
-  };
-
-  if (systemMessage) params.system = systemMessage.content;
-
-  if (tools && tools.length > 0) {
-    params.tools = tools.map((t: unknown) => {
-      const tool = t as {
-        function: { name: string; description: string; parameters: unknown };
-      };
-      return {
-        name: tool.function.name,
-        description: tool.function.description,
-        input_schema: tool.function.parameters as Anthropic.Tool.InputSchema
-      };
-    });
-  }
-
-  if (debug) {
-    console.log(
-      '   📤 Request:',
-      JSON.stringify(params, null, 2).slice(0, 500)
-    );
-  }
-
-  const response = await client.messages.create(params, { timeout });
-
-  if (debug) {
-    console.log(
-      '   📥 Response:',
-      JSON.stringify(response, null, 2).slice(0, 500)
-    );
-  }
-
-  const textContent = response.content?.find(
-    (c): c is Anthropic.TextBlock => c.type === 'text'
-  );
-  const toolUseContent =
-    response.content?.filter(
-      (c): c is Anthropic.ToolUseBlock => c.type === 'tool_use'
-    ) || [];
-
-  return {
-    content: textContent?.text || '',
-    toolCalls: toolUseContent.map((tc) => ({
-      id: tc.id,
-      type: 'function',
-      function: { name: tc.name, arguments: JSON.stringify(tc.input) }
-    })),
-    usage: {
-      prompt_tokens: response.usage?.input_tokens,
-      completion_tokens: response.usage?.output_tokens,
-      total_tokens:
-        (response.usage?.input_tokens || 0) +
-        (response.usage?.output_tokens || 0)
-    },
-    raw: response
-  };
-}
-
 export async function callAI(
   options: CallAIOptions,
   _retryCount = 0
@@ -250,11 +125,10 @@ export async function callAI(
     toolChoice,
     temperature,
     maxTokens,
-    timeout = 120000,
-    debug = false
+    timeout = 120000
   } = options;
 
-  const config = getRuntimeConfig(provider);
+  const config = PROVIDERS[provider];
   if (!config) {
     throw new Error(`Unknown provider: ${provider}`);
   }
@@ -265,36 +139,22 @@ export async function callAI(
     );
   }
 
-  const resolvedModel = model || config.defaultModel;
+  const resolvedModel = model || config.model;
 
   const maxRetries = 3;
   const baseDelay = 2000;
 
   try {
-    if (provider === 'anthropic') {
-      return await callAnthropic({
-        config,
-        model: resolvedModel,
-        messages,
-        tools,
-        temperature,
-        maxTokens,
-        timeout,
-        debug
-      });
-    } else {
-      return await callOpenAICompat({
-        config,
-        model: resolvedModel,
-        messages,
-        tools,
-        toolChoice,
-        temperature,
-        maxTokens,
-        timeout,
-        debug
-      });
-    }
+    return await callOpenAICompat({
+      config,
+      model: resolvedModel,
+      messages,
+      tools,
+      toolChoice,
+      temperature,
+      maxTokens,
+      timeout
+    });
   } catch (error) {
     const err = error as {
       status?: number;
@@ -311,11 +171,6 @@ export async function callAI(
 
     if (isRetryable && _retryCount < maxRetries) {
       const delay = baseDelay * Math.pow(2, _retryCount);
-      if (debug) {
-        console.log(
-          `   ⏳ Retry ${_retryCount + 1}/${maxRetries} after ${delay}ms (${err.message})`
-        );
-      }
       await new Promise((r) => setTimeout(r, delay));
       return callAI(options, _retryCount + 1);
     }
@@ -330,7 +185,6 @@ interface AgentLoopOptions {
   maxRounds?: number;
   tools?: unknown[];
   toolHandlers?: Record<string, (args: unknown) => unknown | Promise<unknown>>;
-  debug?: boolean;
 }
 
 interface AgentLoopResult {
@@ -352,7 +206,6 @@ export class AgentLoop {
     string,
     (args: unknown) => unknown | Promise<unknown>
   >;
-  private debug: boolean;
   private messages: Array<
     | { role: string; content: string; tool_calls?: unknown[] }
     | { role: 'tool'; tool_call_id: string; content: string }
@@ -370,7 +223,6 @@ export class AgentLoop {
     this.maxRounds = options.maxRounds || 3;
     this.tools = options.tools || [];
     this.toolHandlers = options.toolHandlers || {};
-    this.debug = options.debug || false;
   }
 
   async run(
@@ -387,17 +239,12 @@ export class AgentLoop {
     let lastAssistantContent = '';
 
     for (let round = 0; round < this.maxRounds; round++) {
-      if (this.debug) {
-        console.log(`   🔄 Agent round ${round + 1}/${this.maxRounds}...`);
-      }
-
       const response = await callAI({
         provider: this.provider,
         model: this.model,
         messages: this.messages,
         tools: this.tools,
-        toolChoice: 'auto',
-        debug: this.debug && round === 0
+        toolChoice: 'auto'
       });
 
       if (response.content) {
@@ -419,12 +266,6 @@ export class AgentLoop {
             toolArgs = JSON.parse(toolCall.function.arguments);
           } catch {
             toolArgs = {};
-          }
-
-          if (this.debug) {
-            console.log(
-              `   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`
-            );
           }
 
           let toolResult: unknown;
@@ -457,9 +298,6 @@ export class AgentLoop {
 
     // If maxRounds exhausted and still no final content, force a final generation call
     if (!finalContent && this.toolCallsLog.length > 0) {
-      if (this.debug) {
-        console.log('   🔄 Force final generation (no tools)...');
-      }
       const finalResponse = await callAI({
         provider: this.provider,
         model: this.model,
@@ -470,8 +308,7 @@ export class AgentLoop {
             content:
               '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
           }
-        ],
-        debug: this.debug
+        ]
       });
       finalContent = finalResponse.content || '';
     }
