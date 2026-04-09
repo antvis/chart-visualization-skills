@@ -58,3 +58,9 @@ harness/result/
 
 # lock files
 pnpm-lock.yaml
+
+# Playground (Next.js)
+playground/.next/
+playground/node_modules/
+playground/.env.local
+playground/out/
