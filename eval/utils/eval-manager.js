@@ -163,17 +163,17 @@ class EvaluationManager {
     };
 
     if (concurrency > 1) {
-      await parallelMap(testData, processCase, {
+      const orderedResults = await parallelMap(testData, processCase, {
         concurrency,
-        onProgress: ({ result }) => {
-          if (result) evalRun.results.push(result);
-          evalRun.progress = { current: evalRun.results.length, total: testData.length };
+        onProgress: ({ done, result }) => {
+          evalRun.progress = { current: done, total: testData.length };
           this._saveProgress(evalRun, outputPath);
           if (wsHandler) {
-            wsHandler.onEvalProgress(evalRun.id, evalRun.results.length, testData.length, result);
+            wsHandler.onEvalProgress(evalRun.id, done, testData.length, result);
           }
         }
       });
+      evalRun.results = orderedResults.filter(Boolean);
     } else {
       // Sequential execution
       for (let i = 0; i < testData.length; i++) {
