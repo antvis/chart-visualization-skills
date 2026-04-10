@@ -180,6 +180,56 @@ body {
   border-radius: var(--radius);
 }
 
+/* ── Collapsible code block in messages ───────────────────────────────── */
+.msg-code-block {
+  margin-top: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.msg-code-block summary {
+  padding: 5px 10px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.msg-code-block summary::-webkit-details-marker { display: none; }
+
+.msg-code-block summary::before {
+  content: '▶';
+  font-size: 9px;
+  transition: transform 0.15s;
+}
+
+.msg-code-block[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.msg-code-block pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.msg-code-block pre code {
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Menlo', monospace;
+  line-height: 1.55;
+  color: var(--text-primary);
+  white-space: pre;
+}
+
 /* ── Controls row ──────────────────────────────────────────────────────── */
 .controls-bar {
   padding: 10px 14px;
@@ -455,23 +505,6 @@ body {
   overflow: hidden;
 }
 
-.code-textarea {
-  width: 100%;
-  height: 100%;
-  padding: 12px 14px;
-  background: transparent;
-  border: none;
-  outline: none;
-  resize: none;
-  font-size: 13px;
-  font-family: 'Monaco', 'Menlo', 'JetBrains Mono', 'Fira Code', monospace;
-  line-height: 1.6;
-  color: var(--text-primary);
-}
-
-.code-textarea::placeholder {
-  color: var(--text-tertiary);
-}
 
 /* ── Skills footer ─────────────────────────────────────────────────────── */
 .skills-footer {
