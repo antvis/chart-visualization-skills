@@ -11,26 +11,28 @@
  *   buildSystemPrompt   - Build tool-call system prompt with SKILL.md overview
  */
 
-const fs = require('fs');
-const path = require('path');
-const logger = require('./logger');
+import fs from 'fs';
+import path from 'path';
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
+// Calculate ROOT_DIR - in Next.js, use process.cwd() to get project root
+// Assumes playground is running from the workspace root or playground directory
+const ROOT_DIR = process.cwd().includes('playground')
+  ? path.resolve(process.cwd(), '..')
+  : path.resolve(process.cwd());
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
-// Mapping from short library key → actual skills directory name
-const LIBRARY_DIR = {
-  g2: 'antv-g2-chart',
-  g6: 'antv-g6-graph'
+// Mapping from library index key → actual skills directory name
+const LIBRARY_DIR: Record<string, string> = {
+  g2: 'antv-g2-chart'
 };
 
-function resolveLibraryDir(library) {
+function resolveLibraryDir(library: string): string {
   return LIBRARY_DIR[library] ?? library;
 }
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
-const TOOLS = [
+export const TOOLS = [
   {
     type: 'function',
     function: {
@@ -42,8 +44,8 @@ const TOOLS = [
         properties: {
           library: {
             type: 'string',
-            description: '库：g2、g6',
-            enum: ['g2', 'g6']
+            description: '库名，如 antv-g2-chart',
+            enum: ['antv-g2-chart']
           },
           category: {
             type: 'string',
@@ -79,41 +81,32 @@ const TOOLS = [
 
 // ── File helpers ──────────────────────────────────────────────────────────────
 
-/** In-process cache to avoid redundant disk reads within a single eval run. */
-const _fileCache = new Map();
-
 /**
  * Load a skill markdown file and strip YAML front matter.
- * Results are cached in memory for the lifetime of the process.
- *
- * @param {string} skillPath - absolute or relative-to-ROOT_DIR path
- * @param {boolean} verbose
- * @returns {string|null}
+ * @param skillPath - absolute or relative-to-ROOT_DIR path
+ * @param verbose
+ * @returns file content or null
  */
-function loadSkillFile(skillPath, verbose = false) {
+export function loadSkillFile(
+  skillPath: string,
+  verbose = false
+): string | null {
   const fullPath = skillPath.startsWith('/')
     ? skillPath
     : path.join(ROOT_DIR, skillPath);
-
-  if (_fileCache.has(fullPath)) return _fileCache.get(fullPath);
-
   if (!fs.existsSync(fullPath)) {
-    if (verbose) logger.warn({ path: fullPath }, 'Skill file not found');
+    if (verbose) console.log(`   ⚠️  File not found: ${fullPath}`);
     return null;
   }
-  const content = fs
-    .readFileSync(fullPath, 'utf-8')
-    .replace(/^---[\s\S]*?---\n/, '');
-  _fileCache.set(fullPath, content);
-  return content;
+  return fs.readFileSync(fullPath, 'utf-8').replace(/^---[\s\S]*?---\n/, '');
 }
 
 /**
  * Load the main SKILL.md for a library (strips front matter).
- * @param {string} library - 'g2' | 'g6'
- * @returns {string}
+ * @param library - index key, e.g. 'g2'
+ * @returns file content
  */
-function loadMainSkill(library) {
+export function loadMainSkill(library: string): string {
   const dir = resolveLibraryDir(library);
   return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) || '';
 }
@@ -137,16 +130,16 @@ const TARGET_SECTIONS = [
  * Sub-headings (###) are collected into their parent section rather than
  * terminating it — only a same-level or higher heading ends the section.
  *
- * @param {string} content - raw markdown (front matter already stripped)
- * @param {number} [maxChars=5000]
- * @returns {string}
+ * @param content - raw markdown (front matter already stripped)
+ * @param maxChars - maximum characters to return
+ * @returns extracted content
  */
-function extractKeySections(content, maxChars = 5000) {
+export function extractKeySections(content: string, maxChars = 5000): string {
   const lines = content.split('\n');
-  const sections = [];
+  const sections: string[] = [];
   let inSection = false;
   let sectionLevel = 0;
-  let currentLines = [];
+  let currentLines: string[] = [];
 
   for (const line of lines) {
     const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
@@ -185,18 +178,30 @@ function extractKeySections(content, maxChars = 5000) {
 
 // ── Tool handlers ─────────────────────────────────────────────────────────────
 
+interface ReferenceResult {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  path: string;
+}
+
 /**
  * list_references tool handler.
- * @param {{ library: string, category?: string }} args
- * @param {boolean} verbose
+ * @param args - { library: string, category?: string }
+ * @param verbose
+ * @returns list of reference documents
  */
-function toolListReferences(args, verbose = false) {
+export function toolListReferences(
+  args: { library: string; category?: string },
+  verbose = false
+): ReferenceResult[] {
   const { library, category } = args;
   const dir = resolveLibraryDir(library);
   const referencesDir = path.join(SKILLS_DIR, dir, 'references');
   if (!fs.existsSync(referencesDir)) return [];
 
-  const results = [];
+  const results: ReferenceResult[] = [];
   const categories = category ? [category] : fs.readdirSync(referencesDir);
 
   for (const cat of categories) {
@@ -208,7 +213,7 @@ function toolListReferences(args, verbose = false) {
       .filter((f) => f.endsWith('.md'))) {
       const raw = fs.readFileSync(path.join(catDir, file), 'utf-8');
       const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
-      let meta = {};
+      let meta: { id?: string; title?: string; description?: string } = {};
       if (yamlMatch) {
         const yaml = yamlMatch[1];
         const idMatch = yaml.match(/^id:\s*["']?([^'"\n]+)["']?/m);
@@ -224,29 +229,44 @@ function toolListReferences(args, verbose = false) {
       }
       results.push({
         ...meta,
+        id: meta.id || file.replace('.md', ''),
+        title: meta.title || file,
+        description: meta.description || '',
         category: cat,
         path: `skills/${dir}/references/${cat}/${file}`
       });
     }
   }
 
-  if (verbose) logger.debug({ count: results.length }, '列出参考文档');
+  if (verbose) console.log(`   📋 列出 ${results.length} 个参考文档`);
   return results;
+}
+
+interface SkillReadResult {
+  id: string;
+  path: string;
+  content?: string;
+  error?: string;
 }
 
 /**
  * read_skills tool handler.
- * @param {{ paths: string[] }} args
- * @param {boolean} verbose
+ * @param args - { paths: string[] }
+ * @param verbose
+ * @returns list of skill contents
  */
-function toolReadSkills(args, verbose = false) {
+export function toolReadSkills(
+  args: { paths: string[] },
+  verbose = false
+): SkillReadResult[] {
   return args.paths.slice(0, 4).map((skillPath) => {
     const content = loadSkillFile(skillPath, verbose);
     const fileName = path.basename(skillPath, '.md');
-    if (!content) return { path: skillPath, error: 'File not found' };
+    if (!content)
+      return { path: skillPath, error: 'File not found', id: fileName };
     const extracted = extractKeySections(content).slice(0, 10000);
     if (verbose)
-      logger.debug({ file: fileName, chars: extracted.length }, '加载 Skill');
+      console.log(`   📖 加载: ${fileName} (${extracted.length} 字符)`);
     return { id: fileName, path: skillPath, content: extracted };
   });
 }
@@ -256,41 +276,16 @@ function toolReadSkills(args, verbose = false) {
 /**
  * Build the tool-call system prompt for a given library.
  * Injects the library's SKILL.md as an overview.
- * @param {string} library - 'g2' | 'g6'
- * @returns {string}
+ * @param library - index key, e.g. 'g2'
+ * @returns system prompt string
  */
-function buildSystemPrompt(library) {
+export function buildSystemPrompt(library: string): string {
   const dir = resolveLibraryDir(library);
   const skillContent = loadMainSkill(library);
-  return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
-## 工具使用（必须遵循）
-
-你有两个工具可以查阅详细参考文档：
-
-1. **list_references(library, category?)** - 列出参考文档目录，返回文件路径和标题
-2. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
-
-**工作流程**：
-1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
-2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
-3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
-4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
-5. 生成代码时严格参考文档中的示例写法
+  return `你是 AntV G2 v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
 --- 知识库概览 ---
 
 ${skillContent}`;
 }
-
-// ── Exports ───────────────────────────────────────────────────────────────────
-
-module.exports = {
-  TOOLS,
-  loadSkillFile,
-  loadMainSkill,
-  extractKeySections,
-  toolListReferences,
-  toolReadSkills,
-  buildSystemPrompt
-};
