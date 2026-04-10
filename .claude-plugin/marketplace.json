@@ -46,6 +46,15 @@
       ]
     },
     {
+      "name": "antv-g2-chart",
+      "description": "Generate G2 v5 chart code. Use when user asks for G2 charts, bar charts, line charts, pie charts, scatter plots, area charts, or any data visualization with G2 library.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/antv-g2-chart"
+      ]
+    },
+    {
       "name": "antv-s2-expert",
       "description": "S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.",
       "source": "./",
