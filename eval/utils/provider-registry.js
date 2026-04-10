@@ -73,28 +73,6 @@ const PROVIDERS = {
       'SOFA-RpcId': 'SOFA_RPC_ID'
     }
   },
-  anthropic: {
-    id: 'anthropic',
-    name: 'Anthropic Claude',
-    type: 'anthropic',
-    models: [
-      {
-        id: 'claude-sonnet-4-6-20250514',
-        name: 'Claude Sonnet 4.6',
-        isDefault: true
-      },
-      { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
-      { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
-      { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' }
-    ],
-    apiKeyEnv: 'ANTHROPIC_API_KEY',
-    fallbackApiKeyEnv: 'AI_API_KEY',
-    endpointEnv: 'ANTHROPIC_API_ENDPOINT',
-    fallbackEndpointEnv: 'ANTHROPIC_BASE_URL',
-    modelEnv: 'ANTHROPIC_MODEL',
-    defaultEndpoint: 'https://api.anthropic.com',
-    defaultPath: '/v1/messages'
-  },
   openai: {
     id: 'openai',
     name: 'OpenAI',

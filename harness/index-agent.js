@@ -9,7 +9,7 @@
  *   await indexAgent.run({ libraryId: 'g2', rootDir: '/path/to/project' });
  */
 
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const { getLibraryConfig } = require('./config');
 
 /**
@@ -21,9 +21,14 @@ const { getLibraryConfig } = require('./config');
  */
 function run({ libraryId, rootDir }) {
   const { buildCmd } = getLibraryConfig(libraryId);
+  // Split buildCmd safely: "node bin/skills-antv.js build" → ['node', 'bin/skills-antv.js', 'build']
+  const [cmd, ...args] = buildCmd.split(/\s+/);
   console.log('\nRebuilding index...');
   console.log(`$ ${buildCmd}`);
-  execSync(buildCmd, { cwd: rootDir, stdio: 'inherit' });
+  const result = spawnSync(cmd, args, { cwd: rootDir, stdio: 'inherit', shell: false });
+  if (result.status !== 0) {
+    throw new Error(`Index build exited with code ${result.status}`);
+  }
 }
 
 module.exports = { run };

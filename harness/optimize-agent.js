@@ -79,11 +79,18 @@ function buildRefTools(refs) {
   const allowedRoots = [refs.srcDir, refs.docsDir].filter(Boolean);
 
   function assertAllowed(filePath) {
-    const resolved = path.resolve(filePath);
-    if (!allowedRoots.some((r) => resolved.startsWith(path.resolve(r)))) {
-      throw new Error(
-        `Access denied: ${filePath} is outside allowed ref paths.`
-      );
+    let realPath;
+    try {
+      realPath = fs.realpathSync(path.resolve(filePath));
+    } catch {
+      // Path doesn't exist yet — resolve without realpathSync
+      realPath = path.resolve(filePath);
+    }
+    const realRoots = allowedRoots.map((r) => {
+      try { return fs.realpathSync(path.resolve(r)); } catch { return path.resolve(r); }
+    });
+    if (!realRoots.some((r) => realPath === r || realPath.startsWith(r + path.sep))) {
+      throw new Error(`Access denied: ${filePath} is outside allowed ref paths.`);
     }
   }
 

@@ -6,8 +6,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
 const { AgentLoop, callAI } = require('./ai-sdk');
 const { buildQuery, evaluateCode } = require('./eval-utils');
 const {
@@ -15,102 +13,13 @@ const {
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt
-} = require('../../cli/utils/skill-tools');
-const ParallelExecutor = require('./parallel-executor');
+} = require('./skill-tools');
+const { parallelMap } = require('./parallel-executor');
+const context7 = require('./context7');
+const logger = require('./logger');
 
 const ROOT_DIR = path.resolve(__dirname, '..', '..');
 const MAX_TOOL_ROUNDS = 6;
-
-// ── Context7 ─────────────────────────────────────────────────────────────────
-
-const CONTEXT7_API_BASE = 'https://context7.com/api/v2';
-const CONTEXT7_LIBRARY_ID_MAP = { g2: '/antvis/g2', g6: '/antvis/g6' };
-
-function fetchContext7Docs(query, libraryId, tokens = 12000) {
-  const apiKey = process.env.CONTEXT7_API_KEY;
-  if (!apiKey) throw new Error('Missing CONTEXT7_API_KEY environment variable');
-
-  const url = new URL(`${CONTEXT7_API_BASE}/context`);
-  url.searchParams.set('query', query);
-  url.searchParams.set('libraryId', libraryId);
-  url.searchParams.set('type', 'json');
-  url.searchParams.set('tokens', String(tokens));
-
-  return new Promise((resolve, reject) => {
-    const isHttps = url.protocol === 'https:';
-    const client = isHttps ? https : http;
-    const options = {
-      hostname: url.hostname,
-      port: url.port ? parseInt(url.port) : isHttps ? 443 : 80,
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    };
-    const req = client.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk) => (body += chunk));
-      res.on('end', () => {
-        try {
-          if (res.statusCode !== 200)
-            return reject(
-              new Error(
-                `Context7 API error: ${res.statusCode} ${body.slice(0, 200)}`
-              )
-            );
-          resolve(JSON.parse(body));
-        } catch (e) {
-          reject(new Error(`Failed to parse Context7 response: ${e.message}`));
-        }
-      });
-    });
-    req.setTimeout(30000, () => {
-      req.destroy();
-      reject(new Error('Context7 API timeout (30s)'));
-    });
-    req.on('error', (err) =>
-      reject(new Error(`Context7 request failed: ${err.message}`))
-    );
-    req.end();
-  });
-}
-
-function formatContext7Docs(data, maxResults = 6) {
-  const codeSnippets = Array.isArray(data?.codeSnippets)
-    ? data.codeSnippets
-    : [];
-  const infoSnippets = Array.isArray(data?.infoSnippets)
-    ? data.infoSnippets
-    : [];
-  const sections = [];
-  for (const s of codeSnippets.slice(0, Math.ceil(maxResults * 0.7))) {
-    const title = s.pageTitle?.trim() || s.codeTitle?.trim() || 'Code Snippet';
-    const desc = s.codeDescription?.trim() || '';
-    const blocks = Array.isArray(s.codeList)
-      ? s.codeList
-          .filter(
-            (b) => typeof b?.code === 'string' && b.code.trim().length > 0
-          )
-          .map(
-            (b) =>
-              `\`\`\`${(b.language || s.codeLanguage || 'javascript').trim()}\n${b.code}\n\`\`\``
-          )
-      : [];
-    if (blocks.length === 0) continue;
-    sections.push(
-      `### ${title}\n${desc ? desc + '\n\n' : ''}${blocks.join('\n\n')}`
-    );
-  }
-  for (const s of infoSnippets.slice(0, Math.floor(maxResults * 0.3))) {
-    const title = (s.breadcrumb || s.pageId || 'Documentation').trim();
-    const content = (s.content || '').trim();
-    if (!content) continue;
-    sections.push(`### ${title}\n${content}`);
-  }
-  return sections.join('\n\n---\n\n');
-}
 
 // ── BM25 ──────────────────────────────────────────────────────────────────────
 
@@ -223,12 +132,10 @@ class EvaluationManager {
       concurrency,
       wsHandler
     }).catch((error) => {
-      console.error(`[EvalManager] Error in evaluation ${evalId}:`, error);
+      logger.error({ evalId, err: error.message }, 'Evaluation error');
       evalRun.status = 'error';
       evalRun.error = error.message;
-      if (wsHandler) {
-        wsHandler.onEvalError(evalId, error);
-      }
+      if (wsHandler) wsHandler.onEvalError(evalId, error);
     });
 
     evalRun._promise = evalPromise;
@@ -256,19 +163,17 @@ class EvaluationManager {
     };
 
     if (concurrency > 1) {
-      // Parallel execution
-      const executor = new ParallelExecutor(testData, processCase, {
-        concurrency
-      });
-      executor.onProgress((current, total, result) => {
-        evalRun.results.push(result);
-        evalRun.progress = { current, total };
-        this._saveProgress(evalRun, outputPath);
-        if (wsHandler) {
-          wsHandler.onEvalProgress(evalRun.id, current, total, result);
+      await parallelMap(testData, processCase, {
+        concurrency,
+        onProgress: ({ result }) => {
+          if (result) evalRun.results.push(result);
+          evalRun.progress = { current: evalRun.results.length, total: testData.length };
+          this._saveProgress(evalRun, outputPath);
+          if (wsHandler) {
+            wsHandler.onEvalProgress(evalRun.id, evalRun.results.length, testData.length, result);
+          }
         }
       });
-      await executor.run();
     } else {
       // Sequential execution
       for (let i = 0; i < testData.length; i++) {
@@ -434,15 +339,16 @@ class EvaluationManager {
   }
 
   async _processContext7({ provider, model, query, library }) {
-    const libraryId = CONTEXT7_LIBRARY_ID_MAP[library] || `/antvis/${library}`;
+    const libraryId = context7.resolveLibraryId(library);
     let skillContext = '';
     let context7Error;
 
     try {
-      const data = await fetchContext7Docs(query, libraryId);
-      skillContext = formatContext7Docs(data);
+      const data = await context7.fetchDocs(query, libraryId, process.env.CONTEXT7_API_KEY);
+      skillContext = context7.formatDocs(data);
     } catch (err) {
       context7Error = err.message;
+      logger.warn({ err: err.message }, 'Context7 fetch failed');
     }
 
     const systemPrompt = buildRagSystemPrompt(library, skillContext);

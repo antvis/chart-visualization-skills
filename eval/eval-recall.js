@@ -14,9 +14,10 @@ require('dotenv').config({ override: true });
 
 const fs = require('fs');
 const path = require('path');
+const { inferCategory } = require('./utils/category-inference');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
-const INDEX_DIR = path.join(ROOT_DIR, 'index');
+const INDEX_DIR = path.join(ROOT_DIR, 'src', 'index');
 
 // ── 检索函数 ───────────────────────────────────────────────────────────────────
 
@@ -104,167 +105,11 @@ function retrieveSkills(query, { library = null, topK = 5 } = {}) {
   return scored.map(({ skill, score }) => ({ ...skill, score }));
 }
 
-// ── 从 ID 推断期望类别 ───────────────────────────────────────────────────────────
-
-function inferExpectedCategory(id, description) {
-  // 从 ID 推断
-  // 例如: sample-698 -> 从 description 推断
-  // g2-mark-interval -> marks
-  // g2-transform-stacky -> transforms
-  // g6-layout-force -> layouts
-
-  const lowerDesc = description.toLowerCase();
-
-  // G2 类别推断
-  if (
-    lowerDesc.includes('柱状图') ||
-    lowerDesc.includes('条形图') ||
-    lowerDesc.includes('interval')
-  ) {
-    return 'marks';
-  }
-  if (
-    lowerDesc.includes('折线图') ||
-    lowerDesc.includes('线图') ||
-    lowerDesc.includes('line')
-  ) {
-    return 'marks';
-  }
-  if (
-    lowerDesc.includes('饼图') ||
-    lowerDesc.includes('环形图') ||
-    lowerDesc.includes('pie') ||
-    lowerDesc.includes('donut')
-  ) {
-    return 'marks';
-  }
-  if (
-    lowerDesc.includes('散点图') ||
-    lowerDesc.includes('气泡图') ||
-    lowerDesc.includes('point') ||
-    lowerDesc.includes('scatter')
-  ) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('面积图') || lowerDesc.includes('area')) {
-    return 'marks';
-  }
-  if (
-    lowerDesc.includes('热力图') ||
-    lowerDesc.includes('heatmap') ||
-    lowerDesc.includes('cell')
-  ) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('雷达图') || lowerDesc.includes('radar')) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('桑基图') || lowerDesc.includes('sankey')) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('矩形树图') || lowerDesc.includes('treemap')) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('旭日图') || lowerDesc.includes('sunburst')) {
-    return 'marks';
-  }
-  if (lowerDesc.includes('箱线图') || lowerDesc.includes('boxplot')) {
-    return 'marks';
-  }
-  if (
-    lowerDesc.includes('直方图') ||
-    lowerDesc.includes('histogram') ||
-    lowerDesc.includes('bin')
-  ) {
-    return 'transforms';
-  }
-  if (lowerDesc.includes('堆叠') || lowerDesc.includes('stack')) {
-    return 'transforms';
-  }
-  if (lowerDesc.includes('分组') || lowerDesc.includes('dodge')) {
-    return 'transforms';
-  }
-  if (lowerDesc.includes('排序') || lowerDesc.includes('sort')) {
-    return 'transforms';
-  }
-  if (lowerDesc.includes('过滤') || lowerDesc.includes('filter')) {
-    return 'data';
-  }
-  if (lowerDesc.includes('坐标轴') || lowerDesc.includes('axis')) {
-    return 'components';
-  }
-  if (lowerDesc.includes('图例') || lowerDesc.includes('legend')) {
-    return 'components';
-  }
-  if (lowerDesc.includes('tooltip') || lowerDesc.includes('提示')) {
-    return 'components';
-  }
-  if (
-    lowerDesc.includes('交互') ||
-    lowerDesc.includes('brush') ||
-    lowerDesc.includes('select')
-  ) {
-    return 'interactions';
-  }
-  if (lowerDesc.includes('动画') || lowerDesc.includes('animation')) {
-    return 'animations';
-  }
-  if (lowerDesc.includes('主题') || lowerDesc.includes('theme')) {
-    return 'themes';
-  }
-
-  // G6 类别推断
-  if (lowerDesc.includes('力导') || lowerDesc.includes('force')) {
-    return 'layouts';
-  }
-  if (
-    lowerDesc.includes('树布局') ||
-    lowerDesc.includes('tree') ||
-    lowerDesc.includes('compactbox') ||
-    lowerDesc.includes('dendrogram')
-  ) {
-    return 'layouts';
-  }
-  if (lowerDesc.includes('dagre') || lowerDesc.includes('层次布局')) {
-    return 'layouts';
-  }
-  if (
-    lowerDesc.includes('节点') &&
-    (lowerDesc.includes('样式') ||
-      lowerDesc.includes('颜色') ||
-      lowerDesc.includes('大小'))
-  ) {
-    return 'elements';
-  }
-  if (
-    lowerDesc.includes('边') &&
-    (lowerDesc.includes('样式') || lowerDesc.includes('颜色'))
-  ) {
-    return 'elements';
-  }
-  if (
-    lowerDesc.includes('点击') ||
-    lowerDesc.includes('click') ||
-    lowerDesc.includes('悬停') ||
-    lowerDesc.includes('hover')
-  ) {
-    return 'events';
-  }
-  if (lowerDesc.includes('拖拽') || lowerDesc.includes('drag')) {
-    return 'behaviors';
-  }
-  if (lowerDesc.includes('缩放') || lowerDesc.includes('zoom')) {
-    return 'behaviors';
-  }
-
-  return 'unknown';
-}
-
 // ── 评估函数 ───────────────────────────────────────────────────────────────────
 
 function evaluateRecall() {
   // 加载测试数据集
-  const datasetPath = path.join(__dirname, 'g2-dataset-174.json ');
+  const datasetPath = path.join(__dirname, 'data', 'g2-dataset-174.json');
   const dataset = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
 
   console.log('\n' + '='.repeat(60));
@@ -292,7 +137,7 @@ function evaluateRecall() {
     if (results.length === 0) continue;
 
     // 推断期望类别
-    const expectedCategory = inferExpectedCategory(id, description);
+    const expectedCategory = inferCategory(description);
 
     // 检查检索结果是否包含期望类别
     const hit = results.some((s) => s.category === expectedCategory);

@@ -27,7 +27,7 @@
 require('dotenv').config({ override: true });
 
 const path = require('path');
-const { parseArgs } = require('../eval/utils/eval-utils');
+const { Command } = require('commander');
 const { detectProviderFromModel } = require('../eval/utils/ai-sdk');
 const { getLibraryConfig } = require('./config');
 const evalAgent = require('./eval-agent');
@@ -37,54 +37,50 @@ const optimizeAgent = require('./optimize-agent');
 const indexAgent = require('./index-agent');
 const { closeBrowser } = require('../eval/utils/render-tester');
 const worktreeManager = require('../eval/utils/worktree');
+const logger = require('../eval/utils/logger');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
-// ── Config ────────────────────────────────────────────────────────────────────
+// ── CLI ───────────────────────────────────────────────────────────────────────
 
-const argv = parseArgs(process.argv);
+const program = new Command();
+program
+  .name('controller')
+  .description('AntV Skills iterative validation harness')
+  .option('--library <id>', 'Library id (g2 | g6)', process.env.LOOP_LIBRARY || 'g2')
+  .option('--sample <n>', 'Eval sample size', (v) => parseInt(v, 10), parseInt(process.env.LOOP_SAMPLE || '10', 10))
+  .option('--retrieval <strategy>', 'tool-call | bm25 | context7', process.env.LOOP_RETRIEVAL || 'tool-call')
+  .option('--passes <n>', 'Consecutive clean passes required', (v) => parseInt(v, 10), 3)
+  .option('--max-iterations <n>', 'Max optimization iterations', (v) => parseInt(v, 10), 20)
+  .option('--concurrency <n>', 'Render test concurrency', (v) => parseInt(v, 10), parseInt(process.env.LOOP_CONCURRENCY || '5', 10))
+  .option('--dry-run', 'Log errors only, skip optimization')
+  .option('--no-worktree', 'Disable git worktree isolation')
+  .option('--skip-score', 'Skip VL visual scoring')
+  .option('--score-threshold <n>', 'Fail threshold for visual score', (v) => parseFloat(v), parseFloat(process.env.LOOP_SCORE_THRESHOLD || '0.6'))
+  .option('--log <file>', 'Custom dry-run log file path')
+  .parse(process.argv);
 
-const LIBRARY_ID =
-  process.argv.find((a) => a.startsWith('--library='))?.split('=')[1] ||
-  process.env.LOOP_LIBRARY ||
-  'g2';
+const opts = program.opts();
 
-const SAMPLE = parseInt(argv.sample || process.env.LOOP_SAMPLE || '10');
-const RETRIEVAL =
-  process.argv.find((a) => a.startsWith('--retrieval='))?.split('=')[1] ||
-  process.env.LOOP_RETRIEVAL ||
-  'tool-call';
-const MAX_PASSES = parseInt(
-  process.argv.find((a) => a.startsWith('--passes='))?.split('=')[1] || '3'
-);
-const MAX_ITERATIONS = parseInt(
-  process.argv.find((a) => a.startsWith('--max-iterations='))?.split('=')[1] ||
-    '20'
-);
-const CONCURRENCY = parseInt(
-  process.argv.find((a) => a.startsWith('--concurrency='))?.split('=')[1] ||
-    process.env.LOOP_CONCURRENCY ||
-    '5'
-);
+const LIBRARY_ID = opts.library;
+const SAMPLE = opts.sample;
+const RETRIEVAL = opts.retrieval;
+const MAX_PASSES = opts.passes;
+const MAX_ITERATIONS = opts.maxIterations;
+const CONCURRENCY = opts.concurrency;
 const MODEL = process.env.AI_MODEL || 'qwen3-coder-480b-a35b-instruct';
 const PROVIDER = detectProviderFromModel(MODEL);
+const DRY_RUN = opts.dryRun;
+const NO_WORKTREE = !opts.worktree;
+const SKIP_SCORE = opts.skipScore;
+const SCORE_THRESHOLD = opts.scoreThreshold;
 
-const DRY_RUN = process.argv.includes('--dry-run');
-const NO_WORKTREE = process.argv.includes('--no-worktree');
-const SKIP_SCORE = process.argv.includes('--skip-score');
-const SCORE_THRESHOLD = parseFloat(
-  process.argv.find((a) => a.startsWith('--score-threshold='))?.split('=')[1] ||
-    process.env.LOOP_SCORE_THRESHOLD ||
-    '0.6'
-);
 const LOG_DIR = path.join(__dirname, 'logs');
 const LOG_FILE = (() => {
-  const custom = process.argv
-    .find((a) => a.startsWith('--log='))
-    ?.split('=')[1];
-  if (custom)
-    return path.isAbsolute(custom) ? custom : path.join(process.cwd(), custom);
+  if (opts.log) {
+    return path.isAbsolute(opts.log) ? opts.log : path.join(process.cwd(), opts.log);
+  }
   const dateStr = new Date().toISOString().slice(0, 10);
   return path.join(LOG_DIR, `validator-${dateStr}.log`);
 })();
@@ -240,9 +236,9 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error('Fatal:', err.message);
+    logger.error({ err: err.message }, 'Fatal error');
     if (worktree) {
-      console.log('[worktree] Cleaning up due to fatal error...');
+      logger.info('Cleaning up worktree due to fatal error');
       worktree.cleanup();
     }
     process.exit(1);

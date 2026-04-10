@@ -9,7 +9,7 @@
  *   const resultPath = await evalAgent.run({ sample: 10, retrieval: 'tool-call' });
  */
 
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -36,14 +36,19 @@ function run({ sample, retrieval, dataset }) {
       : []
   );
 
-  const parts = [
-    `node eval/eval-cli/index.js eval --sample=${sample} --retrieval=${retrieval}`
+  const argv = [
+    'eval/eval-cli/index.js',
+    'eval',
+    `--sample=${sample}`,
+    `--retrieval=${retrieval}`
   ];
-  if (dataset) parts.push(`--dataset=${dataset}`);
-  const cmd = parts.join(' ');
+  if (dataset) argv.push(`--dataset=${dataset}`);
 
-  console.log(`\n$ ${cmd}`);
-  execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit' });
+  console.log(`\n$ node ${argv.join(' ')}`);
+  const result = spawnSync('node', argv, { cwd: ROOT_DIR, stdio: 'inherit', shell: false });
+  if (result.status !== 0) {
+    throw new Error(`Eval process exited with code ${result.status}`);
+  }
 
   // Find newly created result file
   const after = fs.readdirSync(RESULT_DIR).filter((f) => f.endsWith('.json'));

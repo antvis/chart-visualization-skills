@@ -1,0 +1,26 @@
+{
+  "name": "chart-visualization-skills-eval",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evaluation suite for chart-visualization-skills",
+  "type": "commonjs",
+  "scripts": {
+    "eval": "node eval-cli/index.js",
+    "recall": "node eval-recall.js",
+    "tune": "node _tune-bm25.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.0.0",
+    "express": "^5.2.1",
+    "openai": "^4.104.0",
+    "p-limit": "^3.1.0",
+    "p-retry": "^4.0.0",
+    "pino": "^9.0.0",
+    "pino-pretty": "^13.0.0",
+    "playwright": "^1.59.1",
+    "uuid": "^13.0.0",
+    "ws": "^8.20.0"
+  }
+}

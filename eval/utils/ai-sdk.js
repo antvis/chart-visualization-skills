@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 /**
  * AI SDK 统一适配层
- * 支持多种 AI 提供商：Qwen、Anthropic、OpenAI、DeepSeek、Kimi、GLM
+ * 支持多种 AI 提供商：Qwen、OpenAI、DeepSeek、Kimi、GLM
  *
  * OpenAI 兼容格式（qwen/deepseek/openai/kimi/glm）使用 openai 包
- * Anthropic 格式使用 @anthropic-ai/sdk
  *
  * Provider/model 元数据统一在 provider-registry.js 维护，
  * 本文件通过 getRuntimeConfig() 读取，不再重复定义。
  */
 
 const OpenAI = require('openai');
-const Anthropic = require('@anthropic-ai/sdk');
+const pRetry = require('p-retry');
 const { getRuntimeConfig, PROVIDERS } = require('./provider-registry');
 
 // ── Provider 检测 ──────────────────────────────────────────────────────────────
@@ -24,14 +23,12 @@ const { getRuntimeConfig, PROVIDERS } = require('./provider-registry');
 function detectProviderFromModel(model) {
   if (!model) return 'qwen';
   const modelLower = model.toLowerCase();
-  if (modelLower.startsWith('claude')) return 'anthropic';
   if (modelLower.startsWith('gpt')) return 'openai';
   if (modelLower.startsWith('deepseek')) return 'deepseek';
   if (modelLower.startsWith('qwen')) return 'qwen';
   if (modelLower.startsWith('glm')) return 'glm';
   if (modelLower.startsWith('kimi') || modelLower.startsWith('moonshot'))
     return 'kimi';
-  // Fall back to provider id match
   if (model in PROVIDERS) return model;
   return 'qwen';
 }
@@ -52,21 +49,12 @@ function createOpenAIClient(config) {
   });
 }
 
-function createAnthropicClient(config) {
-  return new Anthropic({
-    apiKey: config.apiKey,
-    baseURL:
-      config.endpoint !== 'https://api.anthropic.com'
-        ? config.endpoint
-        : undefined
-  });
-}
-
 // ── 核心 API 调用 ───────────────────────────────────────────────────────────────
 
 const RETRY_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
+const RETRY_ERROR_CODES = new Set(['ETIMEDOUT', 'ECONNRESET']);
 
-async function callAI(options, _retryCount = 0) {
+async function callAI(options) {
   const {
     provider = 'qwen',
     model,
@@ -75,14 +63,11 @@ async function callAI(options, _retryCount = 0) {
     toolChoice,
     temperature,
     maxTokens,
-    timeout = 120000,
-    debug = false
+    timeout = 120000
   } = options;
 
   const config = getRuntimeConfig(provider);
-  if (!config) {
-    throw new Error(`Unknown provider: ${provider}`);
-  }
+  if (!config) throw new Error(`Unknown provider: ${provider}`);
 
   if (!config.apiKey) {
     throw new Error(
@@ -92,23 +77,9 @@ async function callAI(options, _retryCount = 0) {
 
   const resolvedModel = model || config.defaultModel;
 
-  const maxRetries = 3;
-  const baseDelay = 2000;
-
-  try {
-    if (provider === 'anthropic') {
-      return await callAnthropic({
-        config,
-        model: resolvedModel,
-        messages,
-        tools,
-        temperature,
-        maxTokens,
-        timeout,
-        debug
-      });
-    } else {
-      return await callOpenAICompat({
+  return pRetry(
+    () =>
+      callOpenAICompat({
         config,
         model: resolvedModel,
         messages,
@@ -116,31 +87,25 @@ async function callAI(options, _retryCount = 0) {
         toolChoice,
         temperature,
         maxTokens,
-        timeout,
-        debug
-      });
-    }
-  } catch (error) {
-    const statusCode =
-      error.status || error.statusCode || error.response?.status;
-    const isRetryable =
-      RETRY_STATUS_CODES.has(statusCode) ||
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ECONNRESET';
-
-    if (isRetryable && _retryCount < maxRetries) {
-      const delay = baseDelay * Math.pow(2, _retryCount);
-      if (debug) {
-        console.log(
-          `   ⏳ Retry ${_retryCount + 1}/${maxRetries} after ${delay}ms (${error.message})`
-        );
+        timeout
+      }),
+    {
+      retries: 3,
+      factor: 2,
+      minTimeout: 2000,
+      maxTimeout: 16000,
+      randomize: true,
+      onFailedAttempt(err) {
+        const statusCode = err.status || err.statusCode || err.response?.status;
+        const isRetryable =
+          RETRY_STATUS_CODES.has(statusCode) ||
+          RETRY_ERROR_CODES.has(err.code);
+        if (!isRetryable) {
+          throw new pRetry.AbortError(err);
+        }
       }
-      await new Promise((r) => setTimeout(r, delay));
-      return callAI(options, _retryCount + 1);
     }
-
-    throw error;
-  }
+  );
 }
 
 async function callOpenAICompat({
@@ -151,8 +116,7 @@ async function callOpenAICompat({
   toolChoice,
   temperature,
   maxTokens,
-  timeout,
-  debug
+  timeout
 }) {
   const client = createOpenAIClient(config);
 
@@ -168,21 +132,7 @@ async function callOpenAICompat({
     if (toolChoice) params.tool_choice = toolChoice;
   }
 
-  if (debug) {
-    console.log(
-      '   📤 Request:',
-      JSON.stringify(params, null, 2).slice(0, 500)
-    );
-  }
-
   const response = await client.chat.completions.create(params, { timeout });
-
-  if (debug) {
-    console.log(
-      '   📥 Response:',
-      JSON.stringify(response, null, 2).slice(0, 500)
-    );
-  }
 
   const choice = response.choices?.[0];
   if (!choice) throw new Error('Invalid response format: no choices');
@@ -200,85 +150,9 @@ async function callOpenAICompat({
   };
 }
 
-async function callAnthropic({
-  config,
-  model,
-  messages,
-  tools,
-  temperature,
-  maxTokens,
-  timeout,
-  debug
-}) {
-  const client = createAnthropicClient(config);
-
-  const systemMessage = messages.find((m) => m.role === 'system');
-  const userMessages = messages
-    .filter((m) => m.role !== 'system')
-    .map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content
-    }));
-
-  const params = {
-    model,
-    messages: userMessages,
-    temperature: temperature ?? 0.3,
-    max_tokens: maxTokens ?? 2000
-  };
-
-  if (systemMessage) params.system = systemMessage.content;
-
-  if (tools && tools.length > 0) {
-    params.tools = tools.map((t) => ({
-      name: t.function.name,
-      description: t.function.description,
-      input_schema: t.function.parameters
-    }));
-  }
-
-  if (debug) {
-    console.log(
-      '   📤 Request:',
-      JSON.stringify(params, null, 2).slice(0, 500)
-    );
-  }
-
-  const response = await client.messages.create(params, { timeout });
-
-  if (debug) {
-    console.log(
-      '   📥 Response:',
-      JSON.stringify(response, null, 2).slice(0, 500)
-    );
-  }
-
-  const textContent = response.content?.find((c) => c.type === 'text');
-  const toolUseContent =
-    response.content?.filter((c) => c.type === 'tool_use') || [];
-
-  return {
-    content: textContent?.text || '',
-    toolCalls: toolUseContent.map((tc) => ({
-      id: tc.id,
-      type: 'function',
-      function: { name: tc.name, arguments: JSON.stringify(tc.input) }
-    })),
-    usage: {
-      prompt_tokens: response.usage?.input_tokens,
-      completion_tokens: response.usage?.output_tokens,
-      total_tokens:
-        (response.usage?.input_tokens || 0) +
-        (response.usage?.output_tokens || 0)
-    },
-    raw: response
-  };
-}
-
 // ── 流式调用（可选）─────────────────────────────────────────────────────────────
 
-async function* streamAI(options) {
-  // TODO: 实现流式响应支持
+async function* streamAI(_options) {
   throw new Error('Streaming not implemented yet');
 }
 
@@ -291,7 +165,6 @@ class AgentLoop {
     this.maxRounds = options.maxRounds || 3;
     this.tools = options.tools || [];
     this.toolHandlers = options.toolHandlers || {};
-    this.debug = options.debug || false;
     this.messages = [];
     this.toolCallsLog = [];
   }
@@ -307,17 +180,12 @@ class AgentLoop {
     let lastAssistantContent = '';
 
     for (let round = 0; round < this.maxRounds; round++) {
-      if (this.debug) {
-        console.log(`   🔄 Agent round ${round + 1}/${this.maxRounds}...`);
-      }
-
       const response = await callAI({
         provider: this.provider,
         model: this.model,
         messages: this.messages,
         tools: this.tools,
-        toolChoice: 'auto',
-        debug: this.debug && round === 0
+        toolChoice: 'auto'
       });
 
       if (response.content) {
@@ -334,25 +202,15 @@ class AgentLoop {
         for (const toolCall of response.toolCalls) {
           const toolName = toolCall.function.name;
           let toolArgs;
-
           try {
             toolArgs = JSON.parse(toolCall.function.arguments);
-          } catch (e) {
+          } catch {
             toolArgs = {};
           }
 
-          if (this.debug) {
-            console.log(
-              `   📞 Tool call: ${toolName}(${JSON.stringify(toolArgs)})`
-            );
-          }
-
-          let toolResult;
-          if (this.toolHandlers[toolName]) {
-            toolResult = await this.toolHandlers[toolName](toolArgs);
-          } else {
-            toolResult = { error: `Unknown tool: ${toolName}` };
-          }
+          const toolResult = this.toolHandlers[toolName]
+            ? await this.toolHandlers[toolName](toolArgs)
+            : { error: `Unknown tool: ${toolName}` };
 
           this.toolCallsLog.push({
             round: round + 1,
@@ -375,11 +233,7 @@ class AgentLoop {
       }
     }
 
-    // If maxRounds exhausted and still no final content, force a final generation call
     if (!finalContent && this.toolCallsLog.length > 0) {
-      if (this.debug) {
-        console.log('   🔄 Force final generation (no tools)...');
-      }
       const finalResponse = await callAI({
         provider: this.provider,
         model: this.model,
@@ -390,8 +244,7 @@ class AgentLoop {
             content:
               '请根据以上参考文档，直接生成最终代码，只输出代码块，不要再调用工具。'
           }
-        ],
-        debug: this.debug
+        ]
       });
       finalContent = finalResponse.content || '';
     }

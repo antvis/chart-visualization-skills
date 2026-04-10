@@ -1,0 +1,16 @@
+{
+  "name": "chart-visualization-skills-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent harness for chart-visualization-skills evaluation",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node controller.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.0.0",
+    "pino": "^9.0.0",
+    "pino-pretty": "^13.0.0"
+  }
+}

@@ -15,6 +15,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 const { scoreScreenshot } = require('./visual-scorer');
+const logger = require('./logger');
 
 const G2_CDN = 'https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js';
 const G6_CDN = 'https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js';
@@ -160,7 +161,6 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
     if (!libLoaded) {
       return { status: 'error', error: `Library load failed after ${CDN_RETRIES} attempts: ${libErr.message}` };
     }
-
     // Step 3: Execute the generated code and detect blank screen
     const libSetup = isG6 ? 'const { Graph } = window.G6;' : 'const { Chart } = window.G2;';
     const userCode = libSetup + '\n' + transformCode(code);
@@ -208,8 +208,9 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
           result.visualDimensions = scoreResult.dimensions;
           result.visualReasoning = scoreResult.reasoning;
         }
-      } catch {
+      } catch (err) {
         // Screenshot/score failure must not affect the render status
+        logger.debug({ err: err.message }, 'Visual scoring failed');
       }
     }
 
