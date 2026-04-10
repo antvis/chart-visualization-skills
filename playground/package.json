@@ -9,10 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@antv/chart-visualization-skills": "workspace:*",
     "@antv/g2": "^5.4.8",
     "@antv/g6": "^5.0.42",
     "@monaco-editor/react": "^4.6.0",
-    "@antv/chart-visualization-skills": "workspace:*",
     "next": "^15.2.4",
     "openai": "^4.104.0",
     "react": "^19.0.0",
@@ -23,6 +23,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "concurrently": "^9.0.0",
+    "monaco-editor": "^0.55.1",
     "typescript": "^5.7.0"
   }
 }

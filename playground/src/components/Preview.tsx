@@ -14,21 +14,44 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
   const chartInstanceRef = useRef<unknown>(null);
   const graphInstanceRef = useRef<unknown>(null);
 
+  const execCode = useCallback((container: HTMLDivElement) => {
+    const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
+    // @ts-ignore
+    const lib = isG6 ? window.G6 : window.G2;
+
+    if (!lib) {
+      throw new Error(`${isG6 ? 'G6' : 'G2'} 库尚未加载，请稍后重试`);
+    }
+
+    let t = code
+      .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
+      .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
+      .replace(/import\s+\w+\s+from\s*['"]@antv\/g2['"];?/g, '')
+      .replace(/import\s+\w+\s+from\s*['"]@antv\/g6['"];?/g, '')
+      .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g2['"];?/g, '')
+      .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
+      .replace(/container:\s*['"]container['"]/g, 'container: container');
+
+    const exec = isG6
+      ? `const { Graph } = window.G6;\n${t}`
+      : `const { Chart } = window.G2;\n${t}`;
+
+    const fn = new Function('container', exec);
+    fn(container);
+  }, [code]);
+
   const runCode = useCallback(() => {
     if (!code.trim() || !containerRef.current) return;
 
-    // Destroy previous instances
     if (
       chartInstanceRef.current &&
-      typeof (chartInstanceRef.current as { destroy: () => void }).destroy ===
-        'function'
+      typeof (chartInstanceRef.current as { destroy: () => void }).destroy === 'function'
     ) {
       (chartInstanceRef.current as { destroy: () => void }).destroy();
     }
     if (
       graphInstanceRef.current &&
-      typeof (graphInstanceRef.current as { destroy: () => void }).destroy ===
-        'function'
+      typeof (graphInstanceRef.current as { destroy: () => void }).destroy === 'function'
     ) {
       (graphInstanceRef.current as { destroy: () => void }).destroy();
     }
@@ -39,31 +62,7 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
     container.innerHTML = '';
 
     try {
-      let t = code
-        .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
-        .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
-        .replace(/import\s+\w+\s+from\s*['"]@antv\/g2['"];?/g, '')
-        .replace(/import\s+\w+\s+from\s*['"]@antv\/g6['"];?/g, '')
-        .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g2['"];?/g, '')
-        .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
-        .replace(/container:\s*['"]container['"]/g, 'container: container');
-
-      const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
-
-      // Use global G2/G6 from CDN
-      // @ts-ignore
-      const G2 = window.G2;
-      // @ts-ignore
-      const G6 = window.G6;
-
-      const exec = isG6
-        ? `const { Graph } = window.G6;\n${t}`
-        : `const { Chart } = window.G2;\n${t}`;
-
-      // Create a function and execute
-      const fn = new Function('container', exec);
-      fn(container);
-
+      execCode(container);
       onStatusChange('预览已更新', 'var(--green)');
     } catch (e) {
       console.error(e);
@@ -71,17 +70,31 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       container.innerHTML = `<div class="error-block"><strong>运行错误</strong><br>${error.message}</div>`;
       onStatusChange('运行错误', 'var(--red)');
     }
-  }, [code, onStatusChange]);
+  }, [code, execCode, onStatusChange]);
 
-  // Auto-run code with debounce
+  // Auto-run code with debounce; poll until CDN library is ready
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (code.trim()) {
-        runCode();
-      }
-    }, 1000);
+    if (!code.trim()) return;
 
-    return () => clearTimeout(timer);
+    let pollTimer: ReturnType<typeof setTimeout>;
+    const debounceTimer = setTimeout(() => {
+      const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
+      const check = () => {
+        // @ts-ignore
+        const ready = isG6 ? !!window.G6 : !!window.G2;
+        if (ready) {
+          runCode();
+        } else {
+          pollTimer = setTimeout(check, 200);
+        }
+      };
+      check();
+    }, 800);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      clearTimeout(pollTimer!);
+    };
   }, [code, runCode]);
 
   return (

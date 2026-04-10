@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   Sidebar,
   ChatContainer,
@@ -9,6 +9,7 @@ import {
   Toolbar,
   ControlsBar
 } from '@/components';
+import type { CodeEditorHandle } from '@/components/CodeEditor';
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ interface Skill {
 }
 
 export default function Home() {
+  const codeEditorRef = useRef<CodeEditorHandle>(null);
   const [library, setLibrary] = useState('g2');
   const [mode, setMode] = useState('tool-call');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -97,13 +99,21 @@ export default function Home() {
             ? `工具调用 ${toolCallsCount} 次 · 加载 ${loadedSkills.length} 个 Skill`
             : `检索到 ${loadedSkills.length} 个相关 Skill`;
 
+        const escapedCode = (newCode || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+        const codeBlock = escapedCode
+          ? `<details class="msg-code-block"><summary>查看代码</summary><pre><code>${escapedCode}</code></pre></details>`
+          : '';
+
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMsgId
               ? {
                   ...msg,
                   role: 'assistant',
-                  content: `代码已生成 &nbsp;·&nbsp; <strong>${lib.toUpperCase()}</strong> ${badge}<br><span style="font-size:11px;color:var(--text-tertiary)">${note}</span>`
+                  content: `代码已生成 &nbsp;·&nbsp; <strong>${lib.toUpperCase()}</strong> ${badge}<br><span style="font-size:11px;color:var(--text-tertiary)">${note}</span>${codeBlock}`
                 }
               : msg
           )
@@ -147,8 +157,7 @@ export default function Home() {
   }, [code]);
 
   const handleFormat = useCallback(() => {
-    // Format code - placeholder for now
-    // In a real implementation, this would use prettier or similar
+    codeEditorRef.current?.format();
     setStatus('已格式化');
     setTimeout(() => setStatus('就绪'), 1500);
   }, []);
@@ -204,7 +213,7 @@ export default function Home() {
                 </span>
               )}
             </div>
-            <CodeEditor code={code} onChange={setCode} />
+            <CodeEditor ref={codeEditorRef} code={code} onChange={setCode} />
             {skills.length > 0 && (
               <div className='skills-footer'>
                 <div className='skills-footer-title'>已加载 Skills</div>

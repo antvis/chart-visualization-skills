@@ -28,8 +28,8 @@ export default function RootLayout({
           rel='stylesheet'
         />
         {/* G2 and G6 libraries loaded via CDN for runtime execution */}
-        <script src='https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js' async />
-        <script src='https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js' async />
+        <script src='https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js' defer />
+        <script src='https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js' defer />
       </head>
       <body>{children}</body>
     </html>
