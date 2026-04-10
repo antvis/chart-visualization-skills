@@ -7,7 +7,13 @@ import path from 'path';
 import { retrieve } from '@antv/chart-visualization-skills';
 import type { Skill } from '@antv/chart-visualization-skills';
 
-const ROOT_DIR = path.resolve(__dirname, '../../..');
+// process.cwd() is reliable in Next.js server context; __dirname is not (webpack rewrites it)
+const ROOT_DIR = process.cwd().endsWith('playground')
+  ? path.resolve(process.cwd(), '..')
+  : process.cwd();
+
+// Index files live in dist/index/ relative to the repo root
+const INDEX_DIR = path.resolve(ROOT_DIR, 'dist/index');
 
 function loadSkillContent(relativePath: string): string | null {
   const fullPath = path.resolve(ROOT_DIR, relativePath);
@@ -29,7 +35,7 @@ export function buildPrompt(
   opts: { library?: string; topK?: number } = {}
 ): BuildPromptResult {
   const { library = 'g2', topK = 5 } = opts;
-  const retrievedSkills = retrieve(query, library, topK);
+  const retrievedSkills = retrieve(query, library, topK, INDEX_DIR);
 
   let skillContext = '';
   for (const skill of retrievedSkills) {
