@@ -515,7 +515,7 @@ Marks 是 G2 的核心可视化元素，决定了数据的视觉表现形式。�
 ```javascript
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: data,
     transform: [  // ✅ Data Transform：数据预处理
@@ -564,14 +564,14 @@ chart.options({
 // ❌ 错误：fold 是数据变换，不能放在 mark transform
 chart.options({
   type: 'interval',
-   wideData,
+  data: wideData,
   transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ❌ 错误！
 });
 
 // ✅ 正确：fold 放在 data.transform
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: wideData,
     transform: [{ type: 'fold', fields: ['a', 'b'] }],  // ✅ 正确
@@ -592,7 +592,7 @@ const wideData = [
 
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: wideData,
     transform: [
@@ -1053,10 +1053,10 @@ chart.options({
 // ✅ 子 mark 需要不同数据时，在 children 里单独指定 data
 chart.options({
   type: 'view',
-   mainData,
+  data: mainData,
   children: [
     { type: 'interval', encode: { x: 'x', y: 'y' } },        // 用父级 mainData
-    { type: 'text',  labelData, encode: { x: 'x', text: 'label' } },  // 用独立数据
+    { type: 'text', data: labelData, encode: { x: 'x', text: 'label' } },  // 用独立数据
   ],
 });
 
