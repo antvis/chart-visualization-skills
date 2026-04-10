@@ -22,13 +22,14 @@ export function loadIndex(library: string, indexDir?: string): SkillIndex {
 }
 
 function getBM25Index(library: string, indexDir?: string): BM25Index {
-  if (!bm25Cache.has(library)) {
+  const cacheKey = `${library}:${indexDir ?? ''}`;
+  if (!bm25Cache.has(cacheKey)) {
     const { skills } = loadIndex(library, indexDir);
     const index = new BM25Index({ k1: 1.8, b: 0.5 });
     index.build(skills);
-    bm25Cache.set(library, index);
+    bm25Cache.set(cacheKey, index);
   }
-  return bm25Cache.get(library)!;
+  return bm25Cache.get(cacheKey)!;
 }
 
 export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] {
