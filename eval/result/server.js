@@ -5,12 +5,10 @@
  * Express.js server with WebSocket support for real-time evaluation progress.
  *
  * Usage:
- *   node eval/server.js                    # Start server on default port 3100
- *   node eval/server.js --port=4000        # Custom port
- *   node eval/server.js --dev              # Development mode with verbose logging
+ *   node eval/result/server.js                    # Start server on default port 3100
+ *   node eval/result/server.js --port=4000        # Custom port
  */
 
-// Load environment variables from .env file
 require('dotenv').config({ override: true });
 
 const express = require('express');
@@ -23,6 +21,7 @@ const { v4: uuidv4 } = require('uuid');
 const EvaluationManager = require('../utils/eval-manager');
 const WebSocketHandler = require('../utils/websocket');
 const ProviderRegistry = require('../utils/provider-registry');
+const logger = require('../utils/logger');
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -41,7 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging (dev mode)
 if (IS_DEV) {
   app.use((req, res, next) => {
-    console.log(`[REQ] ${req.method} ${req.path}`);
+    logger.debug({ method: req.method, path: req.path }, 'request');
     next();
   });
 }
@@ -86,7 +85,7 @@ app.get('/api/datasets', (req, res) => {
             ? content.length
             : content.results?.length || 0;
         } catch (e) {
-          /* ignore */
+          logger.warn({ file: f, err: e.message }, 'Failed to read dataset file');
         }
         return {
           name: f,
@@ -128,7 +127,7 @@ app.get('/api/results', (req, res) => {
             timestamp: content.timestamp
           };
         } catch (e) {
-          /* ignore */
+          logger.warn({ file: f, err: e.message }, 'Failed to read result file');
         }
         return {
           name: f,
@@ -316,7 +315,7 @@ app.get('/api/compare/:file1/:file2', (req, res) => {
 
 wss.on('connection', (ws) => {
   const clientId = uuidv4();
-  console.log(`[WS] Client connected: ${clientId}`);
+  logger.info({ clientId }, 'WS client connected');
 
   ws.clientId = clientId;
   wsHandler.handleConnection(ws);
@@ -326,12 +325,12 @@ wss.on('connection', (ws) => {
       const message = JSON.parse(data);
       wsHandler.handleMessage(ws, message);
     } catch (error) {
-      console.error('[WS] Error parsing message:', error.message);
+      logger.warn({ err: error.message }, 'WS message parse error');
     }
   });
 
   ws.on('close', () => {
-    console.log(`[WS] Client disconnected: ${clientId}`);
+    logger.info({ clientId }, 'WS client disconnected');
     wsHandler.handleDisconnect(ws);
   });
 });
@@ -345,7 +344,7 @@ app.get('/', (req, res) => {
 // ── Error Handling ────────────────────────────────────────────────────────────
 
 app.use((err, req, res, next) => {
-  console.error('[ERR]', err);
+  logger.error({ err: err.message, path: req.path }, 'Unhandled error');
   res.status(500).json({ error: err.message || 'Internal server error' });
 });
 
@@ -373,9 +372,8 @@ server.listen(PORT, () => {
   console.log('='.repeat(60));
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n[Server] Shutting down...');
+  logger.info('Server shutting down...');
   evalManager.stopAll();
   wss.close();
   server.close();

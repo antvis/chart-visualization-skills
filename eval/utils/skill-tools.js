@@ -13,9 +13,20 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
+
+// Mapping from short library key → actual skills directory name
+const LIBRARY_DIR = {
+  g2: 'antv-g2-chart',
+  g6: 'antv-g6-graph'
+};
+
+function resolveLibraryDir(library) {
+  return LIBRARY_DIR[library] ?? library;
+}
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
@@ -56,7 +67,7 @@ const TOOLS = [
             type: 'array',
             items: { type: 'string' },
             description:
-              'Skill 文件路径列表，如 ["skills/g2/references/marks/g2-mark-interval-basic.md"]',
+              'Skill 文件路径列表，如 ["skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"]',
             maxItems: 4
           }
         },
@@ -68,8 +79,13 @@ const TOOLS = [
 
 // ── File helpers ──────────────────────────────────────────────────────────────
 
+/** In-process cache to avoid redundant disk reads within a single eval run. */
+const _fileCache = new Map();
+
 /**
  * Load a skill markdown file and strip YAML front matter.
+ * Results are cached in memory for the lifetime of the process.
+ *
  * @param {string} skillPath - absolute or relative-to-ROOT_DIR path
  * @param {boolean} verbose
  * @returns {string|null}
@@ -78,11 +94,18 @@ function loadSkillFile(skillPath, verbose = false) {
   const fullPath = skillPath.startsWith('/')
     ? skillPath
     : path.join(ROOT_DIR, skillPath);
+
+  if (_fileCache.has(fullPath)) return _fileCache.get(fullPath);
+
   if (!fs.existsSync(fullPath)) {
-    if (verbose) console.log(`   ⚠️  File not found: ${fullPath}`);
+    if (verbose) logger.warn({ path: fullPath }, 'Skill file not found');
     return null;
   }
-  return fs.readFileSync(fullPath, 'utf-8').replace(/^---[\s\S]*?---\n/, '');
+  const content = fs
+    .readFileSync(fullPath, 'utf-8')
+    .replace(/^---[\s\S]*?---\n/, '');
+  _fileCache.set(fullPath, content);
+  return content;
 }
 
 /**
@@ -91,7 +114,8 @@ function loadSkillFile(skillPath, verbose = false) {
  * @returns {string}
  */
 function loadMainSkill(library) {
-  return loadSkillFile(path.join(SKILLS_DIR, library, 'SKILL.md')) || '';
+  const dir = resolveLibraryDir(library);
+  return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) || '';
 }
 
 // ── Section extraction ────────────────────────────────────────────────────────
@@ -168,7 +192,8 @@ function extractKeySections(content, maxChars = 5000) {
  */
 function toolListReferences(args, verbose = false) {
   const { library, category } = args;
-  const referencesDir = path.join(SKILLS_DIR, library, 'references');
+  const dir = resolveLibraryDir(library);
+  const referencesDir = path.join(SKILLS_DIR, dir, 'references');
   if (!fs.existsSync(referencesDir)) return [];
 
   const results = [];
@@ -200,12 +225,12 @@ function toolListReferences(args, verbose = false) {
       results.push({
         ...meta,
         category: cat,
-        path: `skills/${library}/references/${cat}/${file}`
+        path: `skills/${dir}/references/${cat}/${file}`
       });
     }
   }
 
-  if (verbose) console.log(`   📋 列出 ${results.length} 个参考文档`);
+  if (verbose) logger.debug({ count: results.length }, '列出参考文档');
   return results;
 }
 
@@ -221,7 +246,7 @@ function toolReadSkills(args, verbose = false) {
     if (!content) return { path: skillPath, error: 'File not found' };
     const extracted = extractKeySections(content).slice(0, 10000);
     if (verbose)
-      console.log(`   📖 加载: ${fileName} (${extracted.length} 字符)`);
+      logger.debug({ file: fileName, chars: extracted.length }, '加载 Skill');
     return { id: fileName, path: skillPath, content: extracted };
   });
 }
@@ -235,6 +260,7 @@ function toolReadSkills(args, verbose = false) {
  * @returns {string}
  */
 function buildSystemPrompt(library) {
+  const dir = resolveLibraryDir(library);
   const skillContent = loadMainSkill(library);
   return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
@@ -249,7 +275,7 @@ function buildSystemPrompt(library) {
 1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
 2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
 3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
-4. 参考文档路径格式：\`skills/${library}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
+4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
 5. 生成代码时严格参考文档中的示例写法
 
 --- 知识库概览 ---

@@ -20,6 +20,7 @@
 
 const OpenAI = require('openai');
 const { getRuntimeConfig } = require('./provider-registry');
+const logger = require('./logger');
 
 const VL_MODEL = process.env.QWEN_VL_MODEL || 'qwen-vl-max';
 const SCORE_TIMEOUT_MS = 30000;
@@ -136,6 +137,7 @@ async function scoreScreenshot(screenshotBuffer, query) {
     };
   } catch (err) {
     // Score failure should never crash the render pipeline
+    logger.warn({ err: err.message }, 'Visual scorer error');
     return { ...skippedResult, reasoning: `scorer error: ${err.message}` };
   }
 }
