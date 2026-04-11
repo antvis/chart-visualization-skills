@@ -11,6 +11,26 @@ description: 将数据可视化为图表。当用户需要生成柱状图、折�
 3. 使用 curl 工具调用 API 生成图表图片
 4. 将返回的图片 URL 以 Markdown 图片格式输出
 
+## 图表选择指南
+
+根据用户的数据特征和需求，选择最合适的图表类型：
+
+- **时间序列**：用 `line`（趋势）或 `area`（累计趋势）；两个不同量纲用 `dual-axes`
+- **比较类**：用 `bar`（横向分类对比）或 `column`（纵向分类对比）；频率分布用 `histogram`
+- **占比类**：用 `pie`（比例构成）或 `treemap`（层级占比）
+- **关系与流程**：用 `scatter`（相关性）、`sankey`（流向）或 `venn`（集合重叠）
+- **层级与树形**：用 `organization-chart` 或 `mind-map`
+- **专用类型**：
+  - `radar`：多维度对比
+  - `funnel`：流程阶段转化
+  - `liquid`：百分比/进度
+  - `word-cloud`：文本词频
+  - `boxplot` / `violin`：统计分布
+  - `network-graph`：复杂节点关系
+  - `fishbone-diagram`：因果分析
+  - `flow-diagram`：流程图
+  - `spreadsheet`：结构化数据表或透视表
+
 ## API 接口
 
 POST https://antv-studio.alipay.com/api/gpt-vis
