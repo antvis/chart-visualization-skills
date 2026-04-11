@@ -60,7 +60,7 @@ async function generateChartUrl(chartType, options) {
   const url = getVisRequestServer();
   const payload = {
     type: chartType,
-    source: 'chart-visualization-creator',
+    source: 'chart-visualization-skills',
     ...options,
   };
 
@@ -79,7 +79,7 @@ async function generateMap(tool, inputData) {
     serviceId: getServiceIdentifier(),
     tool,
     input: inputData,
-    source: 'chart-visualization-creator',
+    source: 'chart-visualization-skills',
   };
 
   const data = await httpPost(url, payload);

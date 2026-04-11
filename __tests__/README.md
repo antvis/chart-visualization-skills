@@ -24,7 +24,7 @@ These tests use **real API calls** without mocks to validate the actual function
 ## Test Data
 
 Test data examples are based on:
-- `skills/chart-visualization/references/` - Chart type specifications
+- `skills/chart-visualization/SKILL.md` - Chart type specifications
 - `skills/icon-retrieval/SKILL.md` - Icon search examples
 
 ## Error Handling
