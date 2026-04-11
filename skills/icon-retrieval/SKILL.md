@@ -47,7 +47,7 @@ node ./scripts/search.js 'tech' 20
 ### API Request Format (curl)
 
 ```bash
-curl -sS "https://www.weavefox.cn/api/open/v1/icon?text=document&topK=5"
+curl -sS -L --max-time 20 "https://www.weavefox.cn/api/open/v1/icon?text=document&topK=5"
 ```
 
 The script also uses `curl` to fetch each icon SVG URL returned by the API.

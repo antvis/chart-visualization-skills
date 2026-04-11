@@ -4,21 +4,25 @@ const { execFile } = require('node:child_process');
 const { promisify } = require('node:util');
 
 const execFileAsync = promisify(execFile);
+const CURL_TIMEOUT_SECONDS = 20;
+const MAX_ERROR_BODY_LENGTH = 500;
 
 async function curlGet(url) {
   const marker = '__CURL_HTTP_STATUS__:';
-  const { stdout, stderr } = await execFileAsync('curl', [
-    '-sS',
-    '-L',
-    '--max-time',
-    '20',
-    '-w',
-    `\n${marker}%{http_code}`,
-    url,
-  ]);
-
-  if (stderr) {
-    throw new Error(stderr.trim());
+  let stdout;
+  try {
+    ({ stdout } = await execFileAsync('curl', [
+      '-sS',
+      '-L',
+      '--max-time',
+      String(CURL_TIMEOUT_SECONDS),
+      '-w',
+      `\n${marker}%{http_code}`,
+      url,
+    ]));
+  } catch (error) {
+    const stderr = error?.stderr?.toString().trim();
+    throw new Error(stderr || error.message);
   }
 
   const markerIndex = stdout.lastIndexOf(marker);
@@ -27,14 +31,15 @@ async function curlGet(url) {
   }
 
   const body = stdout.slice(0, markerIndex).trimEnd();
-  const statusCode = Number(stdout.slice(markerIndex + marker.length).trim());
-
-  if (!Number.isInteger(statusCode)) {
-    throw new Error('Invalid HTTP status code from curl');
+  const rawStatusCode = stdout.slice(markerIndex + marker.length).trim();
+  if (!/^\d+$/.test(rawStatusCode)) {
+    throw new Error(`Invalid HTTP status code from curl: ${rawStatusCode}`);
   }
+  const statusCode = Number(rawStatusCode);
 
   if (statusCode < 200 || statusCode >= 300) {
-    throw new Error(`HTTP ${statusCode}: ${body}`);
+    const truncatedBody = body.slice(0, MAX_ERROR_BODY_LENGTH);
+    throw new Error(`HTTP ${statusCode}: ${truncatedBody}`);
   }
 
   return body;
