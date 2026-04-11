@@ -17,6 +17,20 @@ POST https://antv-studio.alipay.com/api/gpt-vis
 
 请求体为 JSON，必须包含 `type` 和 `source: "chart-visualization-skills"` 字段。
 
+示例：
+```bash
+curl -X POST https://antv-studio.alipay.com/api/gpt-vis \
+  -H "Content-Type: application/json" \
+  -d '{"type":"line","source":"chart-visualization-skills","data":[{"time":"2025-01","value":100}],"title":"示例图表"}'
+```
+
+返回示例：
+```json
+{"success":true,"resultObj":"https://..."}
+```
+
+将 `resultObj` 中的 URL 以 Markdown 图片格式输出：`![图表](URL)`
+
 ## 支持的图表类型
 
 | 分类 | 图表类型 |
