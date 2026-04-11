@@ -20,6 +20,8 @@ This skill helps discover available icons by:
 
 ### Search for Icons
 
+This skill follows the icon API documentation format and uses `curl` for all network calls.
+
 To search for icons, use the search script with a keyword or phrase:
 
 ```bash
@@ -41,6 +43,14 @@ node ./scripts/search.js 'security' 10
 # Search for technology icons with top 20 results
 node ./scripts/search.js 'tech' 20
 ```
+
+### API Request Format (curl)
+
+```bash
+curl -sS "https://www.weavefox.cn/api/open/v1/icon?text=document&topK=5"
+```
+
+The script also uses `curl` to fetch each icon SVG URL returned by the API.
 
 ### Understanding Results
 

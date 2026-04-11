@@ -1,16 +1,51 @@
 #!/usr/bin/env node
 
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
+
+const execFileAsync = promisify(execFile);
+
+async function curlGet(url) {
+  const marker = '__CURL_HTTP_STATUS__:';
+  const { stdout, stderr } = await execFileAsync('curl', [
+    '-sS',
+    '-L',
+    '--max-time',
+    '20',
+    '-w',
+    `\n${marker}%{http_code}`,
+    url,
+  ]);
+
+  if (stderr) {
+    throw new Error(stderr.trim());
+  }
+
+  const markerIndex = stdout.lastIndexOf(marker);
+  if (markerIndex === -1) {
+    throw new Error('Invalid curl response format');
+  }
+
+  const body = stdout.slice(0, markerIndex).trimEnd();
+  const statusCode = Number(stdout.slice(markerIndex + marker.length).trim());
+
+  if (!Number.isInteger(statusCode)) {
+    throw new Error('Invalid HTTP status code from curl');
+  }
+
+  if (statusCode < 200 || statusCode >= 300) {
+    throw new Error(`HTTP ${statusCode}: ${body}`);
+  }
+
+  return body;
+}
+
 async function searchIcons(query, topK = 5) {
   const params = new URLSearchParams({ text: query, topK: topK.toString() });
   const apiUrl = `https://www.weavefox.cn/api/open/v1/icon?${params}`;
-  
-  const response = await fetch(apiUrl);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`HTTP ${response.status}: ${text}`);
-  }
-  
-  const data = await response.json();
+
+  const responseText = await curlGet(apiUrl);
+  const data = JSON.parse(responseText);
   
   if (!data.status || !data.data?.success) {
     throw new Error(data.message || 'API request failed');
@@ -21,11 +56,7 @@ async function searchIcons(query, topK = 5) {
   
   for (const url of iconUrls) {
     try {
-      const svgResponse = await fetch(url);
-      if (!svgResponse.ok) {
-        throw new Error(`HTTP ${svgResponse.status}`);
-      }
-      const svgContent = await svgResponse.text();
+      const svgContent = await curlGet(url);
       results.push({ url, svg: svgContent });
     } catch (e) {
       console.error(`Warning: Failed to fetch SVG from ${url}: ${e.message}`);
