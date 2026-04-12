@@ -11,10 +11,12 @@
  *   node harness/controller.js
  *   node harness/controller.js --library=g2 --sample=10 --retrieval=bm25
  *   node harness/controller.js --passes=3 --max-iterations=20 --concurrency=10
- *   node harness/controller.js --dry-run                      # log errors only, skip optimization
- *   node harness/controller.js --dry-run --log=my.log         # custom log file path
- *   node harness/controller.js --skip-score                   # skip VL visual scoring
- *   node harness/controller.js --score-threshold=0.7          # treat visualScore < 0.7 as failure
+ *   node harness/controller.js --full                        # run full dataset
+ *   node harness/controller.js --dry-run                     # log errors only, skip optimization
+ *   node harness/controller.js --dry-run --log=my.log        # custom log file path
+ *   node harness/controller.js --skip-score                  # skip VL visual scoring
+ *   node harness/controller.js --score-threshold=0.7         # treat visualScore < 0.7 as failure
+ *   node harness/controller.js --no-memory                   # disable cross-iteration memory
  *
  * Agent responsibilities:
  *   eval-agent     — invoke CLI eval, return result file path
@@ -30,16 +32,16 @@ const path = require('path');
 const { Command } = require('commander');
 const { detectProviderFromModel } = require('../eval/utils/ai-sdk');
 const { getLibraryConfig } = require('./config');
-const evalAgent = require('./eval-agent');
-const renderAgent = require('./render-agent');
-const analyzeAgent = require('./analyze-agent');
-const optimizeAgent = require('./optimize-agent');
-const indexAgent = require('./index-agent');
+const registry    = require('./agent-registry');
+const configMgr   = require('./config-manager');
+const { classify, Reason } = require('./error-classifier');
+const { withRetry, sleep } = require('./retry-utils');
+const memory      = require('./memory');
 const { closeBrowser } = require('../eval/utils/render-tester');
-const worktreeManager = require('../eval/utils/worktree');
+const worktreeManager  = require('../eval/utils/worktree');
 const logger = require('../eval/utils/logger');
 
-const ROOT_DIR = path.resolve(__dirname, '..');
+const ROOT_DIR   = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
@@ -48,41 +50,43 @@ const program = new Command();
 program
   .name('controller')
   .description('AntV Skills iterative validation harness')
-  .option('--library <id>', 'Library id (g2 | g6)', process.env.LOOP_LIBRARY || 'g2')
-  .option('--sample <n>', 'Eval sample size', (v) => parseInt(v, 10), parseInt(process.env.LOOP_SAMPLE || '10', 10))
-  .option('--full', 'Run full dataset (overrides --sample)')
-  .option('--retrieval <strategy>', 'tool-call | bm25 | context7', process.env.LOOP_RETRIEVAL || 'tool-call')
-  .option('--passes <n>', 'Consecutive clean passes required', (v) => parseInt(v, 10), 3)
-  .option('--max-iterations <n>', 'Max optimization iterations', (v) => parseInt(v, 10), 20)
-  .option('--concurrency <n>', 'Render test concurrency', (v) => parseInt(v, 10), parseInt(process.env.LOOP_CONCURRENCY || '5', 10))
-  .option('--dry-run', 'Log errors only, skip optimization')
-  .option('--no-worktree', 'Disable git worktree isolation')
-  .option('--skip-score', 'Skip VL visual scoring')
-  .option('--score-threshold <n>', 'Fail threshold for visual score', (v) => parseFloat(v), parseFloat(process.env.LOOP_SCORE_THRESHOLD || '0.6'))
-  .option('--log <file>', 'Custom dry-run log file path')
+  .option('--library <id>',          'Library id (g2 | g6)')
+  .option('--sample <n>',            'Eval sample size',             (v) => parseInt(v, 10))
+  .option('--full',                  'Run full dataset (overrides --sample)')
+  .option('--retrieval <strategy>',  'tool-call | bm25 | context7')
+  .option('--passes <n>',            'Consecutive clean passes required', (v) => parseInt(v, 10))
+  .option('--max-iterations <n>',    'Max optimization iterations',  (v) => parseInt(v, 10))
+  .option('--concurrency <n>',       'Render test concurrency',      (v) => parseInt(v, 10))
+  .option('--dry-run',               'Log errors only, skip optimization')
+  .option('--no-worktree',           'Disable git worktree isolation')
+  .option('--skip-score',            'Skip VL visual scoring')
+  .option('--score-threshold <n>',   'Fail threshold for visual score', (v) => parseFloat(v))
+  .option('--log <file>',            'Custom dry-run log file path')
+  .option('--no-memory',             'Disable cross-iteration memory')
   .parse(process.argv);
 
-const opts = program.opts();
+// Merge: defaults < config file < env vars < CLI args
+const cfg = configMgr.load(program.opts());
 
-const LIBRARY_ID = opts.library;
-const FULL = opts.full || false;
-const SAMPLE = FULL ? undefined : opts.sample;
-const RETRIEVAL = opts.retrieval;
-const MAX_PASSES = opts.passes;
-const MAX_ITERATIONS = opts.maxIterations;
-const CONCURRENCY = opts.concurrency;
-const MODEL = process.env.AI_MODEL || 'qwen3-coder-480b-a35b-instruct';
-const PROVIDER = detectProviderFromModel(MODEL);
-const DRY_RUN = opts.dryRun;
-const NO_WORKTREE = !opts.worktree;
-const SKIP_SCORE = opts.skipScore;
-const SCORE_THRESHOLD = opts.scoreThreshold;
+const LIBRARY_ID      = cfg.library;
+const FULL            = cfg.full;
+const SAMPLE          = FULL ? undefined : cfg.sample;
+const RETRIEVAL       = cfg.retrieval;
+const MAX_PASSES      = cfg.passes;
+const MAX_ITERATIONS  = cfg.maxIterations;
+const CONCURRENCY     = cfg.concurrency;
+const MODEL           = process.env.AI_MODEL || 'qwen3-coder-480b-a35b-instruct';
+const PROVIDER        = detectProviderFromModel(MODEL);
+const DRY_RUN         = cfg.dryRun;
+const NO_WORKTREE     = !cfg.worktree;
+const SKIP_SCORE      = cfg.skipScore;
+const SCORE_THRESHOLD = cfg.scoreThreshold;
+const USE_MEMORY      = program.opts().memory !== false; // --no-memory sets opts.memory=false
 
-const LOG_DIR = path.join(__dirname, 'logs');
+const LOG_DIR  = path.join(__dirname, 'logs');
 const LOG_FILE = (() => {
-  if (opts.log) {
-    return path.isAbsolute(opts.log) ? opts.log : path.join(process.cwd(), opts.log);
-  }
+  const cliLog = program.opts().log;
+  if (cliLog) return path.isAbsolute(cliLog) ? cliLog : path.join(process.cwd(), cliLog);
   const dateStr = new Date().toISOString().slice(0, 10);
   return path.join(LOG_DIR, `validator-${dateStr}.log`);
 })();
@@ -94,7 +98,6 @@ let worktree = null;
 // ── Main loop ─────────────────────────────────────────────────────────────────
 
 async function main() {
-  // Validate library config early
   const libConfig = getLibraryConfig(LIBRARY_ID);
 
   console.log('='.repeat(60));
@@ -107,28 +110,22 @@ async function main() {
   console.log(`  Target passes:  ${MAX_PASSES}`);
   console.log(`  Max iterations: ${MAX_ITERATIONS}`);
   console.log(`  Concurrency:    ${CONCURRENCY}`);
-  if (DRY_RUN) console.log(`  Mode:           dry-run (log: ${LOG_FILE})`);
+  console.log(`  Memory:         ${USE_MEMORY ? 'enabled' : 'disabled'}`);
+  if (DRY_RUN)     console.log(`  Mode:           dry-run (log: ${LOG_FILE})`);
   if (NO_WORKTREE) console.log(`  Worktree:       disabled`);
-  if (SKIP_SCORE) console.log(`  Visual score:   disabled`);
-  else console.log(`  Score threshold:${SCORE_THRESHOLD}`);
+  if (SKIP_SCORE)  console.log(`  Visual score:   disabled`);
+  else             console.log(`  Score threshold:${SCORE_THRESHOLD}`);
   console.log('='.repeat(60));
 
   // ── Worktree setup ─────────────────────────────────────────────────────────
-  let activeRootDir = ROOT_DIR;
+  let activeRootDir   = ROOT_DIR;
   let activeSkillsDir = SKILLS_DIR;
 
   if (!DRY_RUN && !NO_WORKTREE) {
-    worktree = worktreeManager.create({
-      rootDir: ROOT_DIR,
-      libraryId: LIBRARY_ID
-    });
-    activeRootDir = worktree.worktreePath;
-    activeSkillsDir = path.join(
-      worktree.worktreePath,
-      path.relative(ROOT_DIR, SKILLS_DIR)
-    );
+    worktree = worktreeManager.create({ rootDir: ROOT_DIR, libraryId: LIBRARY_ID });
+    activeRootDir   = worktree.worktreePath;
+    activeSkillsDir = path.join(worktree.worktreePath, path.relative(ROOT_DIR, SKILLS_DIR));
 
-    // Register cleanup on SIGINT so Ctrl-C doesn't leave a dangling worktree
     process.once('SIGINT', () => {
       console.log('\n[worktree] Interrupted — cleaning up...');
       worktree.cleanup();
@@ -137,8 +134,59 @@ async function main() {
   }
 
   let consecutivePasses = 0;
-  let iteration = 0;
-  let priorityCaseIds = null; // set after optimization to re-test failing cases first
+  let iteration         = 0;
+  let priorityCaseIds   = null; // set after optimization to re-test failing cases first
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+
+  /** Run eval with automatic retry and error-classified back-off. */
+  async function runEval(ids) {
+    let currentSample = SAMPLE;
+
+    return withRetry(
+      () => registry.dispatch('eval', {
+        sample:      currentSample,
+        full:        FULL,
+        retrieval:   RETRIEVAL,
+        dataset:     libConfig.defaultDataset,
+        concurrency: CONCURRENCY,
+        ids,
+      }),
+      {
+        maxAttempts: 3,
+        baseMs:      5_000,
+        shouldRetry(err) {
+          const { reason, action } = classify(err);
+          if (!action.shouldRetry) return false;
+          if (reason === Reason.CONTEXT_OVERFLOW && currentSample) {
+            currentSample = Math.max(1, Math.floor(currentSample / 2));
+            console.warn(`[eval] Context overflow — reducing sample to ${currentSample}`);
+          }
+          return true;
+        },
+        onRetry(err, attempt, delayMs) {
+          const { reason } = classify(err);
+          console.warn(`[eval] attempt ${attempt} failed (${reason}): ${err.message}. Retrying in ${(delayMs/1000).toFixed(1)}s...`);
+        },
+      }
+    );
+  }
+
+  /** Run index rebuild with retry. */
+  async function runIndex() {
+    return withRetry(
+      () => registry.dispatch('index', { libraryId: LIBRARY_ID, rootDir: activeRootDir }),
+      {
+        maxAttempts: 2,
+        baseMs:      3_000,
+        onRetry(err, attempt, delayMs) {
+          console.warn(`[index] attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs/1000).toFixed(1)}s...`);
+        },
+      }
+    );
+  }
+
+  // ── Main iteration loop ───────────────────────────────────────────────────
 
   while (consecutivePasses < MAX_PASSES) {
     if (iteration >= MAX_ITERATIONS) {
@@ -149,37 +197,33 @@ async function main() {
 
     iteration++;
     console.log(`\n${'─'.repeat(60)}`);
-    console.log(
-      `Iteration ${iteration}  |  Consecutive passes: ${consecutivePasses}/${MAX_PASSES}`
-    );
+    console.log(`Iteration ${iteration}  |  Consecutive passes: ${consecutivePasses}/${MAX_PASSES}`);
     console.log('─'.repeat(60));
 
-    // ── Step 1: Run eval ───────────────────────────────────────────────────────
-    let resultPath;
-    try {
-      if (priorityCaseIds) {
-        console.log(`\n[targeted] Re-testing ${priorityCaseIds.length} previously-failing case(s)...`);
-      }
-      resultPath = evalAgent.run({
-        sample: SAMPLE,
-        full: FULL,
-        retrieval: RETRIEVAL,
-        dataset: libConfig.defaultDataset,
-        concurrency: CONCURRENCY,
-        ids: priorityCaseIds
-      });
-      priorityCaseIds = null; // consume — next iteration is free unless optimization sets it again
-    } catch (err) {
-      console.error(`Eval failed: ${err.message}`);
-      if (worktree) worktree.cleanup();
-      process.exit(1);
+    // ── Step 1: Eval ──────────────────────────────────────────────────────────
+    if (priorityCaseIds) {
+      console.log(`\n[targeted] Re-testing ${priorityCaseIds.length} previously-failing case(s)...`);
     }
 
-    // ── Step 2: Render test every generated code ──────────────────────────────
-    const errorCases = await renderAgent.run(resultPath, {
-      concurrency: CONCURRENCY,
-      skipScore: SKIP_SCORE,
-      scoreThreshold: SCORE_THRESHOLD
+    let resultPath;
+    try {
+      resultPath = await runEval(priorityCaseIds);
+      priorityCaseIds = null;
+    } catch (err) {
+      const { reason, action } = classify(err);
+      logger.error({ err: err.message, reason }, 'Eval step failed');
+      if (action.abort) { if (worktree) worktree.cleanup(); process.exit(1); }
+      // Non-abort eval failure: skip this iteration
+      console.error(`Eval failed (${reason}), skipping iteration.`);
+      continue;
+    }
+
+    // ── Step 2: Render test ───────────────────────────────────────────────────
+    const errorCases = await registry.dispatch('render', {
+      resultPath,
+      concurrency:    CONCURRENCY,
+      skipScore:      SKIP_SCORE,
+      scoreThreshold: SCORE_THRESHOLD,
     });
 
     if (errorCases.length === 0) {
@@ -190,33 +234,49 @@ async function main() {
 
     consecutivePasses = 0;
 
-    // ── Step 3: Attribute errors to skill files ────────────────────────────────
-    const { skillToErrors, orphanCases } = analyzeAgent.run(errorCases, {
-      rootDir: activeRootDir,
-      skillsDir: activeSkillsDir
+    // ── Step 3: Analyze errors ────────────────────────────────────────────────
+    const { skillToErrors, orphanCases } = registry.dispatch('analyze', {
+      errorCases,
+      rootDir:    activeRootDir,
+      skillsDir:  activeSkillsDir,
     });
 
     if (skillToErrors.size === 0 && orphanCases.length === 0) {
-      console.log(
-        '\nNo skills to optimize. Counting as pass to avoid infinite loop.'
-      );
+      console.log('\nNo skills to optimize. Counting as pass to avoid infinite loop.');
       consecutivePasses++;
       continue;
     }
 
-    // ── Step 4: Optimize skills (or log in dry-run) ───────────────────────────
+    // ── Step 3b: Update memory ────────────────────────────────────────────────
+    if (USE_MEMORY) {
+      for (const [skillPath, cases] of skillToErrors) {
+        memory.recordErrors(skillPath, cases, iteration);
+      }
+    }
+
+    // ── Step 4: Optimize skills ───────────────────────────────────────────────
     const skillsRefDir = path.join(activeSkillsDir, libConfig.skillsPath);
-    await optimizeAgent.run(skillToErrors, {
-      provider: PROVIDER,
-      model: MODEL,
-      rootDir: activeRootDir,
-      dryRun: DRY_RUN,
-      logFile: LOG_FILE,
+
+    // Build per-skill history context to inject into the optimize prompt
+    const historyContext = USE_MEMORY
+      ? Object.fromEntries(
+          [...skillToErrors.keys()].map((p) => [p, memory.getOptimizationContext(p)])
+        )
+      : {};
+
+    await registry.dispatch('optimize', {
+      skillToErrors,
+      provider:       PROVIDER,
+      model:          MODEL,
+      rootDir:        activeRootDir,
+      dryRun:         DRY_RUN,
+      logFile:        LOG_FILE,
       iteration,
-      allErrorCases: errorCases,
+      allErrorCases:  errorCases,
       orphanCases,
-      libraryId: LIBRARY_ID,
-      skillsRefDir
+      libraryId:      LIBRARY_ID,
+      skillsRefDir,
+      historyContext,
     });
 
     if (DRY_RUN) {
@@ -224,15 +284,20 @@ async function main() {
       break;
     }
 
-    // ── Step 4b: Commit changes to worktree branch ────────────────────────────
-    if (worktree) {
-      worktree.commit(
-        `validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`
-      );
+    // ── Step 4b: Record optimization in memory ────────────────────────────────
+    if (USE_MEMORY) {
+      for (const [skillPath, cases] of skillToErrors) {
+        memory.recordOptimization(skillPath, cases, iteration);
+      }
     }
 
-    // ── Step 5: Rebuild index via tool calls ──────────────────────────────────
-    await indexAgent.run({ libraryId: LIBRARY_ID, rootDir: activeRootDir });
+    // ── Step 4c: Commit worktree ──────────────────────────────────────────────
+    if (worktree) {
+      worktree.commit(`validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`);
+    }
+
+    // ── Step 5: Rebuild index ─────────────────────────────────────────────────
+    await runIndex();
 
     // Schedule targeted re-test of all failing cases in next iteration
     priorityCaseIds = errorCases.map((c) => c.id).filter(Boolean);
@@ -242,21 +307,24 @@ async function main() {
   console.log(`  Done: ${MAX_PASSES} consecutive clean evaluations.`);
   console.log('='.repeat(60));
 
-  if (worktree) {
-    worktree.finish();
+  if (USE_MEMORY) {
+    const top = memory.getFrequentlyFailingSkills(3);
+    if (top.length > 0) {
+      console.log('\n  Most-optimized skills this run:');
+      top.forEach(({ skillPath, count }) =>
+        console.log(`    ${count}x  ${path.relative(ROOT_DIR, skillPath)}`)
+      );
+    }
   }
+
+  if (worktree) worktree.finish();
 }
 
 main()
-  .then(async () => {
-    await closeBrowser();
-  })
+  .then(async () => { await closeBrowser(); })
   .catch(async (err) => {
     logger.error({ err: err.message }, 'Fatal error');
-    if (worktree) {
-      logger.info('Cleaning up worktree due to fatal error');
-      worktree.cleanup();
-    }
+    if (worktree) { logger.info('Cleaning up worktree due to fatal error'); worktree.cleanup(); }
     await closeBrowser();
     process.exit(1);
   });
