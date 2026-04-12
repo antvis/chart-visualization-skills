@@ -311,3 +311,60 @@ chart.options({
   }
 });
 ```
+
+### 错误 5：调色板名称大小写敏感导致找不到调色板
+```javascript
+// ❌ 问题：调色板名称大小写不匹配，如 'gnBu' 实际应为 'GnBu'
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'day', y: 'month', color: 'temp' },
+  scale: {
+    color: { type: 'sequential', palette: 'gnBu' } // 小写 g 不符合实际命名
+  }
+});
+
+// ✅ 正确：使用正确的调色板名称（注意大小写）
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'day', y: 'month', color: 'temp' },
+  scale: {
+    color: { type: 'sequential', palette: 'GnBu' } // 正确的大写 G
+  }
+});
+```
+
+### 错误 6：数据未定义或引用错误
+```javascript
+// ❌ 问题：使用了未定义的变量 'data'
+const processedData = data.map(...);
+
+// ✅ 正确：确保使用的数据变量已正确定义
+const rawData = [...];
+const processedData = rawData.map(...);
+```
+
+### 错误 7：动画配置语法错误
+```javascript
+// ❌ 问题：animate.enter 应为对象而非字符串或其他类型
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'x', y: 'y', color: 'value' },
+  animate: 'fadeIn' // 错误的配置方式
+});
+
+// ✅ 正确：使用标准的动画配置对象
+chart.options({
+  type: 'cell',
+  data,
+  encode: { x: 'x', y: 'y', color: 'value' },
+  animate: {
+    enter: {
+      type: 'fadeIn',
+      duration: 1000
+    }
+  }
+});
+```

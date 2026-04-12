@@ -47,6 +47,7 @@ program
     },
     'tool-call'
   )
+  .option('--ids <ids>', 'Comma-separated case IDs to test (targeted re-test after optimization)')
   .option('--verbose', 'Show detailed output')
   .action(runEvaluation);
 
@@ -56,6 +57,7 @@ async function runEvaluation(opts) {
     dataset: opts.dataset,
     sample: opts.sample,
     full: opts.full || false,
+    ids: opts.ids ? opts.ids.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
     concurrency: opts.concurrency,
     verbose: opts.verbose || false,
     retrieval: opts.retrieval
@@ -93,7 +95,7 @@ async function runEvaluation(opts) {
   console.log(`  Provider:    ${provider}`);
   console.log(`  Model:       ${options.model}`);
   console.log(`  Dataset:     ${options.dataset}`);
-  console.log(`  Sample:      ${options.sample || (options.full ? 'all' : '5')}`);
+  console.log(`  Sample:      ${options.ids ? `targeted (${options.ids.length} IDs)` : options.sample || (options.full ? 'all' : '5')}`);
   console.log(`  Concurrency: ${options.concurrency}`);
   console.log(`  Retrieval:   ${options.retrieval}`);
   console.log('='.repeat(60));

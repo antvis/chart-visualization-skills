@@ -50,6 +50,7 @@ program
   .description('AntV Skills iterative validation harness')
   .option('--library <id>', 'Library id (g2 | g6)', process.env.LOOP_LIBRARY || 'g2')
   .option('--sample <n>', 'Eval sample size', (v) => parseInt(v, 10), parseInt(process.env.LOOP_SAMPLE || '10', 10))
+  .option('--full', 'Run full dataset (overrides --sample)')
   .option('--retrieval <strategy>', 'tool-call | bm25 | context7', process.env.LOOP_RETRIEVAL || 'tool-call')
   .option('--passes <n>', 'Consecutive clean passes required', (v) => parseInt(v, 10), 3)
   .option('--max-iterations <n>', 'Max optimization iterations', (v) => parseInt(v, 10), 20)
@@ -64,7 +65,8 @@ program
 const opts = program.opts();
 
 const LIBRARY_ID = opts.library;
-const SAMPLE = opts.sample;
+const FULL = opts.full || false;
+const SAMPLE = FULL ? undefined : opts.sample;
 const RETRIEVAL = opts.retrieval;
 const MAX_PASSES = opts.passes;
 const MAX_ITERATIONS = opts.maxIterations;
@@ -99,7 +101,7 @@ async function main() {
   console.log('  AntV Skills Validator');
   console.log('='.repeat(60));
   console.log(`  Library:        ${libConfig.friendlyName} (${LIBRARY_ID})`);
-  console.log(`  Sample:         ${SAMPLE}`);
+  console.log(`  Sample:         ${FULL ? 'full' : SAMPLE}`);
   console.log(`  Retrieval:      ${RETRIEVAL}`);
   console.log(`  Provider/Model: ${PROVIDER} / ${MODEL}`);
   console.log(`  Target passes:  ${MAX_PASSES}`);
@@ -136,6 +138,7 @@ async function main() {
 
   let consecutivePasses = 0;
   let iteration = 0;
+  let priorityCaseIds = null; // set after optimization to re-test failing cases first
 
   while (consecutivePasses < MAX_PASSES) {
     if (iteration >= MAX_ITERATIONS) {
@@ -154,11 +157,18 @@ async function main() {
     // ── Step 1: Run eval ───────────────────────────────────────────────────────
     let resultPath;
     try {
+      if (priorityCaseIds) {
+        console.log(`\n[targeted] Re-testing ${priorityCaseIds.length} previously-failing case(s)...`);
+      }
       resultPath = evalAgent.run({
         sample: SAMPLE,
+        full: FULL,
         retrieval: RETRIEVAL,
-        dataset: libConfig.defaultDataset
+        dataset: libConfig.defaultDataset,
+        concurrency: CONCURRENCY,
+        ids: priorityCaseIds
       });
+      priorityCaseIds = null; // consume — next iteration is free unless optimization sets it again
     } catch (err) {
       console.error(`Eval failed: ${err.message}`);
       if (worktree) worktree.cleanup();
@@ -223,6 +233,9 @@ async function main() {
 
     // ── Step 5: Rebuild index via tool calls ──────────────────────────────────
     await indexAgent.run({ libraryId: LIBRARY_ID, rootDir: activeRootDir });
+
+    // Schedule targeted re-test of all failing cases in next iteration
+    priorityCaseIds = errorCases.map((c) => c.id).filter(Boolean);
   }
 
   console.log('\n' + '='.repeat(60));
@@ -235,15 +248,15 @@ async function main() {
 }
 
 main()
-  .catch((err) => {
+  .then(async () => {
+    await closeBrowser();
+  })
+  .catch(async (err) => {
     logger.error({ err: err.message }, 'Fatal error');
     if (worktree) {
       logger.info('Cleaning up worktree due to fatal error');
       worktree.cleanup();
     }
-    process.exit(1);
-  })
-  .finally(async () => {
     await closeBrowser();
-    process.exit(0);
+    process.exit(1);
   });

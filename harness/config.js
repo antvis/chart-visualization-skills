@@ -16,10 +16,10 @@ const LIBRARY_REGISTRY = {
     cdnUrl: 'https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js',
     windowGlobal: 'G2',
     entry: 'Chart',
-    skillsPath: 'g2/references', // relative to skills/
-    buildCmd: 'node bin/skills-antv.js build',
+    skillsPath: 'antv-g2-chart/references', // relative to skills/
+    buildCmd: 'node dist/scripts/build.js',
     detectPattern: '@antv/g2', // pattern to detect library in generated code
-    defaultDataset: 'g2-dataset-174.json ',
+    defaultDataset: 'g2-dataset-174.json',
     // Local reference paths for optimize-agent context injection
     refs: {
       srcDir: '/Users/liufu/publicWorkspace/G2/src',
@@ -33,10 +33,10 @@ const LIBRARY_REGISTRY = {
     cdnUrl: 'https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js',
     windowGlobal: 'G6',
     entry: 'Graph',
-    skillsPath: 'g6/references',
-    buildCmd: 'node bin/skills-antv.js build',
+    skillsPath: 'antv-g6-graph/references',
+    buildCmd: 'node dist/scripts/build.js',
     detectPattern: '@antv/g6',
-    defaultDataset: 'g2-dataset-174.json '
+    defaultDataset: 'g6-dataset.json' // TODO: provide a g6-specific dataset in eval/data/
   }
 };
 
