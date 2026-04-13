@@ -10,6 +10,8 @@ const { AgentLoop, callAI } = require('./ai-sdk');
 const { buildQuery, evaluateCode } = require('./eval-utils');
 const {
   TOOLS,
+  loadSkillFile,
+  extractKeySections,
   toolListReferences,
   toolReadSkills,
   buildSystemPrompt
@@ -18,7 +20,9 @@ const { parallelMap } = require('./parallel-executor');
 const context7 = require('./context7');
 const logger = require('./logger');
 
-const ROOT_DIR = path.resolve(__dirname, '..', '..');
+// When running inside a harness worktree, HARNESS_ROOT_DIR points to the
+// worktree root so that skill retrieval reads from the optimised skill files.
+const ROOT_DIR = process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '..', '..');
 const MAX_TOOL_ROUNDS = 6;
 
 // ── BM25 ──────────────────────────────────────────────────────────────────────
@@ -327,11 +331,16 @@ class EvaluationManager {
 
     let skillContext = '';
     const retrievedSkillIds = [];
+    const loadedSkillPaths = [];
     for (const skill of retrievedSkills) {
-      const content = retriever.loadSkillContent(skill.path);
+      // Use shared loadSkillFile (with _fileCache) instead of retriever's own loader,
+      // so tool-call and bm25 paths share the same in-process file cache.
+      const content = skill.path ? loadSkillFile(skill.path) : null;
       if (content) {
-        skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${retriever.extractKeyContent(content)}`;
+        skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${extractKeySections(content)}`;
         retrievedSkillIds.push(skill.id);
+        // Record the relative path so analyze-agent can resolve it to an absolute path.
+        if (skill.path) loadedSkillPaths.push(skill.path);
       }
     }
 
@@ -349,7 +358,7 @@ class EvaluationManager {
     });
     return {
       generatedCode: this._extractCode(response.content),
-      retrievalInfo: { retrievedSkillIds }
+      retrievalInfo: { retrievedSkillIds, loadedSkillPaths }
     };
   }
 

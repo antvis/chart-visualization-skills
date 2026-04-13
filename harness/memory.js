@@ -17,6 +17,8 @@ const fs = require('fs');
 const path = require('path');
 
 const MEMORY_PATH = path.join(__dirname, 'memory.json');
+// Project root used to normalise skill paths to relative keys.
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 /** @typedef {{ caseId: string, errorType: string, query: string, iteration: number, ts: number }} ErrorRecord */
 /** @typedef {{ iteration: number, numErrors: number, errorTypes: string[], ts: number }} OptimizationRecord */
@@ -33,26 +35,56 @@ class HarnessMemory {
   // ── Persistence ─────────────────────────────────────────────────────────────
 
   _load() {
-    try {
-      if (fs.existsSync(this._path)) {
-        return JSON.parse(fs.readFileSync(this._path, 'utf-8'));
+    // Try the canonical file first; fall back to the tmp file left by a
+    // crashed previous run; if both are missing/corrupt, start fresh.
+    for (const p of [this._path, `${this._path}.tmp`]) {
+      try {
+        if (fs.existsSync(p)) {
+          return JSON.parse(fs.readFileSync(p, 'utf-8'));
+        }
+      } catch {
+        // Corrupt — try the next candidate
       }
-    } catch {
-      // Corrupt file — start fresh
     }
     return {};
   }
 
   _save() {
+    const tmp = `${this._path}.tmp`;
     fs.mkdirSync(path.dirname(this._path), { recursive: true });
-    fs.writeFileSync(this._path, JSON.stringify(this._data, null, 2));
+    // Write to a temp file first, then atomically replace the canonical file.
+    // fs.renameSync is atomic on POSIX (same filesystem), so a crash between
+    // the two calls leaves the old file intact and recoverable via the .tmp.
+    fs.writeFileSync(tmp, JSON.stringify(this._data, null, 2));
+    fs.renameSync(tmp, this._path);
   }
 
   _skill(skillPath) {
-    if (!this._data[skillPath]) {
-      this._data[skillPath] = { errors: [], optimizations: [] };
+    const key = this._normalizeKey(skillPath);
+    if (!this._data[key]) {
+      this._data[key] = { errors: [], optimizations: [] };
     }
-    return this._data[skillPath];
+    return this._data[key];
+  }
+
+  /**
+   * Normalise an absolute or relative skill path to a project-root-relative key.
+   * This makes memory.json portable across machines and worktrees.
+   *
+   * @param {string} skillPath
+   * @returns {string} relative path, e.g. "skills/antv-g2-chart/references/xxx.md"
+   */
+  _normalizeKey(skillPath) {
+    if (path.isAbsolute(skillPath)) {
+      // Strip worktree or any machine-specific prefix up to the first "skills/" segment.
+      const rel = path.relative(PROJECT_ROOT, skillPath);
+      // If the path escapes project root (worktree on different drive etc.), fall back
+      // to extracting from the first "skills/" occurrence in the string.
+      if (!rel.startsWith('..')) return rel;
+      const idx = skillPath.indexOf(`${path.sep}skills${path.sep}`);
+      return idx >= 0 ? skillPath.slice(idx + 1) : skillPath;
+    }
+    return skillPath;
   }
 
   // ── Write API ────────────────────────────────────────────────────────────────
@@ -67,9 +99,15 @@ class HarnessMemory {
   recordErrors(skillPath, errorCases, iteration) {
     const history = this._skill(skillPath);
     for (const c of errorCases) {
+      // Use the concrete render error message as errorType when available —
+      // it carries far more signal than the generic "error" / "blank" status.
+      const errorType = c.renderStatus === 'error' && c.renderError
+        ? c.renderError.slice(0, 150)
+        : (c.renderStatus || 'unknown');
+
       history.errors.push({
         caseId:    c.id,
-        errorType: c.renderStatus || 'unknown',
+        errorType,
         query:     (c.query || '').slice(0, 120),
         iteration,
         ts:        Date.now(),
@@ -107,11 +145,12 @@ class HarnessMemory {
    * @returns {string|null}
    */
   getOptimizationContext(skillPath) {
-    const history = this._data[skillPath];
+    const history = this._data[this._normalizeKey(skillPath)];
     if (!history || history.optimizations.length === 0) return null;
 
+    const key = this._normalizeKey(skillPath);
     const lines = [
-      `【历史优化记录 — ${path.basename(skillPath)}】`,
+      `【历史优化记录 — ${path.basename(key)}】`,
       `共优化 ${history.optimizations.length} 次，累计错误 ${history.errors.length} 条。`,
       '',
     ];
