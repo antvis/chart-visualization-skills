@@ -41,6 +41,7 @@ export function toolListReferences(
     for (const file of fs.readdirSync(catDir).filter((f) => f.endsWith('.md'))) {
       const filePath = path.join(catDir, file);
       if (!isWithinDir(catDir, filePath)) continue;
+      if (!fs.existsSync(filePath)) continue;
       const raw = fs.readFileSync(filePath, 'utf-8');
       const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
       let meta: { id?: string; title?: string; description?: string } = {};

@@ -7,10 +7,12 @@ const ROOT_DIR = process.cwd().includes('playground')
 
 export const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 export const SAFE_CATEGORY_RE = /^[a-z0-9_-]+$/i;
-const SAFE_LIBRARY_RE = /^[a-z0-9_-]+$/i;
+const SAFE_SKILL_PATH_RE =
+  /^skills\/[a-z0-9_-]+(?:\/[a-z0-9_.-]+)*\/[a-z0-9_.-]+\.md$/i;
 
 const LIBRARY_DIR: Record<string, string> = {
-  g2: 'antv-g2-chart'
+  g2: 'antv-g2-chart',
+  g6: 'antv-g6-graph'
 };
 
 const LIBRARY_DISPLAY_NAME: Record<string, string> = {
@@ -21,9 +23,7 @@ const LIBRARY_DISPLAY_NAME: Record<string, string> = {
 };
 
 export function resolveLibraryDir(library: string): string {
-  if (LIBRARY_DIR[library]) return LIBRARY_DIR[library];
-  if (!SAFE_LIBRARY_RE.test(library)) return '';
-  return library;
+  return LIBRARY_DIR[library] ?? '';
 }
 
 export function getLibraryDisplayName(library: string): string {
@@ -43,10 +43,14 @@ export function loadSkillFile(
   skillPath: string,
   verbose = false
 ): string | null {
-  const candidatePath = skillPath.startsWith('/')
-    ? skillPath
-    : path.join(ROOT_DIR, skillPath);
-  const fullPath = path.resolve(candidatePath);
+  const normalizedPath = skillPath.replace(/\\/g, '/').replace(/^\/+/, '');
+
+  if (!SAFE_SKILL_PATH_RE.test(normalizedPath)) {
+    if (verbose) console.log(`   ⚠️  Invalid skill path: ${skillPath}`);
+    return null;
+  }
+
+  const fullPath = path.resolve(path.join(ROOT_DIR, normalizedPath));
 
   if (!fullPath.endsWith('.md')) {
     if (verbose) console.log(`   ⚠️  Invalid skill path: ${skillPath}`);
@@ -67,7 +71,7 @@ export function loadSkillFile(
 export function loadMainSkill(library: string): string {
   const dir = resolveLibraryDir(library);
   if (!dir) return '';
-  return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) || '';
+  return loadSkillFile(path.posix.join('skills', dir, 'SKILL.md')) || '';
 }
 
 const TARGET_SECTIONS = [

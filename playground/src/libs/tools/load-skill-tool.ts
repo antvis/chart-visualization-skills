@@ -11,6 +11,13 @@ interface LoadSkillResult {
 export function toolLoadSkill(args: { library: string }): LoadSkillResult {
   const { library } = args;
   const dir = resolveLibraryDir(library);
+  if (!dir) {
+    return {
+      library,
+      skillPath: '',
+      content: ''
+    };
+  }
   return {
     library,
     skillPath: `skills/${dir}/SKILL.md`,
