@@ -16,10 +16,6 @@ export function toolReadFile(
   args: { paths: string[] },
   verbose = false
 ): SkillReadResult[] {
-  if (args.paths.length > MAX_READ_FILES) {
-    throw new Error(`最多读取 ${MAX_READ_FILES} 个文件`);
-  }
-
   return args.paths.map((skillPath) => {
     const content = loadSkillFile(skillPath, verbose);
     const fileName = path.basename(skillPath, '.md');

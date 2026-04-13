@@ -24,7 +24,7 @@ export function resolveLibraryDir(library: string): string {
 }
 
 export function getLibraryDisplayName(library: string): string {
-  return LIBRARY_DISPLAY_NAME[library] ?? library.toUpperCase();
+  return LIBRARY_DISPLAY_NAME[library] ?? library;
 }
 
 export function isWithinDir(parentDir: string, targetPath: string): boolean {
