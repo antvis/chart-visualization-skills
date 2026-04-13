@@ -7,6 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import matter from 'gray-matter';
 import type { Skill, SkillIndex } from '../core/types';
 
 // Allow overriding the project root via --root=<dir> (used by harness when running inside a worktree)
@@ -19,48 +20,6 @@ const LIBRARY_PATHS: Record<string, string> = {
   g2: 'antv-g2-chart/references',
   g6: 'antv-g6-graph/references',
 };
-
-function extractFrontMatterMeta(content: string): Record<string, any> {
-  const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return {};
-
-  const yamlStr = match[1];
-  const meta: Record<string, any> = {};
-
-  let currentKey: string | null = null;
-  let currentArray: string[] | null = null;
-
-  for (const line of yamlStr.split('\n')) {
-    if (line.trim().startsWith('#')) continue;
-
-    if (line.match(/^\s+-\s+/)) {
-      const value = line.replace(/^\s+-\s+/, '').replace(/^["']|["']$/g, '').trim();
-      if (currentArray) currentArray.push(value);
-      continue;
-    }
-
-    const kvMatch = line.match(/^(\w[\w-]*):\s*(.*)$/);
-    if (kvMatch) {
-      const [, key, value] = kvMatch;
-      currentKey = key;
-      currentArray = null;
-
-      if (value.trim() === '' || value.trim() === '|') {
-        meta[key] = [];
-        currentArray = meta[key];
-      } else {
-        meta[key] = value.replace(/^["']|["']$/g, '').trim();
-        currentArray = null;
-      }
-    } else if (currentKey && line.startsWith('  ') && currentArray) {
-      if (Array.isArray(meta[currentKey])) {
-        meta[currentKey] = meta[currentKey].join(' ') + ' ' + line.trim();
-      }
-    }
-  }
-
-  return meta;
-}
 
 function walkDir(dir: string, library: string): Skill[] {
   const skills: Skill[] = [];
@@ -77,7 +36,8 @@ function walkDir(dir: string, library: string): Skill[] {
       skills.push(...walkDir(fullPath, library));
     } else if (entry.isFile() && entry.name.endsWith('.md') && !['README.md', 'CONTRIBUTING.md'].includes(entry.name)) {
       const content = fs.readFileSync(fullPath, 'utf-8');
-      const meta = extractFrontMatterMeta(content);
+      const parsed = matter(content);
+      const meta = parsed.data as Record<string, any>;
 
       if (library && meta.library && meta.library !== library) continue;
       if (!meta.id) {
@@ -101,6 +61,7 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
+        content,
       });
     }
   }

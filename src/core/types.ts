@@ -27,7 +27,6 @@ export interface SkillIndex {
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
-  indexDir?: string;
   includeContent?: boolean;
 }
 
@@ -36,7 +35,6 @@ export interface ListOptions {
   category?: string | null;
   tags?: string[];
   difficulty?: string | null;
-  indexDir?: string;
 }
 
 export interface BM25Options {
