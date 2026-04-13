@@ -6,7 +6,7 @@
   "main": "dist/api.js",
   "types": "dist/api.d.ts",
   "bin": {
-    "chart-visualization-cli": "dist/index.js"
+    "chart-visualization-skills": "dist/index.js"
   },
   "files": [
     "dist",
