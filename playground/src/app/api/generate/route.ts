@@ -1,7 +1,10 @@
 import { NextRequest } from 'next/server';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
-import { buildBm25SystemPrompt, createRetrieveTool } from '@/libs/retriever';
-import { buildSystemPrompt, createSkillTools } from '@/libs/skill-tools';
+import { buildCliSystemPrompt, createCliModeTools } from '@/libs/tools/cli-mode';
+import {
+  buildSkillSystemPrompt,
+  createSkillModeTools
+} from '@/libs/tools/skill-mode';
 import {
   createLanguageModel,
   resolveProviderModel
@@ -9,20 +12,20 @@ import {
 
 export const maxDuration = 120;
 const SKILL_MODE_MAX_STEPS = 8;
-const BM25_MODE_MAX_STEPS = 6;
+const CLI_MODE_MAX_STEPS = 6;
 
 export async function POST(request: NextRequest) {
   const {
     messages = [],
     library = 'g2',
-    mode = 'tool-call',
+    mode = 'skill',
     currentCode = null,
     provider: reqProvider,
     model: reqModel
   }: {
     messages?: UIMessage[];
     library?: string;
-    mode?: 'tool-call' | 'bm25';
+    mode?: 'skill' | 'cli';
     currentCode?: string | null;
     provider?: string;
     model?: string;
@@ -36,7 +39,7 @@ export async function POST(request: NextRequest) {
   const languageModel = createLanguageModel(provider, model);
 
   const system = [
-    mode === 'tool-call' ? buildSystemPrompt(library) : buildBm25SystemPrompt(library),
+    mode === 'skill' ? buildSkillSystemPrompt(library) : buildCliSystemPrompt(library),
     currentCode
       ? `当前代码如下，请在后续回答中基于它进行修改并返回完整 javascript 代码块：\n\`\`\`javascript\n${currentCode}\n\`\`\``
       : ''
@@ -48,13 +51,10 @@ export async function POST(request: NextRequest) {
     model: languageModel,
     system,
     messages: await convertToModelMessages(messages),
-    tools:
-      mode === 'tool-call'
-        ? createSkillTools(library)
-        : { retrieve: createRetrieveTool(library) },
-    // skill 模式通常要经过 load_skill → list_references → read_file 多轮调用，BM25 只需 retrieve 一轮
+    tools: mode === 'skill' ? createSkillModeTools(library) : createCliModeTools(library),
+    // Skill 模式通常要经过 load_skill → list_references → read_file 多轮调用，CLI 只需 retrieve 一轮
     stopWhen: stepCountIs(
-      mode === 'tool-call' ? SKILL_MODE_MAX_STEPS : BM25_MODE_MAX_STEPS
+      mode === 'skill' ? SKILL_MODE_MAX_STEPS : CLI_MODE_MAX_STEPS
     ),
     temperature: 0.3,
     maxOutputTokens: 4000

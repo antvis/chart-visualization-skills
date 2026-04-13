@@ -142,7 +142,7 @@ function getUsage(message: UIMessage): TokenUsage | undefined {
 export default function Home() {
   const codeEditorRef = useRef<CodeEditorHandle>(null);
   const [library, setLibrary] = useState('g2');
-  const [mode, setMode] = useState<'tool-call' | 'bm25'>('tool-call');
+  const [mode, setMode] = useState<'skill' | 'cli'>('skill');
   const [code, setCode] = useState('');
   const [input, setInput] = useState('');
   const [status, setStatus] = useState('就绪');
@@ -318,7 +318,7 @@ export default function Home() {
             library={library}
             mode={mode}
             onLibraryChange={setLibrary}
-            onModeChange={(value) => setMode(value as 'tool-call' | 'bm25')}
+            onModeChange={(value) => setMode(value as 'skill' | 'cli')}
           />
           <div className='chat-stats'>
             <span>多轮 Token 合计: {totalTokenUsage.totalTokens}</span>
@@ -342,7 +342,7 @@ export default function Home() {
               <span className='panel-header-label'>代码</span>
               {mode && (
                 <span className={`panel-badge ${mode}`}>
-                  {mode === 'tool-call' ? 'Tool Call' : 'BM25'}
+                  {mode === 'skill' ? 'Skill' : 'CLI'}
                 </span>
               )}
             </div>

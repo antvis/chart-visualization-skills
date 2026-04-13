@@ -496,8 +496,8 @@ body {
   font-weight: 500;
 }
 
-.panel-badge.bm25  { background: var(--accent-dim); color: var(--accent-hover); }
-.panel-badge.tool-call { background: var(--purple-dim); color: var(--purple); }
+.panel-badge.cli { background: var(--accent-dim); color: var(--accent-hover); }
+.panel-badge.skill { background: var(--purple-dim); color: var(--purple); }
 
 .code-editor {
   flex: 1;
@@ -643,8 +643,8 @@ body {
   text-transform: uppercase;
 }
 
-.mode-badge.bm25 { background: var(--accent-dim); color: var(--accent-hover); }
-.mode-badge.tool-call { background: var(--purple-dim); color: var(--purple); }
+.mode-badge.cli { background: var(--accent-dim); color: var(--accent-hover); }
+.mode-badge.skill { background: var(--purple-dim); color: var(--purple); }
 
 .token-usage {
   margin-top: 8px;

@@ -1,9 +1,9 @@
-import { createLoadSkillTool } from './skill-tools/load-skill-tool';
-import { createListReferencesTool } from './skill-tools/list-references-tool';
-import { createReadFileTool } from './skill-tools/read-file-tool';
-import { getLibraryDisplayName } from './skill-tools/shared';
+import { createLoadSkillTool } from './load-skill-tool';
+import { createListReferencesTool } from './list-references-tool';
+import { createReadFileTool } from './read-file-tool';
+import { getLibraryDisplayName } from './shared';
 
-export function buildSystemPrompt(library: string): string {
+export function buildSkillSystemPrompt(library: string): string {
   const libraryName = getLibraryDisplayName(library);
   return `你是 AntV ${libraryName} v5 代码生成专家。请按以下顺序使用工具：
 1) 先调用 load_skill 获取主 Skill 概览；
@@ -12,7 +12,7 @@ export function buildSystemPrompt(library: string): string {
 然后基于召回内容输出可运行的完整代码。`;
 }
 
-export function createSkillTools(library: string) {
+export function createSkillModeTools(library: string) {
   return {
     load_skill: createLoadSkillTool(library),
     list_references: createListReferencesTool(library),
