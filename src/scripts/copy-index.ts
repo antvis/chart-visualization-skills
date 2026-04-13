@@ -13,8 +13,11 @@ if (!fs.existsSync(SRC_INDEX_DIR)) {
 }
 
 try {
+  fs.mkdirSync(path.dirname(DIST_INDEX_DIR), { recursive: true });
+  fs.rmSync(DIST_INDEX_DIR, { recursive: true, force: true });
   fs.cpSync(SRC_INDEX_DIR, DIST_INDEX_DIR, { recursive: true });
   console.log('Copied index files to dist/index');
 } catch (error) {
-  throw new Error(`Failed to copy index files to dist/index: ${String(error)}`);
+  const reason = error instanceof Error ? error.message : String(error);
+  throw new Error(`Failed to copy index files to dist/index: ${reason}`);
 }
