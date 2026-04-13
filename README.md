@@ -73,7 +73,7 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 
 ## CLI Usage
 
-We also provide a CLI tool for easy usage in your terminal, Install globally:
+We also provide a CLI tool named `antv` for easy usage in your terminal, Install globally:
 
 ```bash
 npm install -g chart-visualization-skills
@@ -83,16 +83,16 @@ npm install -g chart-visualization-skills
 
 ```bash
 # Retrieve skills by query
-chart-visualization-cli retrieve "bar chart" --library g2 --topk 10
+antv retrieve "bar chart" --library g2 --topk 10
 
 # List all available skills
-chart-visualization-cli list --library g2 --category core
+antv list --library g2 --category core
 ```
 
 **Usage for the command**:
 
 ```
-Usage: chart-visualization-cli [options] [command]
+Usage: antv [options] [command]
 
 CLI tool for AntV chart visualization skills retrieval
 
@@ -112,6 +112,7 @@ Commands:
 import { retrieve } from 'chart-visualization-skills';
 
 const skills = retrieve('bar chart', 'g2', 5);
+// or with content, retrieve('bar chart', 'g2', 5, { includeContent: true })
 ```
 
 | Parameter | Type | Default | Description |
@@ -119,6 +120,7 @@ const skills = retrieve('bar chart', 'g2', 5);
 | `query` | `string` | — | Search query |
 | `library` | `string` | `'g2'` | Library filter (`g2` or `g6`) |
 | `topk` | `number` | `7` | Number of results |
+| `options.includeContent` | `boolean` | `false` | Whether to include document content |
 
 ## License
 

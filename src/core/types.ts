@@ -13,6 +13,7 @@ export interface Skill {
   anti_patterns: string[];
   related: string[];
   embedding_text: string;
+  content?: string;
 }
 
 export interface SkillIndex {

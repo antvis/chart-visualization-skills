@@ -303,8 +303,8 @@ Marks 是 G2 的核心可视化元素，决定了数据的视觉表现形式。�
 |------|------|----------|
 | 基础折线图 | `line` | - |
 | 多系列折线 | `line` | `encode: { color: 'category' }` |
-| 平滑曲线 | `line` | `style: { curve: 'smooth' }` |
-| 阶梯线 | `line` | `style: { curve: 'step' }` |
+| 平滑曲线 | `line` | `encode: { shape: 'smooth' }` |
+| 阶梯线 | `line` | `encode: { shape: 'step' }` |
 
 > **详细文档**: [基础折线图](references/marks/g2-mark-line-basic.md) | [多系列折线](references/marks/g2-mark-line-multi.md) | [LineX/LineY](references/marks/g2-mark-linex-liney.md)
 

@@ -10,7 +10,7 @@ const pkg = require(path.resolve(__dirname, '../package.json'));
 const program = new Command();
 
 program
-  .name('chart-visualization-skills')
+  .name('antv')
   .description('CLI tool for AntV chart visualization skills retrieval')
   .version(pkg.version);
 

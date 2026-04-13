@@ -150,6 +150,7 @@ function walkDir(dir: string, library: string): Skill[] {
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
         embedding_text: buildEmbeddingText(meta, body),
+        content: body,
       });
     }
   }
