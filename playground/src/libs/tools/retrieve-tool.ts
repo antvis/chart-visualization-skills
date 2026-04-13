@@ -30,7 +30,7 @@ interface RetrieveToolResult {
 
 export function createRetrieveTool(library: string) {
   return tool({
-    description: '利用 retrieve API 召回最相关参考文档。',
+    description: '通过 retrieve 召回最相关参考文档。',
     inputSchema: z.object({
       query: z.string().describe('用户需求或检索关键词'),
       topK: z

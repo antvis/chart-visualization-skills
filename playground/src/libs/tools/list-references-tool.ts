@@ -23,7 +23,9 @@ export function toolListReferences(
 ): ReferenceResult[] {
   const { library, category } = args;
   const dir = resolveLibraryDir(library);
+  if (!dir) return [];
   const referencesDir = path.join(SKILLS_DIR, dir, 'references');
+  if (!isWithinDir(SKILLS_DIR, referencesDir)) return [];
   if (!fs.existsSync(referencesDir)) return [];
 
   const results: ReferenceResult[] = [];
@@ -37,7 +39,9 @@ export function toolListReferences(
     if (!fs.existsSync(catDir) || !fs.statSync(catDir).isDirectory()) continue;
 
     for (const file of fs.readdirSync(catDir).filter((f) => f.endsWith('.md'))) {
-      const raw = fs.readFileSync(path.join(catDir, file), 'utf-8');
+      const filePath = path.join(catDir, file);
+      if (!isWithinDir(catDir, filePath)) continue;
+      const raw = fs.readFileSync(filePath, 'utf-8');
       const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
       let meta: { id?: string; title?: string; description?: string } = {};
       if (yamlMatch) {

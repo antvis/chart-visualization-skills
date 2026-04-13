@@ -7,6 +7,7 @@ const ROOT_DIR = process.cwd().includes('playground')
 
 export const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 export const SAFE_CATEGORY_RE = /^[a-z0-9_-]+$/i;
+const SAFE_LIBRARY_RE = /^[a-z0-9_-]+$/i;
 
 const LIBRARY_DIR: Record<string, string> = {
   g2: 'antv-g2-chart'
@@ -20,7 +21,9 @@ const LIBRARY_DISPLAY_NAME: Record<string, string> = {
 };
 
 export function resolveLibraryDir(library: string): string {
-  return LIBRARY_DIR[library] ?? library;
+  if (LIBRARY_DIR[library]) return LIBRARY_DIR[library];
+  if (!SAFE_LIBRARY_RE.test(library)) return '';
+  return library;
 }
 
 export function getLibraryDisplayName(library: string): string {
@@ -40,10 +43,17 @@ export function loadSkillFile(
   skillPath: string,
   verbose = false
 ): string | null {
-  const fullPath = path.resolve(
-    skillPath.startsWith('/') ? skillPath : path.join(ROOT_DIR, skillPath)
-  );
-  if (!isWithinDir(SKILLS_DIR, fullPath) || !fullPath.endsWith('.md')) {
+  const candidatePath = skillPath.startsWith('/')
+    ? skillPath
+    : path.join(ROOT_DIR, skillPath);
+  const fullPath = path.resolve(candidatePath);
+
+  if (!fullPath.endsWith('.md')) {
+    if (verbose) console.log(`   ⚠️  Invalid skill path: ${skillPath}`);
+    return null;
+  }
+
+  if (!isWithinDir(SKILLS_DIR, fullPath)) {
     if (verbose) console.log(`   ⚠️  Invalid skill path: ${skillPath}`);
     return null;
   }
@@ -56,6 +66,7 @@ export function loadSkillFile(
 
 export function loadMainSkill(library: string): string {
   const dir = resolveLibraryDir(library);
+  if (!dir) return '';
   return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) || '';
 }
 
