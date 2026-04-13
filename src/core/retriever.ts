@@ -15,6 +15,7 @@ const PKG_ROOT = path.resolve(__dirname, '../..');
 const DEFAULT_LIBRARY = 'g2';
 
 const bm25Cache = new Map<string, BM25Index>();
+const contentCache = new Map<string, string>();
 
 export function loadIndex(library: string, indexDir?: string): SkillIndex {
   const dir = indexDir || DEFAULT_INDEX_DIR;
@@ -38,10 +39,41 @@ function getBM25Index(library: string, indexDir?: string): BM25Index {
   return bm25Cache.get(cacheKey)!;
 }
 
+function loadSkillContent(skillPath?: string): string | undefined {
+  if (!skillPath) return undefined;
+
+  const cacheKey = skillPath.replace(/\\/g, '/');
+  if (contentCache.has(cacheKey)) {
+    return contentCache.get(cacheKey);
+  }
+
+  const absolutePath = path.resolve(PKG_ROOT, cacheKey);
+  const safeRoot = PKG_ROOT.endsWith(path.sep) ? PKG_ROOT : `${PKG_ROOT}${path.sep}`;
+  if (!absolutePath.startsWith(safeRoot)) {
+    return undefined;
+  }
+
+  if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
+    return undefined;
+  }
+
+  const content = fs.readFileSync(absolutePath, 'utf-8');
+  contentCache.set(cacheKey, content);
+  return content;
+}
+
 export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] {
-  const { library = DEFAULT_LIBRARY, topK = 7, indexDir } = options;
+  const { library = DEFAULT_LIBRARY, topK = 7, indexDir, includeContent = false } = options;
   const index = getBM25Index(library, indexDir);
-  return index.search(query, topK).map(({ skill }) => skill);
+  const skills = index.search(query, topK).map(({ skill }) => skill);
+
+  if (!includeContent) {
+    return skills;
+  }
+
+  return skills.map((skill) => (skill.content !== undefined
+    ? skill
+    : { ...skill, content: loadSkillContent(skill.path) }));
 }
 
 export function listSkills(options: ListOptions = {}): Skill[] {

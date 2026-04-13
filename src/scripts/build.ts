@@ -63,60 +63,12 @@ function parseFrontMatter(content: string): FrontMatter {
   return { meta, body };
 }
 
-function extractSections(markdown: string, sectionTitles: string[]): string {
-  const sections: string[] = [];
-  const lines = markdown.split('\n');
-  let inSection = false;
-  let currentLines: string[] = [];
-
-  for (const line of lines) {
-    const headingMatch = line.match(/^#{1,3}\s+(.+)/);
-    if (headingMatch) {
-      const title = headingMatch[1];
-      if (sectionTitles.some(t => title.includes(t))) {
-        inSection = true;
-        currentLines = [line];
-      } else if (inSection && line.startsWith('#')) {
-        sections.push(currentLines.join('\n'));
-        inSection = false;
-        currentLines = [];
-      }
-    } else if (inSection) {
-      currentLines.push(line);
-    }
-  }
-
-  if (currentLines.length > 0 && inSection) {
-    sections.push(currentLines.join('\n'));
-  }
-
-  return sections.join('\n\n');
-}
-
-function buildEmbeddingText(meta: Record<string, any>, body: string): string {
-  const parts = [
-    `Title: ${meta.title || ''}`,
-    `Description: ${meta.description || ''}`,
-    `Tags: ${Array.isArray(meta.tags) ? meta.tags.join(', ') : meta.tags || ''}`,
-    `Use Cases: ${Array.isArray(meta.use_cases) ? meta.use_cases.join('; ') : meta.use_cases || ''}`,
-    `Anti-patterns: ${Array.isArray(meta.anti_patterns) ? meta.anti_patterns.join('; ') : ''}`,
-  ];
-
-  const coreContent = extractSections(body, [
-    'Core Concepts', 'Minimal Runnable Example', 'API Quick Reference', 'Common Errors',
-    '核心概念', '最小可运行示例', 'API 速查', '常见错误',
-  ]);
-
-  if (coreContent) parts.push(coreContent.slice(0, 1000));
-
-  return parts.filter(Boolean).join('\n');
-}
-
 function walkDir(dir: string, library: string): Skill[] {
   const skills: Skill[] = [];
   if (!fs.existsSync(dir)) return skills;
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
@@ -125,7 +77,7 @@ function walkDir(dir: string, library: string): Skill[] {
       skills.push(...walkDir(fullPath, library));
     } else if (entry.isFile() && entry.name.endsWith('.md') && !['README.md', 'CONTRIBUTING.md'].includes(entry.name)) {
       const content = fs.readFileSync(fullPath, 'utf-8');
-      const { meta, body } = parseFrontMatter(content);
+      const { meta } = parseFrontMatter(content);
 
       if (library && meta.library && meta.library !== library) continue;
       if (!meta.id) {
@@ -149,8 +101,6 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
-        embedding_text: buildEmbeddingText(meta, body),
-        content: body,
       });
     }
   }
@@ -180,7 +130,7 @@ function build(): void {
     };
 
     const indexPath = path.join(INDEX_DIR, `${lib}.index.json`);
-    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2), 'utf-8');
+    fs.writeFileSync(indexPath, JSON.stringify(indexData), 'utf-8');
     console.log(`  Written ${lib}.index.json`);
   }
 }

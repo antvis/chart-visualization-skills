@@ -21,5 +21,5 @@ export type RetrieveOptions = {
  */
 export function retrieve(query: string, library = 'g2', topk = 7, indexDir?: string, options: RetrieveOptions = {}): Skill[] {
   const { includeContent = false } = options;
-  return _retrieve(query, { library, topK: topk, indexDir }).map((skill) => (includeContent ? skill : { ...skill, content: undefined }));
+  return _retrieve(query, { library, topK: topk, indexDir, includeContent });
 }

@@ -8,6 +8,7 @@ describe('retrieve API', () => {
     expect(results.length).toBeLessThanOrEqual(7);
     expect(results[0]).toHaveProperty('id');
     expect(results[0]).toHaveProperty('title');
+    expect(results[0].content).toBeUndefined();
   });
 
   it('should respect topk parameter', () => {
@@ -25,5 +26,12 @@ describe('retrieve API', () => {
     const results = retrieve('饼图 tooltip', 'g2', 5);
     expect(results.length).toBeGreaterThan(0);
     expect(results.length).toBeLessThanOrEqual(5);
+  });
+
+  it('should load markdown content on demand', () => {
+    const results = retrieve('折线图', 'g2', 1, undefined, { includeContent: true });
+    expect(results.length).toBeGreaterThan(0);
+    expect(typeof results[0].content).toBe('string');
+    expect((results[0].content || '').length).toBeGreaterThan(0);
   });
 });
