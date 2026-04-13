@@ -13,6 +13,8 @@
 
 import fs from 'fs';
 import path from 'path';
+import { tool } from 'ai';
+import { z } from 'zod';
 
 // Calculate ROOT_DIR - in Next.js, use process.cwd() to get project root
 // Assumes playground is running from the workspace root or playground directory
@@ -288,4 +290,38 @@ export function buildSystemPrompt(library: string): string {
 --- 知识库概览 ---
 
 ${skillContent}`;
+}
+
+export function createSkillTools(library: string) {
+  return {
+    list_references: tool({
+      description:
+        '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
+      inputSchema: z.object({
+        category: z
+          .string()
+          .optional()
+          .describe(
+            '可选，过滤分类：marks、transforms、components、scales、coordinates、interactions、data、layouts、elements、behaviors、plugins、events、themes、patterns、recipes'
+          )
+      }),
+      execute: async ({ category }) => {
+        return toolListReferences({ library, category });
+      }
+    }),
+    read_skills: tool({
+      description: '读取指定 Skill 参考文档的完整内容。一次最多读取 4 个文件。',
+      inputSchema: z.object({
+        paths: z
+          .array(z.string())
+          .max(4)
+          .describe(
+            'Skill 文件路径列表，如 ["skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"]'
+          )
+      }),
+      execute: async ({ paths }) => {
+        return toolReadSkills({ paths });
+      }
+    })
+  };
 }

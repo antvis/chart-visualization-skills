@@ -646,6 +646,42 @@ body {
 .mode-badge.bm25 { background: var(--accent-dim); color: var(--accent-hover); }
 .mode-badge.tool-call { background: var(--purple-dim); color: var(--purple); }
 
+.token-usage {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.tool-events {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tool-event {
+  font-size: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tool-event span {
+  color: var(--text-tertiary);
+  word-break: break-all;
+}
+
+.chat-stats {
+  padding: 0 14px 10px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg-sidebar);
+}
+
 /* ── Scrollbar global ──────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
