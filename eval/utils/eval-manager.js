@@ -69,6 +69,7 @@ class EvaluationManager {
       dataset,
       sample,
       full,
+      ids,
       concurrency = 1,
       similarityAlgorithm = 'hybrid',
       retrieval = 'tool-call'
@@ -81,12 +82,19 @@ class EvaluationManager {
     }
 
     const datasetContent = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
-    let testData = Array.isArray(datasetContent)
+    const rawData = Array.isArray(datasetContent)
       ? datasetContent
       : datasetContent.results || [];
 
-    // Sample or full
-    if (sample && !full) {
+    // Assign stable IDs based on original array position so IDs are consistent across runs
+    let testData = rawData.map((t, i) => (t.id ? t : { ...t, id: `case-${i}` }));
+
+    // Priority mode: test only specified case IDs (post-optimization targeted re-test)
+    if (ids && ids.length > 0) {
+      const idSet = new Set(ids);
+      testData = testData.filter((t) => idSet.has(t.id));
+    } else if (sample && !full) {
+      // Sample or full
       testData = testData.sort(() => Math.random() - 0.5).slice(0, sample);
     }
 
@@ -103,7 +111,12 @@ class EvaluationManager {
       results: [],
       abortController: new AbortController(),
       totalSimilarity: 0,
-      totalToolCalls: 0
+      totalToolCalls: 0,
+      totalDuration: 0,
+      highSimilarityCount: 0,
+      issuesCount: 0,
+      skillHitCount: 0,
+      successCount: 0
     };
 
     this.runningEvals.set(evalId, evalRun);
@@ -166,6 +179,7 @@ class EvaluationManager {
       const orderedResults = await parallelMap(testData, processCase, {
         concurrency,
         onProgress: ({ done, result }) => {
+          if (result) this._updateIncrementalCounters(evalRun, result);
           evalRun.progress = { current: done, total: testData.length };
           this._saveProgress(evalRun, outputPath);
           if (wsHandler) {
@@ -183,6 +197,7 @@ class EvaluationManager {
 
         const result = await processCase(testData[i], i);
         evalRun.results.push(result);
+        this._updateIncrementalCounters(evalRun, result);
         evalRun.progress = { current: i + 1, total: testData.length };
 
         // Save progress
@@ -406,6 +421,18 @@ class EvaluationManager {
   }
 
   /**
+   * Update incremental counters after a single result is added.
+   * Called once per result to avoid O(n²) recomputation in _saveProgress.
+   */
+  _updateIncrementalCounters(evalRun, result) {
+    evalRun.totalDuration += result.duration || 0;
+    if (!result.error && result.evaluation?.similarity >= 0.5) evalRun.highSimilarityCount++;
+    if (result.evaluation?.hasIssues) evalRun.issuesCount++;
+    if (result.loadedSkillPaths?.length > 0) evalRun.skillHitCount++;
+    if (!result.error) evalRun.successCount++;
+  }
+
+  /**
    * Compute summary statistics
    */
   _computeSummary(evalRun) {
@@ -438,10 +465,21 @@ class EvaluationManager {
   }
 
   /**
-   * Save progress to file
+   * Save progress to file (uses incremental counters — O(1) per call)
    */
   _saveProgress(evalRun, outputPath) {
-    const summary = this._computeSummary(evalRun);
+    const n = evalRun.progress?.current ?? evalRun.results.length;
+    const successCount = evalRun.successCount ?? evalRun.results.filter((r) => !r.error).length;
+    const summary = {
+      totalTests: n,
+      successCount,
+      avgDuration: n > 0 ? evalRun.totalDuration / n : 0,
+      avgSimilarity: successCount > 0 ? evalRun.totalSimilarity / successCount : 0,
+      highSimilarityCount: evalRun.highSimilarityCount,
+      issuesCount: evalRun.issuesCount,
+      avgToolCalls: successCount > 0 ? evalRun.totalToolCalls / successCount : 0,
+      skillHitRate: n > 0 ? evalRun.skillHitCount / n : 0
+    };
     const data = {
       id: evalRun.id,
       provider: evalRun.provider,

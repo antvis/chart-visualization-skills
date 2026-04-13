@@ -9,7 +9,9 @@ import fs from 'fs';
 import path from 'path';
 import type { Skill, SkillIndex, FrontMatter } from '../core/types';
 
-const PKG_ROOT = path.resolve(__dirname, '../..');
+// Allow overriding the project root via --root=<dir> (used by harness when running inside a worktree)
+const rootArg = process.argv.find((a) => a.startsWith('--root='));
+const PKG_ROOT = rootArg ? path.resolve(rootArg.slice('--root='.length)) : path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 

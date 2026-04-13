@@ -54,7 +54,7 @@ logs
 eval/temp/
 
 # harness
-harness/result/
+harness/memory.json
 
 # lock files
 pnpm-lock.yaml

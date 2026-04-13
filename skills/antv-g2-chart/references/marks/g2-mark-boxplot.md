@@ -114,6 +114,60 @@ chart.options({
 });
 ```
 
+## 极坐标箱线图
+
+```javascript
+chart.options({
+  type: 'box',
+  data: [
+    { x: "Oceania", y: [1, 9, 16, 22, 24] },
+    { x: "East Europe", y: [1, 5, 8, 12, 16] },
+    { x: "Australia", y: [1, 8, 12, 19, 26] },
+    { x: "South America", y: [2, 8, 12, 21, 28] },
+    { x: "North Africa", y: [1, 8, 14, 18, 24] },
+    { x: "North America", y: [3, 10, 17, 28, 30] },
+    { x: "West Europe", y: [1, 7, 10, 17, 22] },
+    { x: "West Africa", y: [1, 6, 8, 13, 16] }
+  ],
+  encode: {
+    x: 'x',
+    y: 'y', // y 字段本身就是 [min, Q1, median, Q3, max] 数组
+    color: 'x' // 用 x (地区) 映射颜色
+  },
+  coordinate: {
+    type: 'polar', // 极坐标
+    innerRadius: 0.2 // 可选：设置内半径避免中心过于拥挤
+  },
+  scale: {
+    x: {
+      paddingInner: 0.6,
+      paddingOuter: 0.3
+    },
+    y: {
+      zero: true
+    }
+  },
+  style: {
+    stroke: "black"
+  },
+  axis: {
+    y: {
+      tickCount: 5
+    }
+  },
+  tooltip: {
+    items: [
+      { channel: 'y', name: 'min' },
+      { channel: 'y1', name: 'q1' },
+      { channel: 'y2', name: 'q2' },
+      { channel: 'y3', name: 'q3' },
+      { channel: 'y4', name: 'max' }
+    ]
+  },
+  legend: false // 隐藏图例（因颜色与x轴一致）
+});
+```
+
 ## 小提琴图（Violin Shape）
 
 ```javascript
@@ -223,4 +277,64 @@ chart.options({
     },
   ],
 });
+```
+
+### 错误：极坐标箱线图使用 boxplot 而不是 box
+```javascript
+// ❌ 错误：使用 boxplot 处理已聚合的五数概括数据
+chart.options({
+  type: 'boxplot',
+  data: [
+    { x: "Oceania", y: [1, 9, 16, 22, 24] },
+    { x: "East Europe", y: [1, 5, 8, 12, 16] }
+  ],
+  encode: { x: 'x', y: 'y' }
+});
+
+// ✅ 正确：使用 box mark 处理已聚合的五数概括数据
+chart.options({
+  type: 'box',
+  data: [
+    { x: "Oceania", y: [1, 9, 16, 22, 24] },
+    { x: "East Europe", y: [1, 5, 8, 12, 16] }
+  ],
+  encode: { x: 'x', y: 'y' }
+});
+```
+
+### 错误：tooltip items 配置不正确
+```javascript
+// ❌ 错误：tooltip items 中使用不存在的 channel 名称
+chart.options({
+  type: 'box',
+  data,
+  encode: { x: 'x', y: 'y' },
+  tooltip: {
+    items: [
+      { channel: 'y0', name: 'min' }, // 错误！y0 不是字段名而是通道名
+      { channel: 'y1', name: 'Q1' },
+      { channel: 'y2', name: 'median' },
+      { channel: 'y3', name: 'Q3' },
+      { channel: 'y4', name: 'max' }
+    ]
+  }
+});
+
+// ✅ 正确：使用正确的 channel 名称
+chart.options({
+  type: 'box',
+  data,
+  encode: { x: 'x', y: 'y' },
+  tooltip: {
+    items: [
+      { channel: 'y', name: 'min' },
+      { channel: 'y1', name: 'q1' },
+      { channel: 'y2', name: 'q2' },
+      { channel: 'y3', name: 'q3' },
+      { channel: 'y4', name: 'max' }
+    ]
+  }
+});
+```
+</skill>
 ```

@@ -268,7 +268,8 @@ async function optimizeSkill(
   errorCases,
   provider,
   model,
-  libraryId
+  libraryId,
+  historyContext = null   // optional cross-iteration history string from memory.js
 ) {
   const skillContent = fs.readFileSync(skillPath, 'utf-8');
   const skillName = path.basename(skillPath, '.md');
@@ -308,8 +309,12 @@ async function optimizeSkill(
         .join('\n')
     : '';
 
+  const historySection = historyContext
+    ? `\n${historyContext}\n`
+    : '';
+
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
-${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}
+${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}${historySection}
 分析错误后，直接输出完整的优化后 skill 文档（以 --- 开头），不要输出任何解释文字。`;
 
   const userMessage = `以下是当前 skill 文件：
@@ -526,7 +531,8 @@ async function run(
     allErrorCases = [],
     orphanCases = [],
     libraryId,
-    skillsRefDir
+    skillsRefDir,
+    historyContext = {}   // { [skillPath]: string | null } — from memory.js
   }
 ) {
   if (dryRun) {
@@ -540,7 +546,7 @@ async function run(
   if (skillToErrors.size > 0) {
     console.log(`\nOptimizing ${skillToErrors.size} skill(s)...`);
     for (const [skillPath, cases] of skillToErrors) {
-      await optimizeSkill(skillPath, cases, provider, model, libraryId);
+      await optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath]);
     }
   }
 

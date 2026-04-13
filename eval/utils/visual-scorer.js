@@ -22,15 +22,15 @@ const OpenAI = require('openai');
 const { getRuntimeConfig } = require('./provider-registry');
 const logger = require('./logger');
 
-const VL_MODEL = process.env.QWEN_VL_MODEL || 'qwen-vl-max';
+const VL_MODEL = process.env.QWEN_VL_MODEL || 'Qwen3-VL-235B-A22B-Instruct';
 const SCORE_TIMEOUT_MS = 30000;
 
 // Weight of each dimension in the composite score
 const WEIGHTS = {
   dataCompleteness: 0.35,
-  chartTypeMatch: 0.30,
+  chartTypeMatch: 0.3,
   visualClarity: 0.25,
-  aesthetics: 0.10
+  aesthetics: 0.1
 };
 
 /**
@@ -42,9 +42,14 @@ function buildVLClient() {
   if (!config?.apiKey) {
     throw new Error('Qwen VL scorer requires QWEN_API_KEY to be set.');
   }
+  // Derive baseURL from config.path to avoid double-appending the path segment.
+  // config.path is like "/compatible-mode/v1/chat/completions"; strip the trailing operation.
+  const basePath = (
+    config.path || '/compatible-mode/v1/chat/completions'
+  ).replace(/\/chat\/completions$/, '');
   return new OpenAI({
     apiKey: config.apiKey,
-    baseURL: `${config.endpoint}/compatible-mode/v1`
+    baseURL: `${config.endpoint}${basePath}`
   });
 }
 
@@ -79,7 +84,7 @@ async function scoreScreenshot(screenshotBuffer, query) {
   }
 
   const base64 = screenshotBuffer.toString('base64');
-  const dataUrl = `image/png;base64,${base64}`;
+  const dataUrl = `data:image/png;base64,${base64}`;
 
   const systemPrompt = `你是图表质量评审专家。用户给你一张图表截图和对应的查询意图，请从以下4个维度打分，每个维度0到10的整数分：
 
@@ -113,15 +118,19 @@ async function scoreScreenshot(screenshotBuffer, query) {
     const text = response.choices?.[0]?.message?.content?.trim() || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { ...skippedResult, skipped: false, reasoning: `parse error: ${text.slice(0, 100)}` };
+      return {
+        ...skippedResult,
+        skipped: false,
+        reasoning: `parse error: ${text.slice(0, 100)}`
+      };
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     const dims = {
       dataCompleteness: clamp(parsed.dataCompleteness ?? 0) / 10,
-      chartTypeMatch:   clamp(parsed.chartTypeMatch   ?? 0) / 10,
-      visualClarity:    clamp(parsed.visualClarity    ?? 0) / 10,
-      aesthetics:       clamp(parsed.aesthetics       ?? 0) / 10
+      chartTypeMatch: clamp(parsed.chartTypeMatch ?? 0) / 10,
+      visualClarity: clamp(parsed.visualClarity ?? 0) / 10,
+      aesthetics: clamp(parsed.aesthetics ?? 0) / 10
     };
 
     const visualScore = Object.entries(WEIGHTS).reduce(

@@ -80,7 +80,6 @@ async function generateWithToolCall(
     model,
     tools: TOOLS,
     maxRounds: 6,
-    debug: false,
     toolHandlers: {
       list_references: toolListReferences as (args: unknown) => unknown,
       read_skills: toolReadSkills as (args: unknown) => unknown
