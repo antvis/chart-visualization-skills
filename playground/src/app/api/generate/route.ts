@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     messages: await convertToModelMessages(messages),
     tools: mode === 'tool-call' ? createSkillTools(library) : undefined,
     stopWhen: mode === 'tool-call' ? stepCountIs(8) : undefined,
-    temperature: 0.2,
+    temperature: 0.3,
     maxOutputTokens: 4000
   });
 

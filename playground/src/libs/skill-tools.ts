@@ -22,6 +22,7 @@ const ROOT_DIR = process.cwd().includes('playground')
   ? path.resolve(process.cwd(), '..')
   : path.resolve(process.cwd());
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
+const SAFE_CATEGORY_RE = /^[a-z0-9_-]+$/i;
 
 // Mapping from library index key → actual skills directory name
 const LIBRARY_DIR: Record<string, string> = {
@@ -30,6 +31,15 @@ const LIBRARY_DIR: Record<string, string> = {
 
 function resolveLibraryDir(library: string): string {
   return LIBRARY_DIR[library] ?? library;
+}
+
+function isWithinDir(parentDir: string, targetPath: string): boolean {
+  const normalizedParent = path.resolve(parentDir);
+  const normalizedTarget = path.resolve(targetPath);
+  return (
+    normalizedTarget === normalizedParent ||
+    normalizedTarget.startsWith(`${normalizedParent}${path.sep}`)
+  );
 }
 
 // ── Tool definitions ──────────────────────────────────────────────────────────
@@ -93,9 +103,13 @@ export function loadSkillFile(
   skillPath: string,
   verbose = false
 ): string | null {
-  const fullPath = skillPath.startsWith('/')
-    ? skillPath
-    : path.join(ROOT_DIR, skillPath);
+  const fullPath = path.resolve(
+    skillPath.startsWith('/') ? skillPath : path.join(ROOT_DIR, skillPath)
+  );
+  if (!isWithinDir(SKILLS_DIR, fullPath) || !fullPath.endsWith('.md')) {
+    if (verbose) console.log(`   ⚠️  Invalid skill path: ${skillPath}`);
+    return null;
+  }
   if (!fs.existsSync(fullPath)) {
     if (verbose) console.log(`   ⚠️  File not found: ${fullPath}`);
     return null;
@@ -204,10 +218,13 @@ export function toolListReferences(
   if (!fs.existsSync(referencesDir)) return [];
 
   const results: ReferenceResult[] = [];
+  if (category && !SAFE_CATEGORY_RE.test(category)) return [];
   const categories = category ? [category] : fs.readdirSync(referencesDir);
 
   for (const cat of categories) {
+    if (!SAFE_CATEGORY_RE.test(cat)) continue;
     const catDir = path.join(referencesDir, cat);
+    if (!isWithinDir(referencesDir, catDir)) continue;
     if (!fs.existsSync(catDir) || !fs.statSync(catDir).isDirectory()) continue;
 
     for (const file of fs
@@ -293,6 +310,8 @@ ${skillContent}`;
 }
 
 export function createSkillTools(library: string) {
+  const chartLibrary = library;
+
   return {
     list_references: tool({
       description:
@@ -306,7 +325,7 @@ export function createSkillTools(library: string) {
           )
       }),
       execute: async ({ category }) => {
-        return toolListReferences({ library, category });
+        return toolListReferences({ library: chartLibrary, category });
       }
     }),
     read_skills: tool({
