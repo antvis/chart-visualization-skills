@@ -12,7 +12,7 @@ export interface Skill {
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
-  embedding_text: string;
+  embedding_text?: string;
   content?: string;
 }
 
@@ -27,7 +27,7 @@ export interface SkillIndex {
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
-  indexDir?: string;
+  includeContent?: boolean;
 }
 
 export interface ListOptions {
@@ -35,16 +35,10 @@ export interface ListOptions {
   category?: string | null;
   tags?: string[];
   difficulty?: string | null;
-  indexDir?: string;
 }
 
 export interface BM25Options {
   k1?: number;
   b?: number;
   fieldWeights?: Record<string, number>;
-}
-
-export interface FrontMatter {
-  meta: Record<string, any>;
-  body: string;
 }
