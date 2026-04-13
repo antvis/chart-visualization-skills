@@ -12,8 +12,19 @@ const LIBRARY_DIR: Record<string, string> = {
   g2: 'antv-g2-chart'
 };
 
+const LIBRARY_DISPLAY_NAME: Record<string, string> = {
+  g2: 'G2',
+  g6: 'G6',
+  'antv-g2-chart': 'G2',
+  'antv-g6-graph': 'G6'
+};
+
 export function resolveLibraryDir(library: string): string {
   return LIBRARY_DIR[library] ?? library;
+}
+
+export function getLibraryDisplayName(library: string): string {
+  return LIBRARY_DISPLAY_NAME[library] ?? library.toUpperCase();
 }
 
 export function isWithinDir(parentDir: string, targetPath: string): boolean {

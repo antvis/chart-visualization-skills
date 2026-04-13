@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
       mode === 'tool-call'
         ? createSkillTools(library)
         : { retrieve: createRetrieveTool(library) },
+    // skill 模式通常要经过 load_skill → list_references → read_file 多轮调用，BM25 只需 retrieve 一轮
     stopWhen: stepCountIs(mode === 'tool-call' ? 8 : 6),
     temperature: 0.3,
     maxOutputTokens: 4000

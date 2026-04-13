@@ -8,6 +8,7 @@ import { tool } from 'ai';
 import { retrieve } from '@antv/chart-visualization-skills';
 import type { Skill } from '@antv/chart-visualization-skills';
 import { z } from 'zod';
+import { getLibraryDisplayName } from './skill-tools/shared';
 
 // process.cwd() is reliable in Next.js server context; __dirname is not (webpack rewrites it)
 const ROOT_DIR = process.cwd().endsWith('playground')
@@ -55,7 +56,8 @@ export function buildPrompt(
 }
 
 export function buildBm25SystemPrompt(library: string): string {
-  return `你是 AntV ${library.toUpperCase()} v5 专家。
+  const libraryName = getLibraryDisplayName(library);
+  return `你是 AntV ${libraryName} v5 专家。
 你可以使用 retrieve 工具检索与用户需求最相关的参考文档。
 请先调用 retrieve，再基于召回内容生成可运行的完整图表代码。`;
 }
