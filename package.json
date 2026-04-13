@@ -15,7 +15,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && npm run build:index && npm run copy:index",
+    "build": "npm run build:index && tsc && npm run copy:index",
     "build:index": "tsx src/scripts/build.ts",
     "copy:index": "[ -d src/index ] || (echo 'Source index directory not found. Run \"npm run build:index\" first.' && exit 1); rm -rf dist/index && mkdir -p dist/index && cp -R src/index/. dist/index/",
     "test": "vitest run",
