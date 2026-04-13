@@ -17,7 +17,7 @@
   "scripts": {
     "build": "tsc && npm run build:index && npm run copy:index",
     "build:index": "node dist/scripts/build.js",
-    "copy:index": "node dist/scripts/copy-index.js",
+    "copy:index": "rm -rf dist/index && mkdir -p dist/index && cp -R src/index/. dist/index/",
     "test": "vitest run",
     "test:watch": "vitest",
     "precommit": "npm run build"
