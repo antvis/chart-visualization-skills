@@ -8,6 +8,8 @@ import {
 } from '@/libs/provider-registry';
 
 export const maxDuration = 120;
+const SKILL_MODE_MAX_STEPS = 8;
+const BM25_MODE_MAX_STEPS = 6;
 
 export async function POST(request: NextRequest) {
   const {
@@ -51,7 +53,9 @@ export async function POST(request: NextRequest) {
         ? createSkillTools(library)
         : { retrieve: createRetrieveTool(library) },
     // skill 模式通常要经过 load_skill → list_references → read_file 多轮调用，BM25 只需 retrieve 一轮
-    stopWhen: stepCountIs(mode === 'tool-call' ? 8 : 6),
+    stopWhen: stepCountIs(
+      mode === 'tool-call' ? SKILL_MODE_MAX_STEPS : BM25_MODE_MAX_STEPS
+    ),
     temperature: 0.3,
     maxOutputTokens: 4000
   });

@@ -21,7 +21,7 @@ export function toolLoadSkill(args: { library: string }): LoadSkillResult {
 export function createLoadSkillTool(chartLibrary: string) {
   return tool({
     description: '加载当前图表库的主 Skill 文档内容（SKILL.md）。',
-    inputSchema: z.object({}).optional(),
+    inputSchema: z.object({}),
     execute: async () => {
       return toolLoadSkill({ library: chartLibrary });
     }
