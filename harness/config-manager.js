@@ -91,6 +91,50 @@ function readConfigFile(filePath) {
   return {};
 }
 
+// ── Validation schema ─────────────────────────────────────────────────────────
+
+const SCHEMA = {
+  retrieval:      { type: 'string',  enum: ['tool-call', 'bm25', 'context7'] },
+  sample:         { type: 'number',  min: 1 },
+  passes:         { type: 'number',  min: 1 },
+  maxIterations:  { type: 'number',  min: 1 },
+  concurrency:    { type: 'number',  min: 1 },
+  scoreThreshold: { type: 'number',  min: 0, max: 1 },
+};
+
+/**
+ * Validate a resolved config object against SCHEMA.
+ * Throws a descriptive Error on the first violation found.
+ *
+ * @param {object} cfg - resolved config (output of load())
+ */
+function validate(cfg) {
+  const errors = [];
+
+  for (const [key, rule] of Object.entries(SCHEMA)) {
+    const val = cfg[key];
+    if (val === undefined || val === null) continue;
+
+    if (rule.type && typeof val !== rule.type) {
+      errors.push(`"${key}" must be a ${rule.type}, got ${typeof val} (${JSON.stringify(val)})`);
+      continue;
+    }
+    if (rule.enum && !rule.enum.includes(val)) {
+      errors.push(`"${key}" must be one of [${rule.enum.join(', ')}], got "${val}"`);
+    }
+    if (rule.min !== undefined && val < rule.min) {
+      errors.push(`"${key}" must be >= ${rule.min}, got ${val}`);
+    }
+    if (rule.max !== undefined && val > rule.max) {
+      errors.push(`"${key}" must be <= ${rule.max}, got ${val}`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`[config] Invalid configuration:\n  ${errors.join('\n  ')}`);
+  }
+}
+
 // ── Main function ─────────────────────────────────────────────────────────────
 
 /**
@@ -131,6 +175,7 @@ function load(cliOpts = {}) {
     }
   }
 
+  validate(result);
   return result;
 }
 
@@ -154,4 +199,4 @@ function save(patch) {
   console.log(`[config] Saved to ${filePath}`);
 }
 
-module.exports = { load, save, DEFAULTS, ENV_MAP };
+module.exports = { load, save, validate, DEFAULTS, ENV_MAP, SCHEMA };

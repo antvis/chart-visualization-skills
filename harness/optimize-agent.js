@@ -315,7 +315,10 @@ async function optimizeSkill(
 
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
 ${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}${historySection}
-分析错误后，直接输出完整的优化后 skill 文档（以 --- 开头），不要输出任何解释文字。`;
+注意：当前 skill 是候选归因之一，不一定是错误的根本原因。请先判断错误是否确实由本 skill 的内容缺失或错误描述引起。
+- 如果是：输出修正后的完整 skill 文档（以 --- 开头）。
+- 如果不是（错误由其他 skill 或模型行为导致）：原样输出当前 skill 文档，不做任何修改。
+不要输出任何解释文字，只输出完整的 skill 文档内容。`;
 
   const userMessage = `以下是当前 skill 文件：
 
@@ -375,6 +378,13 @@ ${errorContext}
     console.warn(
       `    LLM response is suspiciously short (${newContent.length} vs ${originalContent.length} chars), skipping to prevent regression.`
     );
+    return;
+  }
+
+  // If LLM decided this skill is not the root cause and returned the original
+  // content unchanged, skip the write entirely.
+  if (newContent === originalContent.trim()) {
+    console.log(`    Unchanged (not root cause): ${skillName}`);
     return;
   }
 

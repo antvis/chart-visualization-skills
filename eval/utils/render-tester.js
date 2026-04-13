@@ -29,6 +29,7 @@ function findLocalLib(pkg, distFile) {
 const LIB_LOAD_TIMEOUT_MS = 10000; // max wait for addScriptTag (CDN)
 const RENDER_TIMEOUT_MS = 5000;    // max wait for render() promise
 const BLANK_WAIT_MS = 600;         // wait after render for paint
+const CASE_TIMEOUT_MS = 30000;     // hard per-case wall-clock limit (covers lib load + render + score)
 
 let _browser = null;
 
@@ -218,7 +219,10 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
   } catch (err) {
     return { status: 'error', error: err.message };
   } finally {
-    await page.close();
+    await Promise.race([
+      page.close(),
+      new Promise((r) => setTimeout(r, 5000))  // don't hang if close itself stalls
+    ]);
   }
 }
 
@@ -249,8 +253,17 @@ async function testAllResults(results, { concurrency = 5, skipScore = false, onP
         tested = { ...result, renderStatus: 'error', renderError: result.error || 'no code' };
       } else {
         try {
+          const caseTimeout = new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error(`Case timeout (${CASE_TIMEOUT_MS}ms)`)),
+              CASE_TIMEOUT_MS
+            )
+          );
           const { status, error, visualScore, visualDimensions, visualReasoning } =
-            await testRender(result.generatedCode, { query: result.query || '', skipScore });
+            await Promise.race([
+              testRender(result.generatedCode, { query: result.query || '', skipScore }),
+              caseTimeout
+            ]);
           tested = { ...result, renderStatus: status, renderError: error,
             ...(visualScore != null ? { visualScore, visualDimensions, visualReasoning } : {}) };
         } catch (err) {

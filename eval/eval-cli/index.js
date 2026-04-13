@@ -117,12 +117,12 @@ async function runEvaluation(opts) {
   }, 2000);
 
   try {
-    await evalManager.startEvaluation({ id: evalId, ...options });
+    const { evalId: id, outputPath } = await evalManager.startEvaluation({ id: evalId, ...options });
 
-    const evalRun = evalManager.runningEvals.get(evalId);
+    const evalRun = evalManager.runningEvals.get(id);
     if (evalRun?._promise) await evalRun._promise;
 
-    const finalStatus = evalManager.getStatus(evalId);
+    const finalStatus = evalManager.getStatus(id);
     console.log('');
     console.log('='.repeat(60));
     console.log('  Evaluation Complete');
@@ -137,6 +137,10 @@ async function runEvaluation(opts) {
     );
     console.log(`  Issues Count: ${finalStatus.summary?.issuesCount}`);
     console.log('='.repeat(60));
+
+    // Report the output path to the parent process via stderr marker line.
+    // stdout is used for user-facing progress; stderr is captured by eval-agent.
+    process.stderr.write(`EVAL_RESULT_PATH=${outputPath}\n`);
   } catch (error) {
     console.error('Evaluation failed:', error.message);
     process.exit(1);
