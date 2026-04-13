@@ -7,7 +7,6 @@ import { z } from 'zod';
 const ROOT_DIR = process.cwd().endsWith('playground')
   ? path.resolve(process.cwd(), '..')
   : process.cwd();
-const INDEX_DIR = path.resolve(ROOT_DIR, 'dist/index');
 const MAX_RETRIEVE_DOCUMENTS = 8;
 
 function loadSkillContent(relativePath: string): string | null {
@@ -42,10 +41,10 @@ export function createRetrieveTool(library: string) {
         .describe('召回文档数量，默认 5')
     }),
     execute: async ({ query, topK }) => {
-      const retrievedSkills = retrieve(query, library, topK ?? 5, INDEX_DIR);
+      const retrievedSkills = retrieve(query, library, topK ?? 5, true);
       const results: RetrieveToolResult[] = [];
       for (const skill of retrievedSkills) {
-        const content = loadSkillContent(skill.path);
+        const content = skill.content || loadSkillContent(skill.path);
         results.push({
           id: skill.id,
           title: skill.title,
