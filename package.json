@@ -15,8 +15,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && npm run build:index",
+    "build": "tsc && npm run build:index && npm run copy:index",
     "build:index": "node dist/scripts/build.js",
+    "copy:index": "node -e \"require('fs').cpSync('src/index', 'dist/index', { recursive: true })\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "precommit": "npm run build"

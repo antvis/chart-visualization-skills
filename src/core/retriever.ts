@@ -4,10 +4,8 @@ import { BM25Index } from './bm25';
 import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
 
 // __dirname is dist/core/ when compiled, src/core/ when run directly by vitest/ts-node.
-// Probe both locations so the module works in dev (src/index/) and production (dist/index/).
-const _srcIndex  = path.resolve(__dirname, '../index');
-const _distIndex = path.resolve(__dirname, '../../dist/index');
-const DEFAULT_INDEX_DIR = fs.existsSync(_srcIndex) ? _srcIndex : _distIndex;
+// In both cases, index files are expected at ../index.
+const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
 
 const DEFAULT_LIBRARY = 'g2';
 

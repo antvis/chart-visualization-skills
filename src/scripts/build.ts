@@ -14,7 +14,7 @@ import type { Skill, SkillIndex } from '../core/types';
 const rootArg = process.argv.find((a) => a.startsWith('--root='));
 const PKG_ROOT = rootArg ? path.resolve(rootArg.slice('--root='.length)) : path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
-const INDEX_DIR = path.join(PKG_ROOT, 'dist', 'index');
+const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 
 const LIBRARY_PATHS: Record<string, string> = {
   g2: 'antv-g2-chart/references',
