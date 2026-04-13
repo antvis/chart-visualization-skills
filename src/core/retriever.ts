@@ -3,8 +3,14 @@ import path from 'path';
 import { BM25Index } from './bm25';
 import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
 
-// __dirname at runtime is dist/core/, so ../index points to dist/index/
-const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
+// __dirname is dist/core/ when compiled, src/core/ when run directly by vitest/ts-node.
+// Probe both locations so the module works in dev (src/index/) and production (dist/index/).
+const _srcIndex  = path.resolve(__dirname, '../index');
+const _distIndex = path.resolve(__dirname, '../../dist/index');
+const DEFAULT_INDEX_DIR = fs.existsSync(_srcIndex) ? _srcIndex : _distIndex;
+
+// Package root: two levels up from wherever __dirname resolves to at runtime.
+const PKG_ROOT = path.resolve(__dirname, '../..');
 
 const DEFAULT_LIBRARY = 'g2';
 
@@ -48,4 +54,44 @@ export function listSkills(options: ListOptions = {}): Skill[] {
     if (tags.length > 0 && !tags.some(t => skill.tags.includes(t))) return false;
     return true;
   });
+}
+
+/**
+ * Read the full markdown content of a skill file.
+ * `skill.path` is relative to the package root (e.g. "skills/antv-g2-chart/references/...").
+ *
+ * Path traversal is prevented: the resolved path must remain inside `<root>/skills/`.
+ * Symlinks are resolved before the check so they cannot escape the allowed directory.
+ *
+ * @param skill   - A Skill object returned by retrieve() or listSkills()
+ * @param pkgRoot - Override the package root (useful in monorepo / dev setups).
+ *                  Defaults to two directories above dist/core/ at runtime.
+ * @returns The raw markdown string, or null if the file does not exist.
+ * @throws {Error} If the resolved path escapes the skills directory.
+ */
+export function loadSkillContent(skill: Skill, pkgRoot?: string): string | null {
+  const root = pkgRoot || PKG_ROOT;
+  const allowedDir = path.join(root, 'skills');
+  const filePath = path.resolve(root, skill.path);
+
+  // Resolve symlinks on the parent directory to prevent symlink escape.
+  // The file itself may not exist yet, so we resolve as far as possible.
+  let realFilePath: string;
+  try {
+    realFilePath = fs.realpathSync(filePath);
+  } catch {
+    // File does not exist — use the normalised path for the prefix check.
+    realFilePath = filePath;
+  }
+
+  const realAllowedDir = (() => {
+    try { return fs.realpathSync(allowedDir); } catch { return allowedDir; }
+  })();
+
+  if (!realFilePath.startsWith(realAllowedDir + path.sep) && realFilePath !== realAllowedDir) {
+    throw new Error(`Access denied: skill path "${skill.path}" escapes the skills directory.`);
+  }
+
+  if (!fs.existsSync(realFilePath)) return null;
+  return fs.readFileSync(realFilePath, 'utf-8');
 }

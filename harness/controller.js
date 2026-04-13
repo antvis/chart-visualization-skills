@@ -28,6 +28,7 @@
 
 require('dotenv').config({ override: true });
 
+const fs   = require('fs');
 const path = require('path');
 const { Command } = require('commander');
 const { detectProviderFromModel } = require('../eval/utils/ai-sdk');
@@ -136,7 +137,10 @@ async function main() {
 
   let consecutivePasses = 0;
   let iteration         = 0;
-  let priorityCaseIds   = null; // set after optimization to re-test failing cases first
+  let priorityCaseIds   = null;  // set after optimization to re-test failing cases first
+  // fixedCaseIds: the stable sample drawn in iteration 1 and reused every normal round.
+  // This prevents random re-sampling from generating false "clean pass" signals.
+  let fixedCaseIds      = null;
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -152,6 +156,7 @@ async function main() {
         dataset:     libConfig.defaultDataset,
         concurrency: CONCURRENCY,
         ids,
+        rootDir:     activeRootDir,
       }),
       {
         maxAttempts: 3,
@@ -202,13 +207,22 @@ async function main() {
     console.log('─'.repeat(60));
 
     // ── Step 1: Eval ──────────────────────────────────────────────────────────
-    if (priorityCaseIds) {
+    // Determine which case IDs to run this iteration:
+    //   - priorityCaseIds: targeted re-test of previously failing cases (post-optimize)
+    //   - fixedCaseIds:    the stable sample fixed in iteration 1 (non-full runs)
+    //   - null / undefined: first iteration — sample will be drawn and then fixed
+    const isTargetedRound = priorityCaseIds !== null;
+    const idsForThisRound = priorityCaseIds ?? (FULL ? null : fixedCaseIds);
+
+    if (isTargetedRound) {
       console.log(`\n[targeted] Re-testing ${priorityCaseIds.length} previously-failing case(s)...`);
+    } else if (fixedCaseIds && !FULL) {
+      console.log(`\n[fixed-sample] Running ${fixedCaseIds.length} fixed case(s)...`);
     }
 
     let resultPath;
     try {
-      resultPath = await runEval(priorityCaseIds);
+      resultPath = await runEval(idsForThisRound);
       priorityCaseIds = null;
     } catch (err) {
       const { reason, action } = classify(err);
@@ -219,7 +233,23 @@ async function main() {
       continue;
     }
 
-    // ── Step 2: Render test ───────────────────────────────────────────────────
+    // ── Step 2: Fix sample on first normal (non-targeted) iteration ──────────
+    // After the first eval, lock in the case IDs so every subsequent non-targeted
+    // round tests exactly the same set. This makes consecutivePasses meaningful.
+    if (!FULL && fixedCaseIds === null && !idsForThisRound) {
+      try {
+        const data = JSON.parse(fs.readFileSync(resultPath, 'utf-8'));
+        const ids = (data.results || []).map((r) => r.id).filter(Boolean);
+        if (ids.length > 0) {
+          fixedCaseIds = ids;
+          console.log(`[fixed-sample] Locked ${fixedCaseIds.length} case IDs for this run.`);
+        }
+      } catch {
+        // Non-critical: if we can't read the file here, we'll just re-sample next round.
+      }
+    }
+
+    // ── Step 4 (was 2): Render test ──────────────────────────────────────────
     const errorCases = await registry.dispatch('render', {
       resultPath,
       concurrency:    CONCURRENCY,
@@ -228,8 +258,15 @@ async function main() {
     });
 
     if (errorCases.length === 0) {
-      consecutivePasses++;
-      console.log(`Clean pass (${consecutivePasses}/${MAX_PASSES})`);
+      // A targeted re-test only validates previously-failing cases.
+      // It is not representative of the full sample, so it must NOT increment
+      // consecutivePasses — only a clean full-sample round counts.
+      if (isTargetedRound) {
+        console.log(`[targeted] All re-tested cases pass — running full-sample round next to confirm.`);
+      } else {
+        consecutivePasses++;
+        console.log(`Clean pass (${consecutivePasses}/${MAX_PASSES})`);
+      }
       continue;
     }
 

@@ -56,7 +56,34 @@ function resolveSkillPath(ref, rootDir, skillsDir) {
 }
 
 /**
+ * Pick the single most-relevant skill ref from an error case.
+ *
+ * Attribution priority:
+ *  1. loadedSkillPaths (tool-call): the *last* entry — LLM read it closest to
+ *     code generation, making it the highest-confidence blame target.
+ *  2. retrievedSkillIds (bm25): the *first* entry — highest BM25 rank.
+ *
+ * Attributing a failed case to all loaded skills pollutes healthy skills with
+ * spurious errors and inflates LLM optimization costs.
+ *
+ * @param {object} errorCase
+ * @returns {string|null} the single primary skill ref, or null
+ */
+function pickPrimaryRef(errorCase) {
+  const loaded = errorCase.loadedSkillPaths || [];
+  if (loaded.length > 0) return loaded[loaded.length - 1]; // last read = most relevant
+
+  const retrieved = errorCase.retrievedSkillIds || [];
+  if (retrieved.length > 0) return retrieved[0]; // top BM25 rank
+
+  return null;
+}
+
+/**
  * Analyze error cases and group them by the skill file they exercised.
+ *
+ * Each failed case is attributed to exactly one skill (the primary ref) to
+ * avoid cascading spurious optimizations across unrelated skill files.
  *
  * @param {object[]} errorCases  - failed render results from render-agent
  * @param {object} opts
@@ -71,33 +98,23 @@ function run(errorCases, { rootDir, skillsDir }) {
   const orphanCases = [];
 
   for (const errorCase of errorCases) {
-    const refs = [
-      ...(errorCase.loadedSkillPaths || []),
-      ...(errorCase.retrievedSkillIds || [])
-    ];
+    const primaryRef = pickPrimaryRef(errorCase);
 
-    if (refs.length === 0) {
+    if (!primaryRef) {
       console.log(`  No skill refs for: ${errorCase.id} — queued for new skill creation`);
       orphanCases.push(errorCase);
       continue;
     }
 
-    let resolved = false;
-    for (const ref of refs) {
-      const skillPath = resolveSkillPath(ref, rootDir, skillsDir);
-      if (!skillPath) {
-        console.warn(`  Could not resolve skill: ${ref}`);
-        continue;
-      }
-      if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
-      skillToErrors.get(skillPath).push(errorCase);
-      resolved = true;
+    const skillPath = resolveSkillPath(primaryRef, rootDir, skillsDir);
+    if (!skillPath) {
+      console.warn(`  Could not resolve primary skill ref "${primaryRef}" for: ${errorCase.id} — queued for new skill creation`);
+      orphanCases.push(errorCase);
+      continue;
     }
 
-    if (!resolved) {
-      console.log(`  All refs unresolved for: ${errorCase.id} — queued for new skill creation`);
-      orphanCases.push(errorCase);
-    }
+    if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
+    skillToErrors.get(skillPath).push(errorCase);
   }
 
   return { skillToErrors, orphanCases };

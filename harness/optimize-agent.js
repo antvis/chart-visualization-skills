@@ -368,8 +368,30 @@ ${errorContext}
     return;
   }
 
-  fs.writeFileSync(skillPath, newContent);
-  console.log(`    Saved: ${skillPath}`);
+  // Validate that the new content is meaningfully different and not a regression:
+  // it must be non-empty and at least half the length of the original.
+  const originalContent = fs.readFileSync(skillPath, 'utf-8');
+  if (newContent.length < originalContent.length * 0.5) {
+    console.warn(
+      `    LLM response is suspiciously short (${newContent.length} vs ${originalContent.length} chars), skipping to prevent regression.`
+    );
+    return;
+  }
+
+  // Back up original before overwriting so we can recover if needed.
+  const backupPath = skillPath + '.bak';
+  fs.copyFileSync(skillPath, backupPath);
+
+  try {
+    fs.writeFileSync(skillPath, newContent);
+    fs.unlinkSync(backupPath); // clean up backup on success
+    console.log(`    Saved: ${skillPath}`);
+  } catch (writeErr) {
+    // Restore from backup if the write fails mid-way.
+    try { fs.copyFileSync(backupPath, skillPath); } catch { /* best-effort */ }
+    try { fs.unlinkSync(backupPath); } catch { /* best-effort */ }
+    throw writeErr;
+  }
 }
 
 // ── New skill creator ─────────────────────────────────────────────────────────
@@ -487,7 +509,22 @@ ${errorContext}
 
     const filePath = path.join(skillsBaseDir, `${filename}.md`);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, content);
+
+    // Back up pre-existing file before overwriting (idempotent re-runs).
+    const existingBackup = filePath + '.bak';
+    if (fs.existsSync(filePath)) {
+      fs.copyFileSync(filePath, existingBackup);
+    }
+    try {
+      fs.writeFileSync(filePath, content);
+      if (fs.existsSync(existingBackup)) fs.unlinkSync(existingBackup);
+    } catch (writeErr) {
+      if (fs.existsSync(existingBackup)) {
+        try { fs.copyFileSync(existingBackup, filePath); } catch { /* best-effort */ }
+        try { fs.unlinkSync(existingBackup); } catch { /* best-effort */ }
+      }
+      throw writeErr;
+    }
     console.log(`    Created: ${filePath}`);
     created.push(filePath);
   }
@@ -544,10 +581,12 @@ async function run(
   const created = [];
 
   if (skillToErrors.size > 0) {
-    console.log(`\nOptimizing ${skillToErrors.size} skill(s)...`);
-    for (const [skillPath, cases] of skillToErrors) {
-      await optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath]);
-    }
+    console.log(`\nOptimizing ${skillToErrors.size} skill(s) in parallel...`);
+    await Promise.all(
+      [...skillToErrors.entries()].map(([skillPath, cases]) =>
+        optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath])
+      )
+    );
   }
 
   if (orphanCases.length > 0 && skillsRefDir) {

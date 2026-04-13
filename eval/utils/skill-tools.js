@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 
-const ROOT_DIR = path.resolve(__dirname, '../..');
+const ROOT_DIR = process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
 // Mapping from short library key → actual skills directory name
