@@ -8,8 +8,14 @@
   "bin": {
     "chart-visualization-cli": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc && npm run build:index && cp -r src/index dist/index",
+    "build": "tsc && npm run build:index",
     "build:index": "node dist/scripts/build.js",
     "test": "vitest run",
     "test:watch": "vitest",

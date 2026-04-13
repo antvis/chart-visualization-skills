@@ -3,8 +3,11 @@ import path from 'path';
 import { BM25Index } from './bm25';
 import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
 
-// __dirname at runtime is dist/core/, so ../index points to dist/index/
+// __dirname at runtime is dist/core/
+// ../index  → dist/index/   (BM25 index files)
+// ../..     → package root  (skills/ lives here)
 const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
+const PKG_ROOT = path.resolve(__dirname, '../..');
 
 const DEFAULT_LIBRARY = 'g2';
 
@@ -48,4 +51,20 @@ export function listSkills(options: ListOptions = {}): Skill[] {
     if (tags.length > 0 && !tags.some(t => skill.tags.includes(t))) return false;
     return true;
   });
+}
+
+/**
+ * Read the full markdown content of a skill file.
+ * `skill.path` is relative to the package root (e.g. "skills/antv-g2-chart/references/...").
+ *
+ * @param skill  - A Skill object returned by retrieve() or listSkills()
+ * @param pkgRoot - Override the package root (useful in monorepo / dev setups).
+ *                  Defaults to two directories above dist/core/ at runtime.
+ * @returns The raw markdown string, or null if the file does not exist.
+ */
+export function loadSkillContent(skill: Skill, pkgRoot?: string): string | null {
+  const root = pkgRoot || PKG_ROOT;
+  const filePath = path.resolve(root, skill.path);
+  if (!fs.existsSync(filePath)) return null;
+  return fs.readFileSync(filePath, 'utf-8');
 }
