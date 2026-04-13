@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { tool } from 'ai';
+import matter from 'gray-matter';
 import { z } from 'zod';
 import {
   SAFE_CATEGORY_RE,
@@ -43,26 +44,18 @@ export function toolListReferences(
       if (!isWithinDir(catDir, filePath)) continue;
       if (!fs.existsSync(filePath)) continue;
       const raw = fs.readFileSync(filePath, 'utf-8');
-      const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
-      let meta: { id?: string; title?: string; description?: string } = {};
-      if (yamlMatch) {
-        const yaml = yamlMatch[1];
-        const idMatch = yaml.match(/^id:\s*["']?([^'"\n]+)["']?/m);
-        const titleMatch = yaml.match(/^title:\s*["']?([^'"\n]+)["']?/m);
-        const descMatch = yaml.match(
-          /^description:\s*\|?\s*([\s\S]*?)(?=^[a-z]|\s*$)/m
-        );
-        meta = {
-          id: idMatch ? idMatch[1].trim() : file.replace('.md', ''),
-          title: titleMatch ? titleMatch[1].trim() : file,
-          description: descMatch ? descMatch[1].trim().slice(0, 100) : ''
-        };
-      }
+      const { data } = matter(raw);
+      const meta = {
+        id: typeof data.id === 'string' ? data.id.trim() : file.replace('.md', ''),
+        title: typeof data.title === 'string' ? data.title.trim() : file,
+        description:
+          typeof data.description === 'string' ? data.description.trim().slice(0, 100) : ''
+      };
       results.push({
         ...meta,
-        id: meta.id || file.replace('.md', ''),
-        title: meta.title || file,
-        description: meta.description || '',
+        id: meta.id,
+        title: meta.title,
+        description: meta.description,
         category: cat,
         path: `skills/${dir}/references/${cat}/${file}`
       });
