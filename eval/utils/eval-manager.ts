@@ -24,6 +24,23 @@ const logger = require('./logger');
 // worktree root so that skill retrieval reads from the optimised skill files.
 const ROOT_DIR = process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '..', '..');
 const MAX_TOOL_ROUNDS = 6;
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const RESULT_DIR = path.join(__dirname, '..', 'result');
+
+function sanitizeJsonFilename(filename, fieldName) {
+  const raw = String(filename || '').trim();
+  const baseName = path.basename(raw);
+  if (!baseName || baseName !== raw || !baseName.endsWith('.json')) {
+    throw new Error(`Invalid ${fieldName}: ${filename}`);
+  }
+  return baseName;
+}
+
+function sanitizeFileSegment(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9._-]+/g, '-');
+}
 
 // ── BM25 ──────────────────────────────────────────────────────────────────────
 
@@ -79,10 +96,12 @@ class EvaluationManager {
       retrieval = 'tool-call'
     } = options;
 
+    const datasetFile = sanitizeJsonFilename(dataset || 'g2-dataset-174.json', 'dataset');
+
     // Load dataset
-    const datasetPath = path.join(__dirname, '..', 'data', dataset);
+    const datasetPath = path.join(DATA_DIR, datasetFile);
     if (!fs.existsSync(datasetPath)) {
-      throw new Error(`Dataset not found: ${dataset}`);
+      throw new Error(`Dataset not found: ${datasetFile}`);
     }
 
     const datasetContent = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
@@ -107,7 +126,7 @@ class EvaluationManager {
       id: evalId,
       provider,
       model,
-      dataset,
+      dataset: datasetFile,
       retrieval,
       status: 'running',
       startTime: new Date().toISOString(),
@@ -126,7 +145,7 @@ class EvaluationManager {
     this.runningEvals.set(evalId, evalRun);
 
     // Create result directory
-    const resultDir = path.join(__dirname, '..', 'result');
+    const resultDir = RESULT_DIR;
     if (!fs.existsSync(resultDir)) {
       fs.mkdirSync(resultDir, { recursive: true });
     }
@@ -134,7 +153,7 @@ class EvaluationManager {
     const dateStr = new Date().toISOString().slice(0, 10);
     const outputPath = path.join(
       resultDir,
-      `eval-${retrieval}-${dataset.replace('.json', '')}-${model}-${dateStr}.json`
+      `eval-${sanitizeFileSegment(retrieval)}-${datasetFile.replace('.json', '')}-${sanitizeFileSegment(model)}-${dateStr}.json`
     );
 
     // Notify start

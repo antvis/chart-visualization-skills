@@ -27,6 +27,16 @@ const logger = require('../utils/logger');
 
 const PORT = process.env.EVAL_PORT || 3100;
 const IS_DEV = process.argv.includes('--dev');
+const RESULT_DIR = __dirname;
+
+function resolveResultFilePath(filename) {
+  const raw = String(filename || '').trim();
+  const safeName = path.basename(raw);
+  if (!safeName || safeName !== raw || !safeName.endsWith('.json')) {
+    throw new Error('Invalid result filename');
+  }
+  return path.join(RESULT_DIR, safeName);
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -146,7 +156,12 @@ app.get('/api/results', (req, res) => {
 // GET /api/results/:filename - Get specific result JSON
 app.get('/api/results/:filename', (req, res) => {
   const fs = require('fs');
-  const filePath = path.join(__dirname, req.params.filename);
+  let filePath = '';
+  try {
+    filePath = resolveResultFilePath(req.params.filename);
+  } catch {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: 'Result file not found' });
@@ -163,7 +178,12 @@ app.get('/api/results/:filename', (req, res) => {
 // DELETE /api/results/:filename - Delete a result file
 app.delete('/api/results/:filename', async (req, res) => {
   const fs = require('fs').promises;
-  const filePath = path.join(__dirname, req.params.filename);
+  let filePath = '';
+  try {
+    filePath = resolveResultFilePath(req.params.filename);
+  } catch {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
 
   try {
     await fs.unlink(filePath);
@@ -200,7 +220,7 @@ app.post('/api/eval', async (req, res) => {
       id: evalId,
       provider,
       model: model || ProviderRegistry.getDefaultModel(provider),
-      dataset: options.dataset || 'g2-dataset-174.json ',
+      dataset: options.dataset || 'g2-dataset-174.json',
       sample: options.sample || null,
       full: options.full || false,
       concurrency: options.concurrency || 1,
@@ -245,9 +265,14 @@ app.delete('/api/eval/:id', (req, res) => {
 app.get('/api/compare/:file1/:file2', (req, res) => {
   const fs = require('fs');
   const { file1, file2 } = req.params;
-
-  const filePath1 = path.join(__dirname, file1);
-  const filePath2 = path.join(__dirname, file2);
+  let filePath1 = '';
+  let filePath2 = '';
+  try {
+    filePath1 = resolveResultFilePath(file1);
+    filePath2 = resolveResultFilePath(file2);
+  } catch {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
 
   if (!fs.existsSync(filePath1) || !fs.existsSync(filePath2)) {
     return res

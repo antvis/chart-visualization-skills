@@ -77,7 +77,7 @@ async function runEvaluation(opts) {
 
   if (!ProviderRegistry.hasApiKey(provider)) {
     console.error(`Missing API key for ${provider}`);
-    console.error(`Set ${ProviderRegistry.getApiKeyEnv(provider)} environment variable`);
+    console.error('Set the required provider API key environment variable');
     process.exit(1);
   }
 
