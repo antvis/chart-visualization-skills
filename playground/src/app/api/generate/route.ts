@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
-import { buildPrompt } from '@/libs/retriever';
+import { buildBm25SystemPrompt, createRetrieveTool } from '@/libs/retriever';
 import { buildSystemPrompt, createSkillTools } from '@/libs/skill-tools';
 import {
   createLanguageModel,
@@ -8,17 +8,6 @@ import {
 } from '@/libs/provider-registry';
 
 export const maxDuration = 120;
-
-function getLastUserText(messages: UIMessage[]): string {
-  const last = [...messages].reverse().find((message) => message.role === 'user');
-  if (!last) return '';
-
-  return last.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => part.text)
-    .join('\n')
-    .trim();
-}
 
 export async function POST(request: NextRequest) {
   const {
@@ -43,15 +32,9 @@ export async function POST(request: NextRequest) {
 
   const { provider, model } = resolveProviderModel(reqProvider, reqModel);
   const languageModel = createLanguageModel(provider, model);
-  const latestUserText = getLastUserText(messages);
-
-  const bm25Prompt =
-    mode === 'bm25'
-      ? buildPrompt(latestUserText, { library, topK: 5 }).systemPrompt
-      : '';
 
   const system = [
-    mode === 'tool-call' ? buildSystemPrompt(library) : bm25Prompt,
+    mode === 'tool-call' ? buildSystemPrompt(library) : buildBm25SystemPrompt(library),
     currentCode
       ? `当前代码如下，请在后续回答中基于它进行修改并返回完整 javascript 代码块：\n\`\`\`javascript\n${currentCode}\n\`\`\``
       : ''
@@ -63,8 +46,11 @@ export async function POST(request: NextRequest) {
     model: languageModel,
     system,
     messages: await convertToModelMessages(messages),
-    tools: mode === 'tool-call' ? createSkillTools(library) : undefined,
-    stopWhen: mode === 'tool-call' ? stepCountIs(8) : undefined,
+    tools:
+      mode === 'tool-call'
+        ? createSkillTools(library)
+        : { retrieve: createRetrieveTool(library) },
+    stopWhen: stepCountIs(mode === 'tool-call' ? 8 : 6),
     temperature: 0.3,
     maxOutputTokens: 4000
   });

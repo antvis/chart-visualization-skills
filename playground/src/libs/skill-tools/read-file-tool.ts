@@ -10,7 +10,7 @@ interface SkillReadResult {
   error?: string;
 }
 
-export function toolReadSkills(
+export function toolReadFile(
   args: { paths: string[] },
   verbose = false
 ): SkillReadResult[] {
@@ -24,9 +24,9 @@ export function toolReadSkills(
   });
 }
 
-export function createReadSkillsTool() {
+export function createReadFileTool() {
   return tool({
-    description: '读取指定 Skill 参考文档的完整内容。一次最多读取 4 个文件。',
+    description: '根据 references 索引路径读取文档内容。一次最多读取 4 个文件。',
     inputSchema: z.object({
       paths: z
         .array(z.string())
@@ -36,7 +36,7 @@ export function createReadSkillsTool() {
         )
     }),
     execute: async ({ paths }) => {
-      return toolReadSkills({ paths });
+      return toolReadFile({ paths });
     }
   });
 }

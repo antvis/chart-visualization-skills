@@ -111,9 +111,9 @@ function getReadSkillsFromMessages(messages: UIMessage[]) {
       const part = rawPart as Record<string, unknown>;
       const isReadSkills =
         (part.type === 'tool-result' || part.type === 'tool-invocation') &&
-        (part.toolName === 'read_skills' ||
+        (part.toolName === 'read_file' ||
           (part.toolInvocation as { toolName?: string } | undefined)
-            ?.toolName === 'read_skills');
+            ?.toolName === 'read_file');
 
       if (!isReadSkills) continue;
 
