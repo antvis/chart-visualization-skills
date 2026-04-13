@@ -28,7 +28,7 @@ export async function searchIcons(query, topK = 5) {
       const svgContent = await svgResponse.text();
       results.push({ url, svg: svgContent });
     } catch (e) {
-      console.error(`Warning: Failed to fetch SVG from ${url}: ${e.message}`);
+      console.warn(`Failed to fetch SVG from ${url}: ${e.message}`);
     }
   }
 

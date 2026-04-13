@@ -61,7 +61,7 @@ export async function generateChartUrl(chartType, options) {
   const data = await httpPost(url, payload);
 
   if (!data.success) {
-    throw new Error(data.errorMessage || 'Unknown error');
+    throw new Error(data.errorMessage || 'Chart generation failed without error details');
   }
 
   return data.resultObj;
@@ -78,7 +78,7 @@ export async function generateMap(tool, inputData) {
   const data = await httpPost(url, payload);
 
   if (!data.success) {
-    throw new Error(data.errorMessage || 'Unknown error');
+    throw new Error(data.errorMessage || 'Map generation failed without error details');
   }
 
   return data.resultObj;
