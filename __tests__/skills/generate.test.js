@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { generateChartUrl, generateMap, CHART_TYPE_MAP } from '../../skills/chart-visualization/scripts/generate.js';
+import {
+  generateChartUrl,
+  generateMap,
+  CHART_TYPE_MAP
+} from '../../skills/chart-visualization/scripts/generate.js';
 
 describe('generate.js - Chart Visualization Script', () => {
   describe('CHART_TYPE_MAP', () => {
@@ -8,7 +12,10 @@ describe('generate.js - Chart Visualization Script', () => {
       expect(CHART_TYPE_MAP).toHaveProperty('generate_bar_chart', 'bar');
       expect(CHART_TYPE_MAP).toHaveProperty('generate_pie_chart', 'pie');
       expect(CHART_TYPE_MAP).toHaveProperty('generate_area_chart', 'area');
-      expect(CHART_TYPE_MAP).toHaveProperty('generate_scatter_chart', 'scatter');
+      expect(CHART_TYPE_MAP).toHaveProperty(
+        'generate_scatter_chart',
+        'scatter'
+      );
     });
 
     it('should have 25 chart types', () => {
@@ -32,13 +39,13 @@ describe('generate.js - Chart Visualization Script', () => {
         { time: '2025-01-02', value: 120 },
         { time: '2025-01-03', value: 110 },
         { time: '2025-01-04', value: 140 },
-        { time: '2025-01-05', value: 130 },
+        { time: '2025-01-05', value: 130 }
       ];
 
       try {
         const result = await generateChartUrl('line', {
           data: lineChartData,
-          title: 'Test Line Chart',
+          title: 'Test Line Chart'
         });
 
         expect(result).toBeDefined();
@@ -60,13 +67,13 @@ describe('generate.js - Chart Visualization Script', () => {
         { category: 'Product B', value: 25 },
         { category: 'Product C', value: 20 },
         { category: 'Product D', value: 15 },
-        { category: 'Product E', value: 10 },
+        { category: 'Product E', value: 10 }
       ];
 
       try {
         const result = await generateChartUrl('pie', {
           data: pieChartData,
-          title: 'Market Share',
+          title: 'Market Share'
         });
 
         expect(result).toBeDefined();
@@ -83,13 +90,13 @@ describe('generate.js - Chart Visualization Script', () => {
         { category: 'Category A', value: 45 },
         { category: 'Category B', value: 60 },
         { category: 'Category C', value: 35 },
-        { category: 'Category D', value: 50 },
+        { category: 'Category D', value: 50 }
       ];
 
       try {
         const result = await generateChartUrl('bar', {
           data: barChartData,
-          title: 'Comparison Chart',
+          title: 'Comparison Chart'
         });
 
         expect(result).toBeDefined();
@@ -106,13 +113,13 @@ describe('generate.js - Chart Visualization Script', () => {
         { time: '2025-01', value: 1000 },
         { time: '2025-02', value: 1200 },
         { time: '2025-03', value: 1100 },
-        { time: '2025-04', value: 1400 },
+        { time: '2025-04', value: 1400 }
       ];
 
       try {
         const result = await generateChartUrl('area', {
           data: areaChartData,
-          title: 'Cumulative Trend',
+          title: 'Cumulative Trend'
         });
 
         expect(result).toBeDefined();
@@ -132,12 +139,15 @@ describe('generate.js - Chart Visualization Script', () => {
         data: [
           { name: '北京', value: 100 },
           { name: '上海', value: 120 },
-          { name: '广东', value: 150 },
-        ],
+          { name: '广东', value: 150 }
+        ]
       };
 
       try {
-        const result = await generateMap('generate_district_map', districtMapData);
+        const result = await generateMap(
+          'generate_district_map',
+          districtMapData
+        );
 
         expect(result).toBeDefined();
         // The result should contain map visualization data
@@ -146,14 +156,14 @@ describe('generate.js - Chart Visualization Script', () => {
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
       }
-    }, 10000);
+    }, 15000);
 
     it('should generate pin map with real data', async () => {
       const pinMapData = {
         points: [
           { name: 'Location 1', lat: 39.9, lng: 116.4, value: 100 },
-          { name: 'Location 2', lat: 31.2, lng: 121.5, value: 150 },
-        ],
+          { name: 'Location 2', lat: 31.2, lng: 121.5, value: 150 }
+        ]
       };
 
       try {
@@ -165,6 +175,6 @@ describe('generate.js - Chart Visualization Script', () => {
         expect(error).toBeDefined();
         expect(error.message).toBeDefined();
       }
-    }, 10000);
+    }, 15000);
   });
 });
