@@ -59,7 +59,8 @@ program
   .option('--concurrency <n>',       'Render test concurrency',      (v) => parseInt(v, 10))
   .option('--dry-run',               'Log errors only, skip optimization')
   .option('--no-worktree',           'Disable git worktree isolation')
-  .option('--skip-score',            'Skip VL visual scoring')
+  .option('--score',                 'Enable VL visual scoring (disabled by default)')
+  .option('--skip-score',            'Skip VL visual scoring (default, kept for compatibility)')
   .option('--score-threshold <n>',   'Fail threshold for visual score', (v) => parseFloat(v))
   .option('--log <file>',            'Custom dry-run log file path')
   .option('--no-memory',             'Disable cross-iteration memory')
@@ -79,7 +80,7 @@ const MODEL           = process.env.AI_MODEL || 'qwen3-coder-480b-a35b-instruct'
 const PROVIDER        = detectProviderFromModel(MODEL);
 const DRY_RUN         = cfg.dryRun;
 const NO_WORKTREE     = !cfg.worktree;
-const SKIP_SCORE      = cfg.skipScore;
+const SKIP_SCORE      = program.opts().score ? false : cfg.skipScore;
 const SCORE_THRESHOLD = cfg.scoreThreshold;
 const USE_MEMORY      = program.opts().memory !== false; // --no-memory sets opts.memory=false
 

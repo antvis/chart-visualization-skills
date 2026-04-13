@@ -15,46 +15,51 @@
 
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
-const os   = require('os');
+const os = require('os');
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
 const DEFAULTS = {
-  library:        'g2',
-  sample:         10,
-  full:           false,
-  retrieval:      'tool-call',
-  passes:         3,
-  maxIterations:  20,
-  concurrency:    5,
-  dryRun:         false,
-  worktree:       true,
-  skipScore:      false,
+  library: 'g2',
+  sample: 10,
+  full: false,
+  retrieval: 'tool-call',
+  passes: 3,
+  maxIterations: 20,
+  concurrency: 5,
+  dryRun: false,
+  worktree: true,
+  skipScore: true,
   scoreThreshold: 0.6,
+  totalDuration: 0,
+  highSimilarityCount: 0,
+  issuesCount: 0,
+  skillHitCount: 0,
+  successCount: 0
 };
 
 // ── Env var name mapping  (HARNESS_<UPPER_SNAKE> → camelCase key) ─────────────
 
 const ENV_MAP = {
-  HARNESS_LIBRARY:         'library',
-  HARNESS_SAMPLE:          'sample',
-  HARNESS_FULL:            'full',
-  HARNESS_RETRIEVAL:       'retrieval',
-  HARNESS_PASSES:          'passes',
-  HARNESS_MAX_ITERATIONS:  'maxIterations',
-  HARNESS_CONCURRENCY:     'concurrency',
-  HARNESS_DRY_RUN:         'dryRun',
-  HARNESS_NO_WORKTREE:     'worktree',   // inverted: set to '1' → worktree: false
-  HARNESS_SKIP_SCORE:      'skipScore',
+  HARNESS_LIBRARY: 'library',
+  HARNESS_SAMPLE: 'sample',
+  HARNESS_FULL: 'full',
+  HARNESS_RETRIEVAL: 'retrieval',
+  HARNESS_PASSES: 'passes',
+  HARNESS_MAX_ITERATIONS: 'maxIterations',
+  HARNESS_CONCURRENCY: 'concurrency',
+  HARNESS_DRY_RUN: 'dryRun',
+  HARNESS_NO_WORKTREE: 'worktree', // inverted: set to '1' → worktree: false
+  HARNESS_SKIP_SCORE: 'skipScore',
   HARNESS_SCORE_THRESHOLD: 'scoreThreshold',
   // Legacy / existing env vars kept for backwards-compat
-  LOOP_LIBRARY:            'library',
-  LOOP_SAMPLE:             'sample',
-  LOOP_RETRIEVAL:          'retrieval',
-  LOOP_CONCURRENCY:        'concurrency',
-  LOOP_SCORE_THRESHOLD:    'scoreThreshold',
+  LOOP_LIBRARY: 'library',
+  LOOP_SAMPLE: 'sample',
+  LOOP_RETRIEVAL: 'retrieval',
+  LOOP_CONCURRENCY: 'concurrency',
+  LOOP_SCORE_THRESHOLD: 'scoreThreshold'
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -63,9 +68,12 @@ function coerce(key, raw) {
   const def = DEFAULTS[key];
   if (def === undefined) return raw;
   switch (typeof def) {
-    case 'number':  return Number(raw);
-    case 'boolean': return raw === true || raw === '1' || raw === 'true';
-    default:        return raw;
+    case 'number':
+      return Number(raw);
+    case 'boolean':
+      return raw === true || raw === '1' || raw === 'true';
+    default:
+      return raw;
   }
 }
 
@@ -76,7 +84,9 @@ function readConfigFile(filePath) {
       return JSON.parse(raw);
     }
   } catch (e) {
-    console.warn(`[config] Could not parse config file ${filePath}: ${e.message}`);
+    console.warn(
+      `[config] Could not parse config file ${filePath}: ${e.message}`
+    );
   }
   return {};
 }
@@ -94,8 +104,9 @@ function load(cliOpts = {}) {
   const result = { ...DEFAULTS };
 
   // 2. Config file  (~/.harness/config.json or HARNESS_CONFIG)
-  const configFilePath = process.env.HARNESS_CONFIG
-    || path.join(os.homedir(), '.harness', 'config.json');
+  const configFilePath =
+    process.env.HARNESS_CONFIG ||
+    path.join(os.homedir(), '.harness', 'config.json');
   const fileConfig = readConfigFile(configFilePath);
   for (const [k, v] of Object.entries(fileConfig)) {
     if (k in result) result[k] = coerce(k, v);
@@ -130,8 +141,9 @@ function load(cliOpts = {}) {
  * @param {object} patch - key/value pairs to save
  */
 function save(patch) {
-  const filePath = process.env.HARNESS_CONFIG
-    || path.join(os.homedir(), '.harness', 'config.json');
+  const filePath =
+    process.env.HARNESS_CONFIG ||
+    path.join(os.homedir(), '.harness', 'config.json');
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
   const existing = readConfigFile(filePath);

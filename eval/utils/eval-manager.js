@@ -115,7 +115,8 @@ class EvaluationManager {
       totalDuration: 0,
       highSimilarityCount: 0,
       issuesCount: 0,
-      skillHitCount: 0
+      skillHitCount: 0,
+      successCount: 0
     };
 
     this.runningEvals.set(evalId, evalRun);
@@ -428,6 +429,7 @@ class EvaluationManager {
     if (!result.error && result.evaluation?.similarity >= 0.5) evalRun.highSimilarityCount++;
     if (result.evaluation?.hasIssues) evalRun.issuesCount++;
     if (result.loadedSkillPaths?.length > 0) evalRun.skillHitCount++;
+    if (!result.error) evalRun.successCount++;
   }
 
   /**
@@ -466,8 +468,8 @@ class EvaluationManager {
    * Save progress to file (uses incremental counters — O(1) per call)
    */
   _saveProgress(evalRun, outputPath) {
-    const n = evalRun.results.length;
-    const successCount = evalRun.results.filter((r) => !r.error).length;
+    const n = evalRun.progress?.current ?? evalRun.results.length;
+    const successCount = evalRun.successCount ?? evalRun.results.filter((r) => !r.error).length;
     const summary = {
       totalTests: n,
       successCount,
