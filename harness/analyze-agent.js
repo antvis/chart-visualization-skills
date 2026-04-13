@@ -56,34 +56,29 @@ function resolveSkillPath(ref, rootDir, skillsDir) {
 }
 
 /**
- * Pick the single most-relevant skill ref from an error case.
+ * Collect all candidate skill refs from an error case.
  *
- * Attribution priority:
- *  1. loadedSkillPaths (tool-call): the *last* entry — LLM read it closest to
- *     code generation, making it the highest-confidence blame target.
- *  2. retrievedSkillIds (bm25): the *first* entry — highest BM25 rank.
- *
- * Attributing a failed case to all loaded skills pollutes healthy skills with
- * spurious errors and inflates LLM optimization costs.
+ * Returns every skill the model actually read (tool-call) or retrieved (bm25).
+ * The optimizer receives the full candidate set and decides which skill(s) to
+ * change — avoiding the "last-read = guilty" single-point-of-failure assumption.
  *
  * @param {object} errorCase
- * @returns {string|null} the single primary skill ref, or null
+ * @returns {string[]} ordered list of skill refs (may be empty)
  */
-function pickPrimaryRef(errorCase) {
+function pickAllRefs(errorCase) {
   const loaded = errorCase.loadedSkillPaths || [];
-  if (loaded.length > 0) return loaded[loaded.length - 1]; // last read = most relevant
+  if (loaded.length > 0) return loaded;
 
   const retrieved = errorCase.retrievedSkillIds || [];
-  if (retrieved.length > 0) return retrieved[0]; // top BM25 rank
-
-  return null;
+  return retrieved;
 }
 
 /**
- * Analyze error cases and group them by the skill file they exercised.
+ * Analyze error cases and group them by every candidate skill file.
  *
- * Each failed case is attributed to exactly one skill (the primary ref) to
- * avoid cascading spurious optimizations across unrelated skill files.
+ * Each failed case is attributed to all skills the model loaded, not just the
+ * last one. The errorCase is annotated with `candidateSkillPaths` so the
+ * optimizer knows the full context and can self-select the true root cause.
  *
  * @param {object[]} errorCases  - failed render results from render-agent
  * @param {object} opts
@@ -98,23 +93,28 @@ function run(errorCases, { rootDir, skillsDir }) {
   const orphanCases = [];
 
   for (const errorCase of errorCases) {
-    const primaryRef = pickPrimaryRef(errorCase);
+    const allRefs = pickAllRefs(errorCase);
 
-    if (!primaryRef) {
+    const resolvedPaths = allRefs
+      .map((ref) => resolveSkillPath(ref, rootDir, skillsDir))
+      .filter(Boolean);
+
+    // Deduplicate (same file may appear under different ref forms)
+    const uniquePaths = [...new Set(resolvedPaths)];
+
+    if (uniquePaths.length === 0) {
       console.log(`  No skill refs for: ${errorCase.id} — queued for new skill creation`);
       orphanCases.push(errorCase);
       continue;
     }
 
-    const skillPath = resolveSkillPath(primaryRef, rootDir, skillsDir);
-    if (!skillPath) {
-      console.warn(`  Could not resolve primary skill ref "${primaryRef}" for: ${errorCase.id} — queued for new skill creation`);
-      orphanCases.push(errorCase);
-      continue;
-    }
+    // Annotate the case so the optimizer knows which skills are candidates
+    const annotated = { ...errorCase, candidateSkillPaths: uniquePaths };
 
-    if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
-    skillToErrors.get(skillPath).push(errorCase);
+    for (const skillPath of uniquePaths) {
+      if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
+      skillToErrors.get(skillPath).push(annotated);
+    }
   }
 
   return { skillToErrors, orphanCases };

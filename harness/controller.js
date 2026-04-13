@@ -141,6 +141,7 @@ async function main() {
   // fixedCaseIds: the stable sample drawn in iteration 1 and reused every normal round.
   // This prevents random re-sampling from generating false "clean pass" signals.
   let fixedCaseIds      = null;
+  let skillsWereModified = false;  // set to true when any optimization commit lands
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -190,6 +191,133 @@ async function main() {
         },
       }
     );
+  }
+
+  /**
+   * Run a baseline eval on the main branch (ROOT_DIR) using the same fixedCaseIds
+   * Run a full-dataset eval on both the worktree and the main branch, then
+   * compare pass rates to detect regressions or confirm net improvement.
+   * Always uses the complete dataset — fixedCaseIds (the optimization sample)
+   * cannot detect overfitting and is intentionally excluded here.
+   *
+   * @returns {boolean} true = net improvement or neutral; false = regression
+   */
+  async function runBaselineComparison() {
+    console.log('\n' + '─'.repeat(60));
+    console.log('[baseline] Comparing worktree skills against main branch (full dataset)...');
+    console.log('─'.repeat(60));
+
+    // Always run the full dataset — fixedCaseIds is the sample the optimizer was
+    // trained on, so comparing against only that set cannot detect overfitting.
+    // ── Eval worktree on full dataset ─────────────────────────────────────────
+    let worktreeFullResultPath;
+    try {
+      worktreeFullResultPath = await withRetry(
+        () => registry.dispatch('eval', {
+          full:        true,
+          retrieval:   RETRIEVAL,
+          dataset:     libConfig.defaultDataset,
+          concurrency: CONCURRENCY,
+          rootDir:     activeRootDir,
+        }),
+        {
+          maxAttempts: 2,
+          baseMs:      5_000,
+          onRetry(err, attempt, delayMs) {
+            console.warn(`[baseline] worktree eval attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
+          },
+        }
+      );
+    } catch (err) {
+      console.warn(`[baseline] Worktree full eval failed — skipping comparison: ${err.message}`);
+      return true;
+    }
+
+    // ── Eval main branch on full dataset ──────────────────────────────────────
+    let baselineResultPath;
+    try {
+      baselineResultPath = await withRetry(
+        () => registry.dispatch('eval', {
+          full:        true,
+          retrieval:   RETRIEVAL,
+          dataset:     libConfig.defaultDataset,
+          concurrency: CONCURRENCY,
+          rootDir:     ROOT_DIR,   // main branch — not the worktree
+        }),
+        {
+          maxAttempts: 2,
+          baseMs:      5_000,
+          onRetry(err, attempt, delayMs) {
+            console.warn(`[baseline] main eval attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
+          },
+        }
+      );
+    } catch (err) {
+      console.warn(`[baseline] Main branch full eval failed — skipping comparison: ${err.message}`);
+      return true;
+    }
+
+    // ── Render test both result files ─────────────────────────────────────────
+    let worktreeFullErrors, baselineErrors;
+    try {
+      [worktreeFullErrors, baselineErrors] = await Promise.all([
+        registry.dispatch('render', {
+          resultPath:     worktreeFullResultPath,
+          concurrency:    CONCURRENCY,
+          skipScore:      true,
+          scoreThreshold: SCORE_THRESHOLD,
+        }),
+        registry.dispatch('render', {
+          resultPath:     baselineResultPath,
+          concurrency:    CONCURRENCY,
+          skipScore:      true,
+          scoreThreshold: SCORE_THRESHOLD,
+        }),
+      ]);
+    } catch (err) {
+      console.warn(`[baseline] Render failed — skipping comparison: ${err.message}`);
+      return true;
+    }
+
+    // ── Compare ───────────────────────────────────────────────────────────────
+    const baselineData    = JSON.parse(fs.readFileSync(baselineResultPath, 'utf-8'));
+    const total           = (baselineData.results || []).length;
+
+    const worktreeErrCount  = worktreeFullErrors.length;
+    const baselineErrCount  = baselineErrors.length;
+    const improved          = worktreeErrCount <= baselineErrCount;
+
+    const fmt = (errors, t) =>
+      `${((t - errors) / t * 100).toFixed(1)}%  (${errors} failure${errors !== 1 ? 's' : ''} / ${t})`;
+
+    console.log('\n[baseline] Full-dataset results:');
+    console.log(`  Main branch  : ${fmt(baselineErrCount,  total)}`);
+    console.log(`  Worktree     : ${fmt(worktreeErrCount,  total)}`);
+    const deltaPp = ((baselineErrCount - worktreeErrCount) / total * 100).toFixed(1);
+    console.log(`  Delta        : ${deltaPp > 0 ? '+' : ''}${deltaPp}pp`);
+
+    // Cases that pass on main but fail on worktree (new regressions)
+    const baselineErrorSet = new Set(baselineErrors.map((c) => c.id));
+    const worktreeErrorSet = new Set(worktreeFullErrors.map((c) => c.id));
+    const newRegressions   = [...worktreeErrorSet].filter((id) => !baselineErrorSet.has(id));
+    // Cases fixed on worktree that were failing on main
+    const newFixes         = [...baselineErrorSet].filter((id) => !worktreeErrorSet.has(id));
+
+    if (newFixes.length > 0) {
+      console.log(`[baseline] Fixed on worktree vs main (${newFixes.length}): ${newFixes.slice(0, 5).join(', ')}${newFixes.length > 5 ? '…' : ''}`);
+    }
+
+    if (improved) {
+      console.log('[baseline] ✓ Net improvement — safe to merge');
+    } else {
+      console.log('[baseline] ⚠ Regression detected — review before merging');
+      if (newRegressions.length > 0) {
+        console.log(`[baseline] Cases passing on main but failing on worktree (${newRegressions.length}):`);
+        newRegressions.forEach((id) => console.log(`  - ${id}`));
+      }
+    }
+
+    return improved;
   }
 
   // ── Main iteration loop ───────────────────────────────────────────────────
@@ -331,7 +459,8 @@ async function main() {
 
     // ── Step 4c: Commit worktree ──────────────────────────────────────────────
     if (worktree) {
-      worktree.commit(`validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`);
+      const committed = worktree.commit(`validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`);
+      if (committed) skillsWereModified = true;
     }
 
     // ── Step 5: Rebuild index ─────────────────────────────────────────────────
@@ -355,7 +484,21 @@ async function main() {
     }
   }
 
-  if (worktree) worktree.finish();
+  if (worktree) {
+    if (!skillsWereModified) {
+      console.log('\n[baseline] No skills were modified — skipping comparison.');
+      worktree.finish();
+    } else {
+      const improved = await runBaselineComparison();
+      if (improved) {
+        worktree.finish();
+      } else {
+        console.log('\n[baseline] Branch left open for manual review:');
+        console.log(`  ${worktree.branch}`);
+        console.log('  Merge only after confirming regressions are acceptable.');
+      }
+    }
+  }
 }
 
 main()

@@ -37,9 +37,6 @@ function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
     fs.mkdirSync(resultDir, { recursive: true });
   }
 
-  // Snapshot existing result files before running so we can detect new ones.
-  const before = new Set(fs.readdirSync(resultDir).filter((f) => f.endsWith('.json')));
-
   const argv = [
     // Always resolve the CLI script from the main repo (eval-cli has no worktree copy).
     path.join(MAIN_ROOT_DIR, 'eval', 'eval-cli', 'index.js'),
@@ -59,32 +56,30 @@ function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
   console.log(`\n$ node ${argv.join(' ')} (root=${effectiveRoot})`);
   const result = spawnSync('node', argv, {
     cwd: effectiveRoot,
-    stdio: 'inherit',
+    stdio: ['inherit', 'inherit', 'pipe'],
     shell: false,
     // Propagate the active root so eval-manager resolves skills from the worktree.
     env: { ...process.env, HARNESS_ROOT_DIR: effectiveRoot }
   });
+
+  // Forward stderr to the terminal (minus the marker line which is ours to consume).
+  const stderrOutput = result.stderr?.toString() || '';
+  const stderrLines = stderrOutput.split('\n');
+  const markerLine = stderrLines.find((l) => l.startsWith('EVAL_RESULT_PATH='));
+  const userStderr = stderrLines.filter((l) => !l.startsWith('EVAL_RESULT_PATH=')).join('\n');
+  if (userStderr.trim()) process.stderr.write(userStderr + '\n');
+
   if (result.status !== 0) {
     throw new Error(`Eval process exited with code ${result.status}`);
   }
 
-  // Detect the newly created result file by comparing directory snapshots.
-  const after = fs.readdirSync(resultDir).filter((f) => f.endsWith('.json'));
-  const newFiles = after.filter((f) => !before.has(f));
-  if (newFiles.length > 0) {
-    // Sort by name (contains timestamp) and return the most recent.
-    newFiles.sort().reverse();
-    return path.join(resultDir, newFiles[0]);
+  if (markerLine) {
+    return markerLine.slice('EVAL_RESULT_PATH='.length).trim();
   }
 
-  // Fallback: most recently modified file in the result directory.
-  const sorted = after
-    .map((f) => ({
-      name: f,
-      mtime: fs.statSync(path.join(resultDir, f)).mtimeMs
-    }))
-    .sort((a, b) => b.mtime - a.mtime);
-  return path.join(resultDir, sorted[0].name);
+  throw new Error(
+    'Eval process did not report EVAL_RESULT_PATH — eval-cli may have crashed before completion'
+  );
 }
 
 module.exports = { run };

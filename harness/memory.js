@@ -90,6 +90,20 @@ class HarnessMemory {
   // ── Write API ────────────────────────────────────────────────────────────────
 
   /**
+   * Extract a diagnostic error type string from a single error case.
+   * Uses the concrete render error message when available — it carries far
+   * more signal than the generic "error" / "blank" status.
+   *
+   * @param {object} errorCase
+   * @returns {string}
+   */
+  _errorType(errorCase) {
+    return errorCase.renderStatus === 'error' && errorCase.renderError
+      ? errorCase.renderError.slice(0, 150)
+      : (errorCase.renderStatus || 'unknown');
+  }
+
+  /**
    * Record error cases attributed to a specific skill after a render pass.
    *
    * @param {string}   skillPath
@@ -99,15 +113,9 @@ class HarnessMemory {
   recordErrors(skillPath, errorCases, iteration) {
     const history = this._skill(skillPath);
     for (const c of errorCases) {
-      // Use the concrete render error message as errorType when available —
-      // it carries far more signal than the generic "error" / "blank" status.
-      const errorType = c.renderStatus === 'error' && c.renderError
-        ? c.renderError.slice(0, 150)
-        : (c.renderStatus || 'unknown');
-
       history.errors.push({
         caseId:    c.id,
-        errorType,
+        errorType: this._errorType(c),
         query:     (c.query || '').slice(0, 120),
         iteration,
         ts:        Date.now(),
@@ -125,7 +133,7 @@ class HarnessMemory {
    */
   recordOptimization(skillPath, errorCases, iteration) {
     const history = this._skill(skillPath);
-    const errorTypes = [...new Set(errorCases.map((c) => c.renderStatus || 'unknown'))];
+    const errorTypes = [...new Set(errorCases.map((c) => this._errorType(c)))];
     history.optimizations.push({
       iteration,
       numErrors:  errorCases.length,

@@ -98,12 +98,14 @@ function create({ rootDir, libraryId }) {
           encoding: 'utf-8'
         }
       ).trim();
-      if (!status) return; // nothing changed
+      if (!status) return false; // nothing changed
       execFileSync('git', ['-C', worktreePath, 'commit', '-m', message], {
         stdio: 'inherit'
       });
+      return true;
     } catch (err) {
       console.warn(`[worktree] commit warning: ${err.message}`);
+      return false;
     }
   }
 

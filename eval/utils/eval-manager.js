@@ -156,7 +156,7 @@ class EvaluationManager {
     });
 
     evalRun._promise = evalPromise;
-    return evalId;
+    return { evalId, outputPath };
   }
 
   /**
