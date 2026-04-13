@@ -5,7 +5,8 @@
   "description": "Agent harness for chart-visualization-skills evaluation",
   "type": "commonjs",
   "scripts": {
-    "start": "node controller.js"
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node controller.js"
   },
   "dependencies": {
     "commander": "^12.1.0",

@@ -55,6 +55,8 @@ eval/temp/
 
 # harness
 harness/memory.json
+eval/**/*.js
+harness/**/*.js
 
 # lock files
 pnpm-lock.yaml

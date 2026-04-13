@@ -5,10 +5,11 @@
   "description": "Evaluation suite for chart-visualization-skills",
   "type": "commonjs",
   "scripts": {
-    "view": "node result/server.js",
-    "eval": "node eval-cli/index.js",
-    "recall": "node eval-recall.js",
-    "tune": "node _tune-bm25.js"
+    "build": "tsc -p tsconfig.json",
+    "view": "npm run build && node result/server.js",
+    "eval": "npm run build && node eval-cli/index.js",
+    "recall": "npm run build && node eval-recall.js",
+    "tune": "npm run build && node _tune-bm25.js"
   },
   "dependencies": {
     "commander": "^12.1.0",

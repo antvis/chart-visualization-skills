@@ -6,23 +6,23 @@
 
 ```bash
 # Run evaluation
-node eval/eval-cli/index.js --sample=10
+cd eval && npm run eval -- --sample=10
 
 # Helps
-node eval/eval-cli/index.js help
+cd eval && npm run eval -- help
 ```
 
 ## CLI Usage
 
 ```bash
 # Run evaluation (default: tool-call retrieval)
-node eval/eval-cli/index.js --sample=10
-node eval/eval-cli/index.js --full --model=claude-3-opus
+cd eval && npm run eval -- --sample=10
+cd eval && npm run eval -- --full --model=claude-3-opus
 
 # Specify retrieval strategy
-node eval/eval-cli/index.js --sample=20 --retrieval=tool-call  # default
-node eval/eval-cli/index.js --sample=20 --retrieval=bm25
-node eval/eval-cli/index.js --sample=20 --retrieval=context7
+cd eval && npm run eval -- --sample=20 --retrieval=tool-call  # default
+cd eval && npm run eval -- --sample=20 --retrieval=bm25
+cd eval && npm run eval -- --sample=20 --retrieval=context7
 ```
 
 ### Retrieval Strategies
@@ -49,9 +49,9 @@ eval-context7-dataset-200-claude-sonnet-4-6-2026-04-01.json
 To fairly compare strategies, run them with the same sample size and model:
 
 ```bash
-node eval/eval-cli/index.js --sample=20 --retrieval=tool-call
-node eval/eval-cli/index.js --sample=20 --retrieval=bm25
-node eval/eval-cli/index.js --sample=20 --retrieval=context7
+cd eval && npm run eval -- --sample=20 --retrieval=tool-call
+cd eval && npm run eval -- --sample=20 --retrieval=bm25
+cd eval && npm run eval -- --sample=20 --retrieval=context7
 ```
 
 ---
@@ -61,13 +61,13 @@ node eval/eval-cli/index.js --sample=20 --retrieval=context7
 ### eval-recall.js
 Tests skill retrieval recall (no API key needed).
 ```bash
-node eval/eval-recall.js
+cd eval && npm run recall
 ```
 
 ### _tune-bm25.js
 BM25 hyperparameter tuning.
 ```bash
-node eval/_tune-bm25.js
+cd eval && npm run tune
 ```
 
 ## Test Dataset
