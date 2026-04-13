@@ -3,8 +3,7 @@ import path from 'path';
 import { BM25Index } from './bm25';
 import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
 
-// __dirname is dist/core/ when compiled, src/core/ when run directly by vitest/ts-node.
-// In both cases, index files are expected at ../index.
+// Index files are always expected in a sibling index directory.
 const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
 
 const DEFAULT_LIBRARY = 'g2';
