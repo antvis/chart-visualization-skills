@@ -1,68 +1,101 @@
 ---
 name: chart-visualization
-description: This skill should be used when the user wants to visualize data. It intelligently selects the most suitable chart type from 26 available options, extracts parameters based on detailed specifications, and generates a chart image using a JavaScript script.
-dependency:
-  nodejs: ">=18.0.0"
+description: 将数据可视化为图表。当用户需要生成柱状图、折线图、饼图、散点图、雷达图、桑基图、思维导图、流程图等图表时调用此技能，通过 curl 工具调用 AntV API 生成图表图片
 ---
 
-# Chart Visualization Skill
+请根据用户输入的内容，将数据可视化为图表。
 
-This skill provides a comprehensive workflow for transforming data into visual charts. It handles chart selection, parameter extraction, and image generation.
+## 步骤
+1. 分析用户数据和需求，选择最合适的图表类型
+2. 构造符合规范的 JSON 请求体
+3. 使用 curl 工具调用 API 生成图表图片
+4. 将返回的图片 URL 以 Markdown 图片格式输出
 
-## Workflow
+## 图表选择指南
 
-To visualize data, follow these steps:
+根据用户的数据特征和需求，选择最合适的图表类型：
 
-### 1. Intelligent Chart Selection
-Analyze the user's data features to determine the most appropriate chart type. Use the following guidelines (and consult `references/` for detailed specs):
+- **时间序列**：用 `line`（趋势）或 `area`（累计趋势）；两个不同量纲用 `dual-axes`
+- **比较类**：用 `bar`（横向分类对比）或 `column`（纵向分类对比）；频率分布用 `histogram`
+- **占比类**：用 `pie`（比例构成）或 `treemap`（层级占比）
+- **关系与流程**：用 `scatter`（相关性）、`sankey`（流向）或 `venn`（集合重叠）
+- **层级与树形**：用 `organization-chart` 或 `mind-map`
+- **专用类型**：
+  - `radar`：多维度对比
+  - `funnel`：流程阶段转化
+  - `liquid`：百分比/进度
+  - `word-cloud`：文本词频
+  - `boxplot` / `violin`：统计分布
+  - `network-graph`：复杂节点关系
+  - `fishbone-diagram`：因果分析
+  - `flow-diagram`：流程图
+  - `spreadsheet`：结构化数据表或透视表
 
-- **Time Series**: Use `generate_line_chart` (trends) or `generate_area_chart` (accumulated trends). Use `generate_dual_axes_chart` for two different scales.
-- **Comparisons**: Use `generate_bar_chart` (categorical) or `generate_column_chart`. Use `generate_histogram_chart` for frequency distributions.
-- **Part-to-Whole**: Use `generate_pie_chart` or `generate_treemap_chart` (hierarchical).
-- **Relationships & Flow**: Use `generate_scatter_chart` (correlation), `generate_sankey_chart` (flow), or `generate_venn_chart` (overlap).
-- **Maps**: Use `generate_district_map` (regions), `generate_pin_map` (points), or `generate_path_map` (routes).
-- **Hierarchies & Trees**: Use `generate_organization_chart` or `generate_mind_map`.
-- **Specialized**:
-    - `generate_radar_chart`: Multi-dimensional comparison.
-    - `generate_funnel_chart`: Process stages.
-    - `generate_liquid_chart`: Percentage/Progress.
-    - `generate_word_cloud_chart`: Text frequency.
-    - `generate_boxplot_chart` or `generate_violin_chart`: Statistical distribution.
-    - `generate_network_graph`: Complex node-edge relationships.
-    - `generate_fishbone_diagram`: Cause-effect analysis.
-    - `generate_flow_diagram`: Process flow.
-    - `generate_spreadsheet`: Tabular data or pivot tables for structured data display and cross-tabulation.
+## API 接口
 
-### 2. Parameter Extraction
-Once a chart type is selected, read the corresponding file in the `references/` directory (e.g., `references/generate_line_chart.md`) to identify the required and optional fields.
-Extract the data from the user's input and map it to the expected `args` format.
+POST https://antv-studio.alipay.com/api/gpt-vis
 
-### 3. Chart Generation
-Invoke the `scripts/generate.js` script with a JSON payload.
+请求体为 JSON，必须包含 `type` 和 `source: "chart-visualization-skills"` 字段。
 
-**Payload Format:**
-```json
-{
-  "tool": "generate_chart_type_name",
-  "args": {
-    "data": [...],
-    "title": "...",
-    "theme": "...",
-    "style": { ... }
-  }
-}
-```
-
-**Execution Command:**
+示例：
 ```bash
-node ./scripts/generate.js '<payload_json>'
+curl -X POST https://antv-studio.alipay.com/api/gpt-vis \
+  -H "Content-Type: application/json" \
+  -d '{"type":"line","source":"chart-visualization-skills","data":[{"time":"2025-01","value":100}],"title":"示例图表"}'
 ```
 
-### 4. Result Return
-The script will output the URL of the generated chart image.
-Return the following to the user:
-- The image URL.
-- The complete `args` (specification) used for generation.
+返回示例：
+```json
+{"success":true,"resultObj":"https://..."}
+```
 
-## Reference Material
-Detailed specifications for each chart type are located in the `references/` directory. Consult these files to ensure the `args` passed to the script match the expected schema.
+将 `resultObj` 中的 URL 以 Markdown 图片格式输出：`![图表](URL)`
+
+## 支持的图表类型
+
+| 分类 | 图表类型 |
+|------|---------|
+| 比较类 | 条形图(bar)、柱状图(column)、瀑布图(waterfall)、双轴图(dual-axes) |
+| 趋势类 | 面积图(area)、折线图(line)、散点图(scatter) |
+| 分布类 | 箱线图(boxplot)、直方图(histogram)、小提琴图(violin)、漏斗图(funnel) |
+| 占比类 | 饼图(pie)、水波图(liquid)、词云(word-cloud) |
+| 层级类 | 组织架构图(organization-chart)、思维导图(mind-map)、矩形树图(treemap)、桑基图(sankey) |
+| 关系类 | 关系图(network-graph)、韦恩图(venn) |
+| 流程类 | 流程图(flow-diagram)、鱼骨图(fishbone-diagram) |
+| 多维类 | 雷达图(radar) |
+| 表格类 | 表格/透视表(spreadsheet) |
+
+## 通用可选参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| theme | string | "default" | 主题："default" / "academy" / "dark" |
+| width | number | 600 | 图表宽度 |
+| height | number | 400 | 图表高度 |
+| title | string | "" | 图表标题 |
+| style.texture | string | "default" | 纹理："default" / "rough"（手绘风格） |
+
+带坐标轴的图表还支持：axisXTitle、axisYTitle。
+
+## 各图表 data 格式
+
+- **area / line**: `{time: string, value: number, group?: string}[]`，可选 stack: boolean
+- **bar**: `{category: string, value: number, group?: string}[]`，可选 group / stack (默认 stack: true)
+- **column**: `{category: string, value: number, group?: string}[]`，可选 group (默认 true) / stack
+- **scatter**: `{x: number, y: number, group?: string}[]`
+- **pie**: `{category: string, value: number}[]`，可选 innerRadius: number (0-1)
+- **radar**: `{name: string, value: number, group?: string}[]`
+- **funnel**: `{category: string, value: number}[]`
+- **waterfall**: `{category: string, value?: number, isTotal?: boolean, isIntermediateTotal?: boolean}[]`
+- **dual-axes**: categories: string[], series: {type: "column"|"line", data: number[], axisYTitle?: string}[]
+- **histogram**: `number[]`，可选 binNumber: number
+- **boxplot / violin**: `{category: string, value: number, group?: string}[]`
+- **liquid**: percent: number (0-1)，可选 shape: "circle"|"rect"|"pin"|"triangle"
+- **word-cloud**: `{text: string, value: number}[]`
+- **sankey**: `{source: string, target: string, value: number}[]`，可选 nodeAlign
+- **treemap**: `{name: string, value: number, children?: ...}[]` (最深 3 层)
+- **venn**: `{sets: string[], value: number, label?: string}[]`
+- **network-graph / flow-diagram**: `{nodes: {name: string}[], edges: {source: string, target: string, name?: string}[]}`
+- **fishbone-diagram / mind-map**: `{name: string, children?: ...}` (最深 3 层)
+- **organization-chart**: `{name: string, description?: string, children?: ...}` (最深 3 层)，可选 orient: "horizontal"|"vertical"
+- **spreadsheet**: `Record<string, string | number>[]`，可选 rows / columns / values（透视表字段）
