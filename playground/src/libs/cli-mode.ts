@@ -1,5 +1,5 @@
-import { getLibraryDisplayName } from './shared';
-import { createRetrieveTool } from './retrieve-tool';
+import { getLibraryDisplayName } from './tools/shared';
+import { createRetrieveTool } from './tools/retrieve-tool';
 
 export function buildCliSystemPrompt(library: string): string {
   const libraryName = getLibraryDisplayName(library);

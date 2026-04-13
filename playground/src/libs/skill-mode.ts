@@ -1,7 +1,7 @@
-import { createLoadSkillTool } from './load-skill-tool';
-import { createListReferencesTool } from './list-references-tool';
-import { createReadFileTool } from './read-file-tool';
-import { getLibraryDisplayName } from './shared';
+import { createLoadSkillTool } from './tools/load-skill-tool';
+import { createListReferencesTool } from './tools/list-references-tool';
+import { createReadFileTool } from './tools/read-file-tool';
+import { getLibraryDisplayName } from './tools/shared';
 
 export function buildSkillSystemPrompt(library: string): string {
   const libraryName = getLibraryDisplayName(library);

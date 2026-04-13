@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 import { convertToModelMessages, stepCountIs, streamText, UIMessage } from 'ai';
-import { buildCliSystemPrompt, createCliModeTools } from '@/libs/tools/cli-mode';
+import { buildCliSystemPrompt, createCliModeTools } from '@/libs/cli-mode';
 import {
   buildSkillSystemPrompt,
   createSkillModeTools
-} from '@/libs/tools/skill-mode';
+} from '@/libs/skill-mode';
 import {
   createLanguageModel,
   resolveProviderModel
