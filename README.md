@@ -112,7 +112,11 @@ Commands:
 import { retrieve } from 'chart-visualization-skills';
 
 const skills = retrieve('bar chart', 'g2', 5);
-// or with content, retrieve('bar chart', 'g2', 5, { includeContent: true })
+// with content: retrieve('bar chart', 'g2', 5, true)
+```
+
+```typescript
+retrieve(query: string, library?: string, topk?: number, includeContent?: boolean)
 ```
 
 | Parameter | Type | Default | Description |
@@ -120,7 +124,11 @@ const skills = retrieve('bar chart', 'g2', 5);
 | `query` | `string` | — | Search query |
 | `library` | `string` | `'g2'` | Library filter (`g2` or `g6`) |
 | `topk` | `number` | `7` | Number of results |
-| `options.includeContent` | `boolean` | `false` | Whether to include document content |
+| `includeContent` | `boolean` | `false` | Whether to include full markdown content in each result |
+
+> Notes:
+> - Default retrieval returns lightweight result objects without the `content` field.
+> - `includeContent = true` returns full markdown content from the built index.
 
 ## License
 
