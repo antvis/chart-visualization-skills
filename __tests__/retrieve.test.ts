@@ -29,7 +29,7 @@ describe('retrieve API', () => {
   });
 
   it('should load markdown content on demand', () => {
-    const results = retrieve('折线图', 'g2', 1, { includeContent: true });
+    const results = retrieve('折线图', 'g2', 1, true);
     expect(results.length).toBeGreaterThan(0);
     expect(typeof results[0].content).toBe('string');
     expect((results[0].content || '').length).toBeGreaterThan(0);
