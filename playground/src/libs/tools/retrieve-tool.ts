@@ -1,19 +1,8 @@
-import fs from 'fs';
-import path from 'path';
 import { tool } from 'ai';
 import { retrieve } from '@antv/chart-visualization-skills';
 import { z } from 'zod';
 
-const ROOT_DIR = process.cwd().endsWith('playground')
-  ? path.resolve(process.cwd(), '..')
-  : process.cwd();
 const MAX_RETRIEVE_DOCUMENTS = 8;
-
-function loadSkillContent(relativePath: string): string | null {
-  const fullPath = path.resolve(ROOT_DIR, relativePath);
-  if (!fs.existsSync(fullPath)) return null;
-  return fs.readFileSync(fullPath, 'utf-8');
-}
 
 function extractKeyContent(content: string): string {
   return content.replace(/^---[\s\S]*?---\n?/, '').trim();
@@ -44,7 +33,7 @@ export function createRetrieveTool(library: string) {
       const retrievedSkills = retrieve(query, library, topK ?? 5, true);
       const results: RetrieveToolResult[] = [];
       for (const skill of retrievedSkills) {
-        const content = skill.content || loadSkillContent(skill.path);
+        const content = skill.content || '';
         results.push({
           id: skill.id,
           title: skill.title,
