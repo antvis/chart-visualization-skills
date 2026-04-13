@@ -17,6 +17,7 @@ const ROOT_DIR = process.cwd().endsWith('playground')
 
 // Index files live in dist/index/ relative to the repo root
 const INDEX_DIR = path.resolve(ROOT_DIR, 'dist/index');
+const MAX_RETRIEVE_DOCUMENTS = 8;
 
 function loadSkillContent(relativePath: string): string | null {
   const fullPath = path.resolve(ROOT_DIR, relativePath);
@@ -75,7 +76,13 @@ export function createRetrieveTool(library: string) {
     description: '通过 BM25 召回最相关参考文档。',
     inputSchema: z.object({
       query: z.string().describe('用户需求或检索关键词'),
-      topK: z.number().int().min(1).max(8).optional().describe('召回文档数量，默认 5')
+      topK: z
+        .number()
+        .int()
+        .min(1)
+        .max(MAX_RETRIEVE_DOCUMENTS)
+        .optional()
+        .describe('召回文档数量，默认 5')
     }),
     execute: async ({ query, topK }) => {
       const retrievedSkills = retrieve(query, library, topK ?? 5, INDEX_DIR);

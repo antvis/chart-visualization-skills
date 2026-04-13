@@ -3,6 +3,8 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import { extractKeySections, loadSkillFile } from './shared';
 
+const MAX_READ_FILES = 4;
+
 interface SkillReadResult {
   id: string;
   path: string;
@@ -14,7 +16,11 @@ export function toolReadFile(
   args: { paths: string[] },
   verbose = false
 ): SkillReadResult[] {
-  return args.paths.slice(0, 4).map((skillPath) => {
+  if (args.paths.length > MAX_READ_FILES) {
+    throw new Error(`最多读取 ${MAX_READ_FILES} 个文件`);
+  }
+
+  return args.paths.map((skillPath) => {
     const content = loadSkillFile(skillPath, verbose);
     const fileName = path.basename(skillPath, '.md');
     if (!content) return { path: skillPath, error: 'File not found', id: fileName };
@@ -30,7 +36,7 @@ export function createReadFileTool() {
     inputSchema: z.object({
       paths: z
         .array(z.string())
-        .max(4)
+        .max(MAX_READ_FILES)
         .describe(
           'Skill 文件路径列表，如 ["skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"]'
         )
