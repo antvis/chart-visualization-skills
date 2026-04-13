@@ -11,6 +11,8 @@ const DEFAULT_INDEX_DIR = fs.existsSync(_srcIndex) ? _srcIndex : _distIndex;
 
 // Package root: two levels up from wherever __dirname resolves to at runtime.
 const PKG_ROOT = path.resolve(__dirname, '../..');
+const PKG_ROOT_REAL = fs.realpathSync(PKG_ROOT);
+const PKG_ROOT_REAL_PREFIX = `${PKG_ROOT_REAL}${path.sep}`;
 
 const DEFAULT_LIBRARY = 'g2';
 
@@ -42,24 +44,27 @@ function getBM25Index(library: string, indexDir?: string): BM25Index {
 function loadSkillContent(skillPath?: string): string | undefined {
   if (!skillPath) return undefined;
 
-  const cacheKey = skillPath.replace(/\\/g, '/');
+  const cacheKey = path.resolve(PKG_ROOT, path.normalize(skillPath));
   if (contentCache.has(cacheKey)) {
     return contentCache.get(cacheKey);
   }
 
-  const absolutePath = path.resolve(PKG_ROOT, cacheKey);
-  const safeRoot = PKG_ROOT.endsWith(path.sep) ? PKG_ROOT : `${PKG_ROOT}${path.sep}`;
-  if (!absolutePath.startsWith(safeRoot)) {
+  try {
+    if (!fs.existsSync(cacheKey) || !fs.statSync(cacheKey).isFile()) {
+      return undefined;
+    }
+
+    const realPath = fs.realpathSync(cacheKey);
+    if (!realPath.startsWith(PKG_ROOT_REAL_PREFIX)) {
+      return undefined;
+    }
+
+    const content = fs.readFileSync(realPath, 'utf-8');
+    contentCache.set(cacheKey, content);
+    return content;
+  } catch {
     return undefined;
   }
-
-  if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
-    return undefined;
-  }
-
-  const content = fs.readFileSync(absolutePath, 'utf-8');
-  contentCache.set(cacheKey, content);
-  return content;
 }
 
 export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] {
@@ -71,6 +76,7 @@ export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] 
     return skills;
   }
 
+  // Keep compatibility with externally provided legacy indexes that may already contain `content`.
   return skills.map((skill) => (skill.content !== undefined
     ? skill
     : { ...skill, content: loadSkillContent(skill.path) }));

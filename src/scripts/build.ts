@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { Skill, SkillIndex, FrontMatter } from '../core/types';
+import type { Skill, SkillIndex } from '../core/types';
 
 // Allow overriding the project root via --root=<dir> (used by harness when running inside a worktree)
 const rootArg = process.argv.find((a) => a.startsWith('--root='));
@@ -20,12 +20,11 @@ const LIBRARY_PATHS: Record<string, string> = {
   g6: 'antv-g6-graph/references',
 };
 
-function parseFrontMatter(content: string): FrontMatter {
+function extractFrontMatterMeta(content: string): Record<string, any> {
   const match = content.match(/^---\n([\s\S]*?)\n---/);
-  if (!match) return { meta: {}, body: content };
+  if (!match) return {};
 
   const yamlStr = match[1];
-  const body = content.slice(match[0].length).trim();
   const meta: Record<string, any> = {};
 
   let currentKey: string | null = null;
@@ -60,13 +59,14 @@ function parseFrontMatter(content: string): FrontMatter {
     }
   }
 
-  return { meta, body };
+  return meta;
 }
 
 function walkDir(dir: string, library: string): Skill[] {
   const skills: Skill[] = [];
   if (!fs.existsSync(dir)) return skills;
 
+  // Keep deterministic output across environments to avoid index diff noise.
   const entries = fs.readdirSync(dir, { withFileTypes: true })
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -77,7 +77,7 @@ function walkDir(dir: string, library: string): Skill[] {
       skills.push(...walkDir(fullPath, library));
     } else if (entry.isFile() && entry.name.endsWith('.md') && !['README.md', 'CONTRIBUTING.md'].includes(entry.name)) {
       const content = fs.readFileSync(fullPath, 'utf-8');
-      const { meta } = parseFrontMatter(content);
+      const meta = extractFrontMatterMeta(content);
 
       if (library && meta.library && meta.library !== library) continue;
       if (!meta.id) {

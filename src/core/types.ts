@@ -44,8 +44,3 @@ export interface BM25Options {
   b?: number;
   fieldWeights?: Record<string, number>;
 }
-
-export interface FrontMatter {
-  meta: Record<string, any>;
-  body: string;
-}
