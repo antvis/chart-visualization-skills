@@ -22,7 +22,7 @@ const OpenAI = require('openai');
 const { getRuntimeConfig } = require('./provider-registry');
 const logger = require('./logger');
 
-const VL_MODEL = process.env.QWEN_VL_MODEL || 'Qwen3-VL-235B-A22B-Instruct';
+const VL_MODEL = process.env.VL_MODEL || 'Qwen3-VL-235B-A22B-Instruct';
 const SCORE_TIMEOUT_MS = 30000;
 
 // Weight of each dimension in the composite score
