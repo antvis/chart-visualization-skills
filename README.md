@@ -76,7 +76,7 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 We also provide a CLI tool named `antv` for easy usage in your terminal, Install globally:
 
 ```bash
-npm install -g chart-visualization-skills
+npm install -g @antv/chart-visualization-skills
 ```
 
 **Retrieve or list skills by query**:
@@ -113,7 +113,7 @@ Commands:
 ## API Usage
 
 ```typescript
-import { retrieve } from 'chart-visualization-skills';
+import { retrieve } from '@antv/chart-visualization-skills';
 
 const skills = retrieve('bar chart', 'g2', 5);
 // with content body: retrieve('bar chart', 'g2', 5, true)
@@ -135,7 +135,7 @@ retrieve(query: string, library?: string, topk?: number, content?: boolean)
 > - `content = true` returns markdown content body (frontmatter metadata is excluded).
 
 ```typescript
-import { info } from 'chart-visualization-skills';
+import { info } from '@antv/chart-visualization-skills';
 
 const skillInfo = info('g2');
 // => { name: 'antv-g2-chart', description: '...', content: '...' }
