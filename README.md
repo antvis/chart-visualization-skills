@@ -83,7 +83,7 @@ npm install -g chart-visualization-skills
 
 ```bash
 # Retrieve skills by query
-antv retrieve "bar chart" --library g2 --topk 10
+antv retrieve "bar chart" --library g2 --topk 10 --content
 
 # List all available skills
 antv list --library g2 --category core
@@ -112,11 +112,11 @@ Commands:
 import { retrieve } from 'chart-visualization-skills';
 
 const skills = retrieve('bar chart', 'g2', 5);
-// with content: retrieve('bar chart', 'g2', 5, true)
+// with content body: retrieve('bar chart', 'g2', 5, true)
 ```
 
 ```typescript
-retrieve(query: string, library?: string, topk?: number, includeContent?: boolean)
+retrieve(query: string, library?: string, topk?: number, content?: boolean)
 ```
 
 | Parameter | Type | Default | Description |
@@ -124,11 +124,11 @@ retrieve(query: string, library?: string, topk?: number, includeContent?: boolea
 | `query` | `string` | — | Search query |
 | `library` | `string` | `'g2'` | Library filter (`g2` or `g6`) |
 | `topk` | `number` | `7` | Number of results |
-| `includeContent` | `boolean` | `false` | Whether to include full markdown content in each result |
+| `content` | `boolean` | `false` | Whether to include markdown content |
 
 > Notes:
 > - Default retrieval returns lightweight result objects without the `content` field.
-> - `includeContent = true` returns full markdown content from the built index.
+> - `content = true` returns markdown content body (frontmatter metadata is excluded).
 
 ## License
 

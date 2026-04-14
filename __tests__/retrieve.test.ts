@@ -33,5 +33,7 @@ describe('retrieve API', () => {
     expect(results.length).toBeGreaterThan(0);
     expect(typeof results[0].content).toBe('string');
     expect((results[0].content || '').length).toBeGreaterThan(0);
+    // content should be body only, without frontmatter
+    expect(results[0].content).not.toMatch(/^---\n/);
   });
 });

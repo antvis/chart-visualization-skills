@@ -12,7 +12,6 @@ export interface Skill {
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
-  embedding_text?: string;
   content?: string;
 }
 
@@ -27,7 +26,7 @@ export interface SkillIndex {
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
-  includeContent?: boolean;
+  content?: boolean;
 }
 
 export interface ListOptions {

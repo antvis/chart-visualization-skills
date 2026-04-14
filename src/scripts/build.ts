@@ -61,7 +61,7 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
-        content,
+        content: parsed.content,
       });
     }
   }
@@ -80,7 +80,7 @@ function build(): void {
     const libDir = path.join(SKILLS_DIR, libPath);
     const skills = walkDir(libDir, lib);
 
-    console.log(`${lib.toUpperCase()}: Found ${skills.length} skills`);
+    console.log(`${lib.toUpperCase()}: Found ${skills.length} documents.`);
 
     const indexData: SkillIndex = {
       library: lib,
@@ -92,7 +92,7 @@ function build(): void {
 
     const indexPath = path.join(INDEX_DIR, `${lib}.index.json`);
     fs.writeFileSync(indexPath, JSON.stringify(indexData), 'utf-8');
-    console.log(`  Written ${lib}.index.json`);
+    console.log(`  Written ${lib}.index.json\n`);
   }
 }
 
