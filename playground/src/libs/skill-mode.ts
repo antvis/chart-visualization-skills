@@ -17,7 +17,7 @@ export function buildSkillSystemPrompt(library: string): string {
 ## Output Format
 
 1. 只输出一个完整的 JavaScript 代码块，不需要任何解释文字
-2. 使用 \`import { Chart } from '@antv/g2'\`
+2. 使用 \`import { ${libraryName === 'G6' ? 'Graph' : 'Chart'} } from '@antv/${libraryName.toLowerCase()}'\`
 3. \`container\` 必须为 'container'
 4. 代码末尾必须有 \`chart.render();\`
 5. 禁止返回 HTML 代码
