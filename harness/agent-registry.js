@@ -133,8 +133,7 @@ registry.register(
 registry.register(
   'index',
   'Rebuild the BM25 skill search index',
-  (opts) => indexAgent.run(opts),
-  () => fs.existsSync(path.join(ROOT_DIR, 'dist', 'scripts', 'build.js'))
+  (opts) => indexAgent.run(opts)
 );
 
 module.exports = registry;

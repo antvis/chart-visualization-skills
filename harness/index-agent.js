@@ -27,6 +27,21 @@ const BUILD_SCRIPT = path.join(MAIN_PKG_ROOT, 'dist', 'scripts', 'build.js');
 function run({ libraryId, rootDir }) {
   // Always use the main repo's compiled build script (worktrees don't have dist/).
   // Pass --root=<rootDir> so the script reads skills from and writes index to rootDir.
+
+  if (!require('fs').existsSync(BUILD_SCRIPT)) {
+    console.log('\n[index] dist/scripts/build.js not found — running npm run build first...');
+    const build = spawnSync('npm', ['run', 'build'], {
+      cwd: MAIN_PKG_ROOT,
+      stdio: 'inherit',
+      shell: false,
+    });
+    if (build.status !== 0) {
+      throw new Error(
+        `TypeScript build failed (exit ${build.status}). Run "npm run build" manually and retry.`
+      );
+    }
+  }
+
   const args = [BUILD_SCRIPT, `--root=${rootDir}`];
   console.log('\nRebuilding index...');
   console.log(`$ node ${args.join(' ')}`);

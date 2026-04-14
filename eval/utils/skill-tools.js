@@ -15,7 +15,8 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./logger');
 
-const ROOT_DIR = process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '../..');
+const ROOT_DIR =
+  process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
 // Mapping from short library key → actual skills directory name
@@ -31,30 +32,30 @@ function resolveLibraryDir(library) {
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
 const TOOLS = [
-  {
-    type: 'function',
-    function: {
-      name: 'list_references',
-      description:
-        '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
-      parameters: {
-        type: 'object',
-        properties: {
-          library: {
-            type: 'string',
-            description: '库：g2、g6',
-            enum: ['g2', 'g6']
-          },
-          category: {
-            type: 'string',
-            description:
-              '可选，过滤分类：marks、transforms、components、scales、coordinates、interactions、data、layouts、elements、behaviors、plugins、events、themes、patterns、recipes'
-          }
-        },
-        required: ['library']
-      }
-    }
-  },
+  // {
+  //   type: 'function',
+  //   function: {
+  //     name: 'list_references',
+  //     description:
+  //       '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
+  //     parameters: {
+  //       type: 'object',
+  //       properties: {
+  //         library: {
+  //           type: 'string',
+  //           description: '库：g2、g6',
+  //           enum: ['g2', 'g6']
+  //         },
+  //         category: {
+  //           type: 'string',
+  //           description:
+  //             '可选，过滤分类：marks、transforms、components、scales、coordinates、interactions、data、layouts、elements、behaviors、plugins、events、themes、patterns、recipes'
+  //         }
+  //       },
+  //       required: ['library']
+  //     }
+  //   }
+  // },
   {
     type: 'function',
     function: {
