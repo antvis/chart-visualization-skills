@@ -2,6 +2,8 @@
  * Provider Registry
  */
 
+import { createOpenAI } from '@ai-sdk/openai';
+
 export interface Provider {
   id: string;
   name: string;
@@ -97,4 +99,24 @@ export function getAvailableModels(): Array<{
   return Object.values(PROVIDERS)
     .filter((p) => p.apiKey)
     .map((p) => ({ provider: p.id, name: p.name, models: p.models }));
+}
+
+export function createLanguageModel(reqProvider?: string, reqModel?: string) {
+  const providerId = reqProvider || process.env.AI_PROVIDER || 'qwen';
+  const config = PROVIDERS[providerId];
+  if (!config) throw new Error(`Unknown provider: ${providerId}`);
+  if (!config.apiKey) throw new Error(`Missing API key for provider: ${providerId}`);
+
+  const modelId = reqModel || process.env.AI_MODEL || config.model;
+
+  const client = createOpenAI({
+    apiKey: config.apiKey,
+    baseURL: new URL(
+      config.path ? config.path.replace('/chat/completions', '') : '/v1',
+      config.endpoint
+    ).toString(),
+    headers: config.extraHeaders
+  });
+
+  return { model: client.chat(modelId), provider: providerId, modelId };
 }

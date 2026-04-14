@@ -10,6 +10,11 @@ const DEFAULT_LIBRARY = 'g2';
 
 const bm25Cache = new Map<string, BM25Index>();
 
+/**
+ * Load the index JSON file.
+ * @param library The library name.
+ * @returns The skill index for the specified library.
+ */
 export function loadIndex(library: string): SkillIndex {
   const indexFile = path.join(DEFAULT_INDEX_DIR, `${library}.index.json`);
 
@@ -20,6 +25,11 @@ export function loadIndex(library: string): SkillIndex {
   return JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
 }
 
+/**
+ * Get the bm25 index for a library, building it if not cached.
+ * @param library The library name.
+ * @returns The BM25 index for the specified library.
+ */
 function getBM25Index(library: string): BM25Index {
   const cacheKey = library;
   if (!bm25Cache.has(cacheKey)) {
@@ -31,18 +41,38 @@ function getBM25Index(library: string): BM25Index {
   return bm25Cache.get(cacheKey)!;
 }
 
+/**
+ * Retrieve relevant skills based on a query and options.
+ * @param query The search query.
+ * @param options Options to customize the retrieval.
+ * @returns An array of skills matching the query.
+ */
 export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] {
-  const { library = DEFAULT_LIBRARY, topK = 7, includeContent = false } = options;
+  const { library = DEFAULT_LIBRARY, topK = 7, content = false } = options;
   const index = getBM25Index(library);
   const skills = index.search(query, topK).map(({ skill }) => skill);
 
-  if (!includeContent) {
+  if (!content) {
     return skills.map(({ content, ...skill }) => skill);
   }
 
   return skills;
 }
 
+/**
+ * Get skill info embedded in the library index.
+ * @param library The library name (default: 'g2').
+ * @returns The skill info, or undefined if not available.
+ */
+export function getSkillInfo(library = DEFAULT_LIBRARY): SkillIndex['info'] {
+  return loadIndex(library).info;
+}
+
+/**
+ * List all the skills, optionally filtered by library, category, tags, or difficulty.
+ * @param options Options to filter the skills.
+ * @returns An array of skills matching the filters.
+ */
 export function listSkills(options: ListOptions = {}): Skill[] {
   const { library = DEFAULT_LIBRARY, category = null, tags = [], difficulty = null } = options;
   const { skills } = loadIndex(library);

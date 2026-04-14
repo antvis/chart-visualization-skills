@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAvailableModels } from '@/libs/provider-registry';
+import { getAvailableModels } from '@/libs/provider';
 
 export async function GET() {
   return NextResponse.json({ providers: getAvailableModels() });

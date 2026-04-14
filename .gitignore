@@ -71,3 +71,6 @@ playground/out/
 
 # TypeScript build cache
 *.tsbuildinfo
+
+# AI
+settings.local.json

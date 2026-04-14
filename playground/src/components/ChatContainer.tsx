@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system' | 'error';
-  content: string;
+  content: React.ReactNode;
 }
 
 interface ChatContainerProps {
-  onSend: (query: string) => void;
+  onSend: () => void;
   isLoading: boolean;
-  loadingText: string;
+  input: string;
+  onInputChange: (value: string) => void;
   messages: Message[];
   children?: React.ReactNode;
 }
@@ -19,22 +20,20 @@ interface ChatContainerProps {
 export default function ChatContainer({
   onSend,
   isLoading,
-  loadingText,
+  input,
+  onInputChange,
   messages,
   children
 }: ChatContainerProps) {
-  const [input, setInput] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
   }, [messages]);
 
-  // Auto-resize textarea
   const handleInput = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -46,8 +45,7 @@ export default function ChatContainer({
   const handleSubmit = useCallback(() => {
     const query = input.trim();
     if (!query || isLoading) return;
-    onSend(query);
-    setInput('');
+    onSend();
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -81,10 +79,7 @@ export default function ChatContainer({
         </div>
         {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.role}`}>
-            <div
-              className='message-content'
-              dangerouslySetInnerHTML={{ __html: msg.content }}
-            />
+            <div className='message-content'>{msg.content}</div>
           </div>
         ))}
       </div>
@@ -97,7 +92,7 @@ export default function ChatContainer({
             ref={textareaRef}
             value={input}
             onChange={(e) => {
-              setInput(e.target.value);
+              onInputChange(e.target.value);
               handleInput();
             }}
             onKeyDown={handleKeyDown}

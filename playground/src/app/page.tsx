@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import {
   Sidebar,
   ChatContainer,
@@ -10,142 +12,245 @@ import {
   ControlsBar
 } from '@/components';
 import type { CodeEditorHandle } from '@/components/CodeEditor';
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'error';
-  content: string;
-}
+import Markdown from 'react-markdown';
 
 interface Skill {
   id: string;
   title: string;
 }
 
+interface DisplayMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'error';
+  content: React.ReactNode;
+}
+
+interface TokenUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+}
+
+interface ToolEvent {
+  id: string;
+  name: string;
+  status: 'call' | 'result';
+  payload: unknown;
+}
+
+export function extractCodeFromMarkdown(text: string): string {
+  const m = text.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
+  return m ? m[1].trim() : text.trim();
+}
+
+function truncate(value: unknown, max = 120): string {
+  const text =
+    typeof value === 'string' ? value : JSON.stringify(value, null, 0) ?? '';
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+function getFileStem(filePath: string): string {
+  const segment = filePath.split('/').pop() || '';
+  return segment.endsWith('.md') ? segment.slice(0, -3) : segment;
+}
+
+function getMessageText(message: {
+  parts?: Array<{ type: string; text?: string }>;
+  content?: string;
+}): string {
+  if (message.parts) {
+    return message.parts
+      .filter((part) => part.type === 'text' && typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('\n')
+      .trim();
+  }
+  return message.content || '';
+}
+
+function getToolEvents(message: UIMessage) {
+  const events: ToolEvent[] = [];
+  for (const [index, rawPart] of (message.parts || []).entries()) {
+    const part = rawPart as Record<string, unknown>;
+    const type = part.type as string | undefined;
+    if (!type) continue;
+
+    // AI SDK v6: tool parts have type "tool-{toolName}" with state/input/output fields
+    if (type.startsWith('tool-')) {
+      console.log('[getToolEvents] part:', { type, state: part.state, errorText: part.errorText, hasOutput: 'output' in part });
+      const toolName = type.slice(5); // strip "tool-" prefix
+      const state = part.state as string | undefined;
+      const id = String(part.toolCallId || `${toolName}-${index}`);
+
+      if (state === 'output-available') {
+        events.push({ id, name: toolName, status: 'result', payload: part.output ?? {} });
+      } else {
+        events.push({ id, name: toolName, status: 'call', payload: part.input ?? {} });
+      }
+    }
+  }
+  return events;
+}
+
+function getReadSkillsFromMessages(messages: UIMessage[]) {
+  const unique = new Map<string, Skill>();
+
+  for (const message of messages) {
+    for (const rawPart of message.parts || []) {
+      const part = rawPart as Record<string, unknown>;
+      if (part.type !== 'tool-read_file' || part.state !== 'output-available') continue;
+
+      const output = part.output;
+      const items = Array.isArray(output) ? output : output ? [output] : [];
+      for (const item of items as { path?: string }[]) {
+        const id = getFileStem(item.path || '');
+        if (id) unique.set(id, { id, title: id });
+      }
+    }
+  }
+
+  return [...unique.values()];
+}
+
+function getUsage(message: UIMessage): TokenUsage | undefined {
+  const metadata = message.metadata as { usage?: TokenUsage } | undefined;
+  return metadata?.usage;
+}
+
 export default function Home() {
   const codeEditorRef = useRef<CodeEditorHandle>(null);
   const [library, setLibrary] = useState('g2');
-  const [mode, setMode] = useState('tool-call');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [mode, setMode] = useState<'skill' | 'cli'>('skill');
   const [code, setCode] = useState('');
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('');
+  const [input, setInput] = useState('');
   const [status, setStatus] = useState('就绪');
   const [statusColor, setStatusColor] = useState('var(--text-tertiary)');
 
-  const handleSend = useCallback(
-    async (query: string) => {
-      // Add user message
-      const userMsg: Message = {
-        id: `user-${Date.now()}`,
-        role: 'user',
-        content: query
-      };
-      setMessages((prev) => [...prev, userMsg]);
-      setIsLoading(true);
-      setLoadingText(
-        mode === 'tool-call'
-          ? '正在查阅文档并生成代码'
-          : '正在检索 Skills 并生成代码'
-      );
-      setStatus('生成中');
-      setStatusColor('#f59e0b');
+  const bodyRef = useRef({ library, mode, currentCode: code || null });
+  bodyRef.current = { library, mode, currentCode: code || null };
 
-      // Add placeholder for assistant message
-      const assistantMsgId = `assistant-${Date.now()}`;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: assistantMsgId,
-          role: 'assistant',
-          content: `<span class="loading"><span class="spinner"></span>${loadingText}</span>`
-        }
-      ]);
-
-      try {
-        const res = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query,
-            library,
-            currentCode: code || null,
-            mode
-          })
-        });
-
-        if (!res.ok) {
-          const err = await res
-            .json()
-            .catch(() => ({ error: 'Generation failed' }));
-          throw new Error(err.error || 'Generation failed');
-        }
-
-        const data = await res.json();
-        const {
-          code: newCode,
-          library: lib,
-          skills: loadedSkills = [],
-          toolCallsCount
-        } = data;
-
-        setCode(newCode || '');
-        setSkills(loadedSkills);
-
-        const badge = `<span class="mode-badge ${mode}">${mode === 'tool-call' ? 'Tool Call' : 'BM25'}</span>`;
-        const note =
-          mode === 'tool-call'
-            ? `工具调用 ${toolCallsCount} 次 · 加载 ${loadedSkills.length} 个 Skill`
-            : `检索到 ${loadedSkills.length} 个相关 Skill`;
-
-        const escapedCode = (newCode || '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-        const codeBlock = escapedCode
-          ? `<details class="msg-code-block"><summary>查看代码</summary><pre><code>${escapedCode}</code></pre></details>`
-          : '';
-
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId
-              ? {
-                  ...msg,
-                  role: 'assistant',
-                  content: `代码已生成 &nbsp;·&nbsp; <strong>${lib.toUpperCase()}</strong> ${badge}<br><span style="font-size:11px;color:var(--text-tertiary)">${note}</span>${codeBlock}`
-                }
-              : msg
-          )
-        );
-
-        setStatus('就绪');
-        setStatusColor('var(--green)');
-      } catch (err) {
-        const error = err as Error;
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId
-              ? {
-                  ...msg,
-                  role: 'error',
-                  content: `<strong>生成失败</strong><br>${error.message}`
-                }
-              : msg
-          )
-        );
-        setStatus('错误');
-        setStatusColor('var(--red)');
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [library, mode, code, loadingText]
+  const [transport] = useState(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/generate',
+        body: () => bodyRef.current
+      })
   );
 
+  const {
+    messages,
+    sendMessage,
+    setMessages,
+    status: chatStatus,
+    error: chatError
+  } = useChat({
+    transport,
+    onFinish: ({ message }) => {
+      const text = getMessageText(message);
+      const nextCode = extractCodeFromMarkdown(text);
+      if (nextCode) {
+        setCode(nextCode);
+      }
+    }
+  });
+
+  const handleSend = useCallback(async () => {
+    const query = input.trim();
+    if (!query || chatStatus !== 'ready') return;
+
+    setStatus('生成中');
+    setStatusColor('#f59e0b');
+    await sendMessage({ text: query });
+    setInput('');
+    setStatus('就绪');
+    setStatusColor('var(--green)');
+  }, [chatStatus, input, sendMessage]);
+
+  const skills = useMemo(
+    () => getReadSkillsFromMessages(messages),
+    [messages]
+  );
+
+  const totalTokenUsage = useMemo(() => {
+    return messages.reduce(
+      (acc, message) => {
+        if (message.role !== 'assistant') return acc;
+        const usage = getUsage(message);
+        return {
+          inputTokens: acc.inputTokens + (usage?.inputTokens || 0),
+          outputTokens: acc.outputTokens + (usage?.outputTokens || 0),
+          totalTokens: acc.totalTokens + (usage?.totalTokens || 0)
+        };
+      },
+      { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
+    );
+  }, [messages]);
+
+  const displayMessages = useMemo<DisplayMessage[]>(() => {
+    const rows: DisplayMessage[] = messages.map((message) => {
+        const text = getMessageText(message as { parts?: Array<{ type: string; text?: string }>; content?: string });
+        const role = message.role as 'user' | 'assistant';
+
+        if (role === 'assistant') {
+          const usage = getUsage(message);
+          const toolEvents = getToolEvents(message);
+
+          return {
+            id: String(message.id),
+            role: 'assistant',
+            content: (
+              <div>
+                {toolEvents.length > 0 && (
+                  <div className='tool-events'>
+                    {toolEvents.map((event) => (
+                      <details key={`${event.id}-${event.status}`} className={`tool-event ${event.status}`}>
+                        <summary>
+                          <span className='tool-event-icon'>{event.status === 'call' ? '↗' : '↙'}</span>
+                          <span className='tool-event-name'>{event.name}{event.name === 'load_skill' && (event.payload as { library?: string })?.library ? ` · ${(event.payload as { library?: string }).library}` : ''}</span>
+                          <span className='tool-event-status'>{event.status === 'call' ? '调用' : '完成'}</span>
+                        </summary>
+                        <pre className='tool-event-payload'>{truncate(event.payload, 300)}</pre>
+                      </details>
+                    ))}
+                  </div>
+                )}
+                {text && <div className='markdown-body'><Markdown>{text}</Markdown></div>}
+                {usage && (
+                  <div className='token-usage'>
+                    Tokens: in {usage.inputTokens || 0} / out{' '}
+                    {usage.outputTokens || 0} / total {usage.totalTokens || 0}
+                  </div>
+                )}
+              </div>
+            )
+          };
+        }
+
+        return {
+          id: String(message.id),
+          role: 'user',
+          content: text
+        };
+      });
+
+    if (chatError) {
+      rows.push({
+        id: 'chat-error',
+        role: 'error',
+        content: (
+          <>
+            <strong>生成失败</strong>
+            <br />
+            {chatError.message}
+          </>
+        )
+      });
+    }
+
+    return rows;
+  }, [chatError, messages]);
+
   const handleRun = useCallback(() => {
-    // The Preview component auto-runs code on change
-    // This is a manual trigger placeholder
     setStatus('预览已更新');
     setStatusColor('var(--green)');
   }, []);
@@ -164,11 +269,10 @@ export default function Home() {
 
   const handleClear = useCallback(() => {
     setCode('');
-    setSkills([]);
     setMessages([]);
     setStatus('就绪');
     setStatusColor('var(--text-tertiary)');
-  }, []);
+  }, [setMessages]);
 
   const handleStatusChange = useCallback((newStatus: string, color: string) => {
     setStatus(newStatus);
@@ -180,16 +284,20 @@ export default function Home() {
       <Sidebar>
         <ChatContainer
           onSend={handleSend}
-          isLoading={isLoading}
-          loadingText={loadingText}
-          messages={messages}
+          isLoading={chatStatus !== 'ready'}
+          input={input}
+          onInputChange={setInput}
+          messages={displayMessages}
         >
           <ControlsBar
             library={library}
             mode={mode}
             onLibraryChange={setLibrary}
-            onModeChange={setMode}
+            onModeChange={(value) => { setMode(value as 'skill' | 'cli'); setMessages([]); }}
           />
+          <div className='chat-stats'>
+            <span>多轮 Token 合计: {totalTokenUsage.totalTokens}</span>
+          </div>
         </ChatContainer>
       </Sidebar>
 
@@ -209,7 +317,7 @@ export default function Home() {
               <span className='panel-header-label'>代码</span>
               {mode && (
                 <span className={`panel-badge ${mode}`}>
-                  {mode === 'tool-call' ? 'Tool Call' : 'BM25'}
+                  {mode === 'skill' ? 'Skill' : 'CLI'}
                 </span>
               )}
             </div>

@@ -12,7 +12,6 @@ export interface Skill {
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
-  embedding_text?: string;
   content?: string;
 }
 
@@ -22,12 +21,13 @@ export interface SkillIndex {
   generated: string;
   total: number;
   skills: Skill[];
+  info?: SkillInfo;
 }
 
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
-  includeContent?: boolean;
+  content?: boolean;
 }
 
 export interface ListOptions {
@@ -35,6 +35,12 @@ export interface ListOptions {
   category?: string | null;
   tags?: string[];
   difficulty?: string | null;
+}
+
+export interface SkillInfo {
+  name: string;
+  description: string;
+  content: string;
 }
 
 export interface BM25Options {
