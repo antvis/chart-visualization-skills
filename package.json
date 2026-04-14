@@ -1,6 +1,6 @@
 {
   "name": "@antv/chart-visualization-skills",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Chart visualization skills for AntV, can be used in various scenarios such as data analysis, business intelligence, and dashboard development. Skills and CLI are included.",
   "type": "commonjs",
   "main": "dist/api.js",
@@ -10,9 +10,15 @@
   },
   "files": [
     "dist",
-    "skills",
     "README.md",
     "LICENSE"
+  ],
+  "keywords": [
+    "antv",
+    "chart",
+    "visualization",
+    "skills",
+    "cli"
   ],
   "scripts": {
     "build": "npm run build:index && tsc && npm run copy:index",
@@ -32,7 +38,6 @@
     "typescript": "^5.3.0",
     "vitest": "^1.2.0"
   },
-  "keywords": [],
   "author": "AntV AI Team",
   "license": "MIT",
   "repository": "git@github.com:antvis/chart-visualization-skills.git"

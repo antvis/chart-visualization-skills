@@ -8,7 +8,6 @@ export interface Skill {
   subcategory: string;
   tags: string[];
   difficulty: string;
-  path: string;
   use_cases: string[];
   anti_patterns: string[];
   related: string[];

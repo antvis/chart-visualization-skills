@@ -57,7 +57,6 @@ function walkDir(dir: string, library: string): Skill[] {
         subcategory: meta.subcategory || '',
         tags: Array.isArray(meta.tags) ? meta.tags : [],
         difficulty: meta.difficulty || 'beginner',
-        path: relativePath.replace(/\\/g, '/'),
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
