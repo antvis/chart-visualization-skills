@@ -6,6 +6,9 @@ description: |
   专为颜色通道设计，常配合 palette（内置色板）或自定义颜色插值函数使用。
   适合热力图、地图着色、连续数值颜色编码场景。
   与 linear 的区别：sequential 专为颜色输出优化，linear 支持任意数值输出。
+  ⚠️ 约束：仅当 encode.color 映射的字段为连续类型（数值型）时使用。
+  分类字段（字符串/枚举）和间断字段（ordinal/band）禁止使用 sequential，
+  否则会产生错误的颜色渐变，应改用 ordinal 比例尺。
 
 library: "g2"
 version: "5.x"
@@ -36,6 +39,18 @@ updated: "2025-03-24"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/scale/sequential"
 ---
+
+## ⚠️ 使用约束
+
+**sequential 仅适用于 `encode.color` 字段为连续类型（数值型）的场景。**
+
+| 字段类型 | 示例 | 是否可用 sequential |
+|--------|------|------------------|
+| 连续数值（quantitative） | `temp_max`、`sales`、`score` | ✅ 允许 |
+| 分类（categorical / ordinal） | `city`、`category`、`name` | ❌ 禁止，用 `ordinal` |
+| 间断（band / point） | 离散的坐标轴字段 | ❌ 禁止，用 `ordinal` |
+
+分类或间断字段使用 sequential 会导致所有数据映射到渐变色的两端，颜色区分度极差。
 
 ## 最小可运行示例（热力图）
 

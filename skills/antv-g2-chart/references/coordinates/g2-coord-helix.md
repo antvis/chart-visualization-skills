@@ -101,3 +101,41 @@ chart.options({
   },
 });
 ```
+
+### 错误：样式设置不当导致图形不可见或渲染异常
+```javascript
+// ❌ 使用了 lineWidth: 0 和 interval 类型但未设置足够宽度，可能导致视觉上“消失”
+chart.options({
+  type: 'interval',
+  coordinate: { type: 'helix' },
+  style: { lineWidth: 0 },
+});
+
+// ✅ 设置合适的 strokeWidth 或调整图形类型如 point 更适合细粒度数据
+chart.options({
+  type: 'point', // 对于大量密集数据更合适
+  style: { strokeWidth: 2 },
+});
+```
+
+### 错误：动画类型与图形元素不兼容导致无动画效果
+```javascript
+// ❌ growInY 动画可能不适用于所有 helix 场景下的 interval 元素
+chart.options({
+  animate: {
+    enter: {
+      type: 'growInY',
+    }
+  }
+});
+
+// ✅ 使用 fadeIn 等通用动画类型确保兼容性
+chart.options({
+  animate: {
+    enter: {
+      type: 'fadeIn',
+      duration: 2000,
+    }
+  }
+});
+```

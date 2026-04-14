@@ -61,7 +61,7 @@ const data = [
 
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: data,
     transform: [
@@ -87,7 +87,9 @@ chart.render();
 
 ```javascript
 chart.options({
-   {
+  data: {
+    type: 'inline',
+    value: data,
     transform: [
       {
         type: 'sortBy',
@@ -103,7 +105,9 @@ chart.options({
 ```javascript
 // 先按 name 升序，name 相同时按 age 降序
 chart.options({
-   {
+  data: {
+    type: 'inline',
+    value: data,
     transform: [
       {
         type: 'sortBy',
@@ -126,17 +130,17 @@ data: {
 }
 
 // 使用 sort（更灵活）
- {
+data: {
   transform: [{ type: 'sort', callback: (a, b) => a.value - b.value }],
 }
 
 // sortBy 降序
- {
+data: {
   transform: [{ type: 'sortBy', fields: [['value', false]] }],
 }
 
 // sort 降序
- {
+data: {
   transform: [{ type: 'sort', callback: (a, b) => b.value - a.value }],
 }
 ```
@@ -156,7 +160,7 @@ chart.options({
 // ✅ 正确：sortBy 放在 data.transform 中
 chart.options({
   type: 'interval',
-   {
+  data: {
     type: 'inline',
     value: data,
     transform: [{ type: 'sortBy', fields: ['value'] }],  // ✅ 正确
@@ -173,7 +177,7 @@ data: {
 }
 
 // ✅ 正确：确保字段名存在
- {
+data: {
   transform: [{ type: 'sortBy', fields: ['value'] }],
 }
 ```
