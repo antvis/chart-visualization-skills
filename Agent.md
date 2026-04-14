@@ -8,7 +8,7 @@ This project is a skill-based system for generating chart visualization code usi
 
 ```
                                 ┌─────────────────────────┐
-                                │   Document + Code        │
+                                │   Document + Code       │
                                 └───────────┬─────────────┘
                                             │
                                             v
