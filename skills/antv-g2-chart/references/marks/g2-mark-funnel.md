@@ -201,6 +201,55 @@ chart.options({
 });
 ```
 
+## 百分比漏斗 + 转化率标注
+
+`normalizeY` 使各阶段高度等比，`symmetryY` 使其对称——**顺序不能颠倒**：
+
+```javascript
+const data = [
+  { stage: '访问', count: 10000 },
+  { stage: '注册', count: 6200 },
+  { stage: '激活', count: 3800 },
+  { stage: '付费', count: 1500 },
+];
+
+const dataWithRate = data.map((d, i) => ({
+  ...d,
+  rate: i === 0 ? '100%' : `${((d.count / data[i - 1].count) * 100).toFixed(1)}%`,
+}));
+
+chart.options({
+  type: 'interval',
+  data: dataWithRate,
+  encode: {
+    x: 'stage',
+    y: 'count',
+    color: 'stage',
+    shape: 'funnel',
+  },
+  transform: [
+    { type: 'normalizeY' },   // ① 先归一化（统一高度比例）
+    { type: 'symmetryY' },    // ② 再对称（形成漏斗形状）
+  ],
+  coordinate: { transform: [{ type: 'transpose' }] },
+  axis: false,
+  legend: false,
+  labels: [
+    {
+      text: (d) => d.stage,
+      position: 'inside',
+      style: { fill: 'white', fontSize: 13, fontWeight: 'bold' },
+    },
+    {
+      text: (d) => `转化率 ${d.rate}`,
+      position: 'right',
+      style: { fill: '#666', fontSize: 11 },
+      dx: 8,
+    },
+  ],
+});
+```
+
 ## 常见错误与修正
 
 ### 错误 1：缺少 symmetryY transform

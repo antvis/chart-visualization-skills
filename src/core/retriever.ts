@@ -31,8 +31,15 @@ function getBM25Index(library: string): BM25Index {
   return bm25Cache.get(cacheKey)!;
 }
 
-export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] {
-  const { library = DEFAULT_LIBRARY, topK = 7, includeContent = false } = options;
+export function retrieve(
+  query: string,
+  options: RetrieveOptions = {}
+): Skill[] {
+  const {
+    library = DEFAULT_LIBRARY,
+    topK = 7,
+    includeContent = false
+  } = options;
   const index = getBM25Index(library);
   const skills = index.search(query, topK).map(({ skill }) => skill);
 
@@ -44,13 +51,19 @@ export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] 
 }
 
 export function listSkills(options: ListOptions = {}): Skill[] {
-  const { library = DEFAULT_LIBRARY, category = null, tags = [], difficulty = null } = options;
+  const {
+    library = DEFAULT_LIBRARY,
+    category = null,
+    tags = [],
+    difficulty = null
+  } = options;
   const { skills } = loadIndex(library);
 
-  return skills.filter(skill => {
+  return skills.filter((skill) => {
     if (category && skill.category !== category) return false;
     if (difficulty && skill.difficulty !== difficulty) return false;
-    if (tags.length > 0 && !tags.some(t => skill.tags.includes(t))) return false;
+    if (tags.length > 0 && !tags.some((t) => skill.tags.includes(t)))
+      return false;
     return true;
   });
 }

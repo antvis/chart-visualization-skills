@@ -22,14 +22,14 @@ const logger = require('./logger');
 
 // When running inside a harness worktree, HARNESS_ROOT_DIR points to the
 // worktree root so that skill retrieval reads from the optimised skill files.
-const ROOT_DIR = process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '..', '..');
+const ROOT_DIR =
+  process.env.HARNESS_ROOT_DIR || path.resolve(__dirname, '..', '..');
 const MAX_TOOL_ROUNDS = 6;
 
 // ── BM25 ──────────────────────────────────────────────────────────────────────
 
 function loadRetriever() {
-  const { SkillRetriever } = require('../../cli/utils/retriever');
-  return new SkillRetriever();
+  return require('../../dist/core/retriever');
 }
 
 // ── Shared prompt builder for non-tool-call strategies ───────────────────────
@@ -91,7 +91,9 @@ class EvaluationManager {
       : datasetContent.results || [];
 
     // Assign stable IDs based on original array position so IDs are consistent across runs
-    let testData = rawData.map((t, i) => (t.id ? t : { ...t, id: `case-${i}` }));
+    let testData = rawData.map((t, i) =>
+      t.id ? t : { ...t, id: `case-${i}` }
+    );
 
     // Priority mode: test only specified case IDs (post-optimization targeted re-test)
     if (ids && ids.length > 0) {
@@ -234,7 +236,7 @@ class EvaluationManager {
    * Process a single test case
    */
   async _processSingleCase(evalRun, testCase, index, options) {
-    const { similarityAlgorithm, signal } = options;
+    const { similarityAlgorithm } = options;
     const { provider, model, retrieval } = evalRun;
 
     const startTime = Date.now();
@@ -249,16 +251,14 @@ class EvaluationManager {
           provider,
           model,
           query,
-          library,
-          similarityAlgorithm
+          library
         }));
       } else if (retrieval === 'context7') {
         ({ generatedCode, retrievalInfo } = await this._processContext7({
           provider,
           model,
           query,
-          library,
-          similarityAlgorithm
+          library
         }));
       } else {
         // tool-call (default)
@@ -325,9 +325,14 @@ class EvaluationManager {
     };
   }
 
-  async _processBm25({ provider, model, query, library, similarityAlgorithm }) {
+  async _processBm25({ provider, model, query, library }) {
     const retriever = loadRetriever();
-    const retrievedSkills = retriever.retrieve(query, { library, topK: 5 });
+    const indexDir = path.join(ROOT_DIR, 'dist', 'index');
+    const retrievedSkills = retriever.retrieve(query, {
+      library,
+      topK: 5,
+      indexDir
+    });
 
     let skillContext = '';
     const retrievedSkillIds = [];
@@ -368,7 +373,11 @@ class EvaluationManager {
     let context7Error;
 
     try {
-      const data = await context7.fetchDocs(query, libraryId, process.env.CONTEXT7_API_KEY);
+      const data = await context7.fetchDocs(
+        query,
+        libraryId,
+        process.env.CONTEXT7_API_KEY
+      );
       skillContext = context7.formatDocs(data);
     } catch (err) {
       context7Error = err.message;
@@ -435,7 +444,8 @@ class EvaluationManager {
    */
   _updateIncrementalCounters(evalRun, result) {
     evalRun.totalDuration += result.duration || 0;
-    if (!result.error && result.evaluation?.similarity >= 0.5) evalRun.highSimilarityCount++;
+    if (!result.error && result.evaluation?.similarity >= 0.5)
+      evalRun.highSimilarityCount++;
     if (result.evaluation?.hasIssues) evalRun.issuesCount++;
     if (result.loadedSkillPaths?.length > 0) evalRun.skillHitCount++;
     if (!result.error) evalRun.successCount++;
@@ -478,15 +488,18 @@ class EvaluationManager {
    */
   _saveProgress(evalRun, outputPath) {
     const n = evalRun.progress?.current ?? evalRun.results.length;
-    const successCount = evalRun.successCount ?? evalRun.results.filter((r) => !r.error).length;
+    const successCount =
+      evalRun.successCount ?? evalRun.results.filter((r) => !r.error).length;
     const summary = {
       totalTests: n,
       successCount,
       avgDuration: n > 0 ? evalRun.totalDuration / n : 0,
-      avgSimilarity: successCount > 0 ? evalRun.totalSimilarity / successCount : 0,
+      avgSimilarity:
+        successCount > 0 ? evalRun.totalSimilarity / successCount : 0,
       highSimilarityCount: evalRun.highSimilarityCount,
       issuesCount: evalRun.issuesCount,
-      avgToolCalls: successCount > 0 ? evalRun.totalToolCalls / successCount : 0,
+      avgToolCalls:
+        successCount > 0 ? evalRun.totalToolCalls / successCount : 0,
       skillHitRate: n > 0 ? evalRun.skillHitCount / n : 0
     };
     const data = {
