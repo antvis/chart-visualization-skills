@@ -76,8 +76,6 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 [![npm version](https://img.shields.io/npm/v/%40antv%2Fchart-visualization-skills)](https://www.npmjs.com/package/@antv/chart-visualization-skills)
 ![license](https://img.shields.io/github/license/antvis/chart-visualization-skills)
 
-
-
 It can be used as a library in your Node.js projects with `CLI` and `API`.
 
 ### CLI Usage
