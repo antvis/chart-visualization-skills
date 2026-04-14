@@ -23,6 +23,7 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "dotenv": "^16.0.0",
     "@types/node": "^22.13.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

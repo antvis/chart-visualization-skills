@@ -20,11 +20,21 @@ const LIBRARY_REGISTRY = {
     buildCmd: 'node dist/scripts/build.js',
     detectPattern: '@antv/g2', // pattern to detect library in generated code
     defaultDataset: 'g2-dataset-174.json',
-    // Local reference paths for optimize-agent context injection
-    refs: {
-      srcDir: '/Users/liufu/publicWorkspace/G2/src',
-      docsDir: '/Users/liufu/publicWorkspace/G2/site/docs'
-    }
+    // Local reference paths for optimize-agent context injection.
+    // These are optional: when set, the optimizer can read library source/docs
+    // to look up authoritative API details during skill rewriting.
+    //
+    // Configure via environment variables (never hardcode paths here):
+    //   G2_SRC_DIR   — absolute path to the G2 source tree, e.g. /path/to/G2/src
+    //   G2_DOCS_DIR  — absolute path to the G2 docs tree,   e.g. /path/to/G2/site/docs
+    //
+    // If neither variable is set, refs is null and the optimizer falls back to
+    // skill-only context (no ref lookups), which is the safe default for CI.
+    refs: (() => {
+      const srcDir  = process.env.G2_SRC_DIR  || null;
+      const docsDir = process.env.G2_DOCS_DIR || null;
+      return (srcDir || docsDir) ? { srcDir, docsDir } : null;
+    })()
   },
   g6: {
     id: 'g6',
