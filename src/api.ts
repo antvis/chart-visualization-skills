@@ -1,7 +1,8 @@
-import { retrieve as _retrieve } from './core/retriever';
-import type { Skill } from './core/types';
+import { retrieve as _retrieve, getSkillInfo } from './core/retriever';
+import type { Skill, SkillInfo } from './core/types';
 
-export type { Skill };
+export type { Skill, SkillInfo };
+
 
 /**
  * Retrieve skills based on a query.
@@ -15,4 +16,15 @@ export type { Skill };
  */
 export function retrieve(query: string, library = 'g2', topk = 7, content = false): Skill[] {
   return _retrieve(query, { library, topK: topk, content });
+}
+
+/**
+ * Get skill info embedded in the library index.
+ *
+ * @param library The library to get info for (default: 'g2').
+ * @example info('g2');
+ * @returns The skill info, or undefined if not available.
+ */
+export function info(library = 'g2'): SkillInfo | undefined {
+  return getSkillInfo(library);
 }

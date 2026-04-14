@@ -87,6 +87,9 @@ antv retrieve "bar chart" --library g2 --topk 10 --content
 
 # List all available skills
 antv list --library g2 --category core
+
+# Show skill info
+antv info --library g2
 ```
 
 **Usage for the command**:
@@ -103,6 +106,7 @@ Options:
 Commands:
   retrieve [options] <query>  Search for skills matching a query
   list [options]              List all available skills
+  info [options]              Show skill info from SKILL.md
   help [command]              display help for command
 ```
 
@@ -129,6 +133,21 @@ retrieve(query: string, library?: string, topk?: number, content?: boolean)
 > Notes:
 > - Default retrieval returns lightweight result objects without the `content` field.
 > - `content = true` returns markdown content body (frontmatter metadata is excluded).
+
+```typescript
+import { info } from 'chart-visualization-skills';
+
+const skillInfo = info('g2');
+// => { name: 'antv-g2-chart', description: '...', content: '...' }
+```
+
+```typescript
+info(library?: string): SkillInfo | undefined
+```
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `library` | `string` | `'g2'` | Library to get info for (`g2` or `g6`) |
 
 ## License
 

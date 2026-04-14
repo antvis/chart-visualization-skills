@@ -12,7 +12,7 @@ import {
   ControlsBar
 } from '@/components';
 import type { CodeEditorHandle } from '@/components/CodeEditor';
-import { extractCodeFromMarkdown } from '@/libs/intent';
+import Markdown from 'react-markdown';
 
 interface Skill {
   id: string;
@@ -36,6 +36,11 @@ interface ToolEvent {
   name: string;
   status: 'call' | 'result';
   payload: unknown;
+}
+
+export function extractCodeFromMarkdown(text: string): string {
+  const m = text.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
+  return m ? m[1].trim() : text.trim();
 }
 
 function truncate(value: unknown, max = 120): string {
@@ -68,36 +73,20 @@ function getToolEvents(message: UIMessage) {
   for (const [index, rawPart] of (message.parts || []).entries()) {
     const part = rawPart as Record<string, unknown>;
     const type = part.type as string | undefined;
-    if (type === 'tool-call') {
-      events.push({
-        id: String(part.toolCallId || `${part.toolName || 'tool'}-${index}`),
-        name: String(part.toolName || 'tool'),
-        status: 'call',
-        payload: part.args ?? {}
-      });
-    }
-    if (type === 'tool-result') {
-      events.push({
-        id: String(part.toolCallId || `${part.toolName || 'tool'}-${index}`),
-        name: String(part.toolName || 'tool'),
-        status: 'result',
-        payload: part.result ?? {}
-      });
-    }
-    if (type === 'tool-invocation' && part.toolInvocation) {
-      const invocation = part.toolInvocation as Record<string, unknown>;
-      const state = invocation.state as string | undefined;
-      events.push({
-        id: String(
-          invocation.toolCallId || `${invocation.toolName || 'tool'}-${index}`
-        ),
-        name: String(invocation.toolName || 'tool'),
-        status: state === 'result' ? 'result' : 'call',
-        payload:
-          state === 'result'
-            ? invocation.result ?? {}
-            : invocation.args ?? invocation
-      });
+    if (!type) continue;
+
+    // AI SDK v6: tool parts have type "tool-{toolName}" with state/input/output fields
+    if (type.startsWith('tool-')) {
+      console.log('[getToolEvents] part:', { type, state: part.state, errorText: part.errorText, hasOutput: 'output' in part });
+      const toolName = type.slice(5); // strip "tool-" prefix
+      const state = part.state as string | undefined;
+      const id = String(part.toolCallId || `${toolName}-${index}`);
+
+      if (state === 'output-available') {
+        events.push({ id, name: toolName, status: 'result', payload: part.output ?? {} });
+      } else {
+        events.push({ id, name: toolName, status: 'call', payload: part.input ?? {} });
+      }
     }
   }
   return events;
@@ -109,24 +98,13 @@ function getReadSkillsFromMessages(messages: UIMessage[]) {
   for (const message of messages) {
     for (const rawPart of message.parts || []) {
       const part = rawPart as Record<string, unknown>;
-      const isReadSkills =
-        (part.type === 'tool-result' || part.type === 'tool-invocation') &&
-        (part.toolName === 'read_file' ||
-          (part.toolInvocation as { toolName?: string } | undefined)
-            ?.toolName === 'read_file');
+      if (part.type !== 'tool-read_file' || part.state !== 'output-available') continue;
 
-      if (!isReadSkills) continue;
-
-      const result =
-        (part.result as { path?: string }[] | undefined) ||
-        ((part.toolInvocation as { result?: { path?: string }[] } | undefined)
-          ?.result ?? []);
-
-      for (const item of result) {
-        const fullPath = item.path || '';
-        const id = getFileStem(fullPath);
-        if (!id) continue;
-        unique.set(id, { id, title: id });
+      const output = part.output;
+      const items = Array.isArray(output) ? output : output ? [output] : [];
+      for (const item of items as { path?: string }[]) {
+        const id = getFileStem(item.path || '');
+        if (id) unique.set(id, { id, title: id });
       }
     }
   }
@@ -148,6 +126,17 @@ export default function Home() {
   const [status, setStatus] = useState('就绪');
   const [statusColor, setStatusColor] = useState('var(--text-tertiary)');
 
+  const bodyRef = useRef({ library, mode, currentCode: code || null });
+  bodyRef.current = { library, mode, currentCode: code || null };
+
+  const [transport] = useState(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/generate',
+        body: () => bodyRef.current
+      })
+  );
+
   const {
     messages,
     sendMessage,
@@ -155,14 +144,7 @@ export default function Home() {
     status: chatStatus,
     error: chatError
   } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/generate',
-      body: {
-        library,
-        mode,
-        currentCode: code || null
-      }
-    }),
+    transport,
     onFinish: ({ message }) => {
       const text = getMessageText(message);
       const nextCode = extractCodeFromMarkdown(text);
@@ -212,39 +194,32 @@ export default function Home() {
         if (role === 'assistant') {
           const usage = getUsage(message);
           const toolEvents = getToolEvents(message);
-          const codeBlock = extractCodeFromMarkdown(text);
 
           return {
             id: String(message.id),
             role: 'assistant',
             content: (
               <div>
-                {text && <div>{text}</div>}
+                {toolEvents.length > 0 && (
+                  <div className='tool-events'>
+                    {toolEvents.map((event) => (
+                      <details key={`${event.id}-${event.status}`} className={`tool-event ${event.status}`}>
+                        <summary>
+                          <span className='tool-event-icon'>{event.status === 'call' ? '↗' : '↙'}</span>
+                          <span className='tool-event-name'>{event.name}{event.name === 'load_skill' && (event.payload as { library?: string })?.library ? ` · ${(event.payload as { library?: string }).library}` : ''}</span>
+                          <span className='tool-event-status'>{event.status === 'call' ? '调用' : '完成'}</span>
+                        </summary>
+                        <pre className='tool-event-payload'>{truncate(event.payload, 300)}</pre>
+                      </details>
+                    ))}
+                  </div>
+                )}
+                {text && <div className='markdown-body'><Markdown>{text}</Markdown></div>}
                 {usage && (
                   <div className='token-usage'>
                     Tokens: in {usage.inputTokens || 0} / out{' '}
                     {usage.outputTokens || 0} / total {usage.totalTokens || 0}
                   </div>
-                )}
-                {toolEvents.length > 0 && (
-                  <div className='tool-events'>
-                    {toolEvents.map((event) => (
-                      <div key={`${event.id}-${event.status}`} className='tool-event'>
-                        <strong>
-                          {event.status === 'call' ? '调用' : '返回'} · {event.name}
-                        </strong>
-                        <span>{truncate(event.payload)}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {codeBlock && (
-                  <details className='msg-code-block'>
-                    <summary>查看代码</summary>
-                    <pre>
-                      <code>{codeBlock}</code>
-                    </pre>
-                  </details>
                 )}
               </div>
             )
@@ -318,7 +293,7 @@ export default function Home() {
             library={library}
             mode={mode}
             onLibraryChange={setLibrary}
-            onModeChange={(value) => setMode(value as 'skill' | 'cli')}
+            onModeChange={(value) => { setMode(value as 'skill' | 'cli'); setMessages([]); }}
           />
           <div className='chat-stats'>
             <span>多轮 Token 合计: {totalTokenUsage.totalTokens}</span>

@@ -60,6 +60,15 @@ export function retrieve(query: string, options: RetrieveOptions = {}): Skill[] 
 }
 
 /**
+ * Get skill info embedded in the library index.
+ * @param library The library name (default: 'g2').
+ * @returns The skill info, or undefined if not available.
+ */
+export function getSkillInfo(library = DEFAULT_LIBRARY): SkillIndex['info'] {
+  return loadIndex(library).info;
+}
+
+/**
  * List all the skills, optionally filtered by library, category, tags, or difficulty.
  * @param options Options to filter the skills.
  * @returns An array of skills matching the filters.

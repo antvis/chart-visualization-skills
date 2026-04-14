@@ -4,10 +4,6 @@ import { z } from 'zod';
 
 const MAX_RETRIEVE_DOCUMENTS = 8;
 
-function extractKeyContent(content: string): string {
-  return content.replace(/^---[\s\S]*?---\n?/, '').trim();
-}
-
 interface RetrieveToolResult {
   id: string;
   title: string;
@@ -16,12 +12,16 @@ interface RetrieveToolResult {
   content: string;
 }
 
-export function createRetrieveTool(library: string) {
+export function createRetrieveTool(defaultLibrary: string) {
   return tool({
     description: '通过 retrieve 召回最相关参考文档。',
     inputSchema: z.object({
       query: z.string().describe('用户需求或检索关键词'),
-      topK: z
+      library: z
+        .enum(['g2', 'g6'])
+        .optional()
+        .describe('图表库名称，例如 g2、g6。').optional(),
+      topk: z
         .number()
         .int()
         .min(1)
@@ -29,17 +29,18 @@ export function createRetrieveTool(library: string) {
         .optional()
         .describe('召回文档数量，默认 5')
     }),
-    execute: async ({ query, topK }) => {
-      const retrievedSkills = retrieve(query, library, topK ?? 5, true);
+    execute: async ({ query, library, topk }) => {
+      const retrievedSkills = retrieve(query, library ?? defaultLibrary, topk ?? 5, true);
+      console.log(`Retrieved ${retrievedSkills.length} skills for query: "${query}"`);
+
       const results: RetrieveToolResult[] = [];
       for (const skill of retrievedSkills) {
-        const content = skill.content || '';
         results.push({
           id: skill.id,
           title: skill.title,
           description: skill.description || '',
           path: skill.path,
-          content: content ? extractKeyContent(content).slice(0, 10000) : ''
+          content: skill.content || '',
         });
       }
       return results;

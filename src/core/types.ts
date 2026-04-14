@@ -21,6 +21,7 @@ export interface SkillIndex {
   generated: string;
   total: number;
   skills: Skill[];
+  info?: SkillInfo;
 }
 
 export interface RetrieveOptions {
@@ -34,6 +35,12 @@ export interface ListOptions {
   category?: string | null;
   tags?: string[];
   difficulty?: string | null;
+}
+
+export interface SkillInfo {
+  name: string;
+  description: string;
+  content: string;
 }
 
 export interface BM25Options {

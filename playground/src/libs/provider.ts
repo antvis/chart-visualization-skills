@@ -101,28 +101,13 @@ export function getAvailableModels(): Array<{
     .map((p) => ({ provider: p.id, name: p.name, models: p.models }));
 }
 
-export function resolveProviderModel(
-  reqProvider?: string,
-  reqModel?: string
-): { provider: string; model: string } {
-  const provider = reqProvider || process.env.AI_PROVIDER || 'qwen';
-  const model =
-    reqModel ||
-    process.env.AI_MODEL ||
-    PROVIDERS[provider]?.model ||
-    'qwen3-coder-480b-a35b-instruct';
-  return { provider, model };
-}
+export function createLanguageModel(reqProvider?: string, reqModel?: string) {
+  const providerId = reqProvider || process.env.AI_PROVIDER || 'qwen';
+  const config = PROVIDERS[providerId];
+  if (!config) throw new Error(`Unknown provider: ${providerId}`);
+  if (!config.apiKey) throw new Error(`Missing API key for provider: ${providerId}`);
 
-export function createLanguageModel(provider: string, model: string) {
-  const config = PROVIDERS[provider];
-  if (!config) {
-    throw new Error(`Unknown provider: ${provider}`);
-  }
-
-  if (!config.apiKey) {
-    throw new Error(`Missing API key for provider: ${provider}`);
-  }
+  const modelId = reqModel || process.env.AI_MODEL || config.model;
 
   const client = createOpenAI({
     apiKey: config.apiKey,
@@ -133,5 +118,5 @@ export function createLanguageModel(provider: string, model: string) {
     headers: config.extraHeaders
   });
 
-  return client(model);
+  return { model: client.chat(modelId), provider: providerId, modelId };
 }

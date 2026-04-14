@@ -5,14 +5,9 @@ import {
   buildSkillSystemPrompt,
   createSkillModeTools
 } from '@/libs/skill-mode';
-import {
-  createLanguageModel,
-  resolveProviderModel
-} from '@/libs/provider-registry';
+import { createLanguageModel } from '@/libs/provider';
 
-export const maxDuration = 120;
-const SKILL_MODE_MAX_STEPS = 8;
-const CLI_MODE_MAX_STEPS = 6;
+const MAX_STEPS = 8;
 
 export async function POST(request: NextRequest) {
   const {
@@ -20,8 +15,8 @@ export async function POST(request: NextRequest) {
     library = 'g2',
     mode = 'skill',
     currentCode = null,
-    provider: reqProvider,
-    model: reqModel
+    provider,
+    model
   }: {
     messages?: UIMessage[];
     library?: string;
@@ -35,8 +30,7 @@ export async function POST(request: NextRequest) {
     return new Response('messages are required', { status: 400 });
   }
 
-  const { provider, model } = resolveProviderModel(reqProvider, reqModel);
-  const languageModel = createLanguageModel(provider, model);
+  const llm = createLanguageModel(provider, model);
 
   const system = [
     mode === 'skill' ? buildSkillSystemPrompt(library) : buildCliSystemPrompt(library),
@@ -47,17 +41,24 @@ export async function POST(request: NextRequest) {
     .filter(Boolean)
     .join('\n\n');
 
+  const tools = mode === 'skill' ? createSkillModeTools(library) : createCliModeTools(library);
+  console.log('[generate] mode:', mode, 'tools:', Object.keys(tools));
+
   const result = streamText({
-    model: languageModel,
+    model: llm.model,
     system,
     messages: await convertToModelMessages(messages),
-    tools: mode === 'skill' ? createSkillModeTools(library) : createCliModeTools(library),
-    // Skill 模式通常要经过 load_skill → list_references → read_file 多轮调用，CLI 只需 retrieve 一轮
-    stopWhen: stepCountIs(
-      mode === 'skill' ? SKILL_MODE_MAX_STEPS : CLI_MODE_MAX_STEPS
-    ),
+    tools,
+    stopWhen: stepCountIs(MAX_STEPS),
     temperature: 0.3,
-    maxOutputTokens: 4000
+    maxOutputTokens: 4000,
+    maxRetries: 5,
+    onToolCall: ({ toolCall }) => {
+      console.log('[generate] onToolCall:', toolCall.toolName, JSON.stringify(toolCall.args));
+    },
+    onError: ({ error }) => {
+      console.error('[generate] onError:', error);
+    },
   });
 
   return result.toUIMessageStreamResponse({
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       if (part.type === 'finish') {
         return {
           provider,
-          model,
+          model: llm.modelId,
           mode,
           usage: part.totalUsage
         };

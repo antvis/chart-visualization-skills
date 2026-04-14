@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import path from 'path';
 import { registerRetrieveCommand } from './commands/retrieve';
 import { registerListCommand } from './commands/list';
+import { registerInfoCommand } from './commands/info';
 
 const pkg = require(path.resolve(__dirname, '../package.json'));
 
@@ -16,5 +17,6 @@ program
 
 registerRetrieveCommand(program);
 registerListCommand(program);
+registerInfoCommand(program);
 
 program.parse();
