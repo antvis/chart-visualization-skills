@@ -10,14 +10,12 @@ export default function Sidebar({ children }: SidebarProps) {
       <div className='sidebar-header'>
         <div className='brand'>
           <div className='brand-icon'>
-            <svg
-              viewBox='0 0 16 16'
-              fill='none'
-              xmlns='http://www.w3.org/2000/svg'
-            >
-              <path d='M3 12L8 4L13 12H3Z' fill='currentColor' opacity='0.9' />
-              <circle cx='8' cy='4' r='1.5' fill='currentColor' />
-            </svg>
+            <img
+              src='https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*FBLnQIAzx6cAAAAAQDAAAAgAemJ7AQ/original'
+              alt='AntV Copilot'
+              width={24}
+              height={24}
+            />
           </div>
           <span className='brand-name'>AntV Copilot</span>
         </div>

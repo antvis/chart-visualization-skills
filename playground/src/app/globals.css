@@ -90,7 +90,7 @@ body {
 .brand-icon {
   width: 28px;
   height: 28px;
-  background: var(--accent);
+  background: transparent;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
