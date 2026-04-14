@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     messageMetadata: ({ part }) => {
       if (part.type === 'finish') {
         return {
-          provider: 'deepseek',
+          provider: llm.provider,
           model: llm.modelId,
           mode,
           usage: part.totalUsage
