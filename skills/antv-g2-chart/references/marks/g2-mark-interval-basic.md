@@ -318,7 +318,7 @@ interface IntervalSpec {
     fill?: string;
     fillOpacity?: number;
     stroke?: string;
-    strokeWidth?: number;
+    lineWidth?: number;
   };
   labels?: LabelOption[];
   tooltip?: TooltipOption;

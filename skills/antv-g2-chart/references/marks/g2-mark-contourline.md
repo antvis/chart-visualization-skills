@@ -70,7 +70,7 @@ const chart = new Chart({
 
 chart.options({
   type: 'cell',
-   terrainData,
+  data: terrainData,
   encode: {
     x: 'x',
     y: 'y',
@@ -78,7 +78,7 @@ chart.options({
   },
   style: {
     stroke: '#333',
-    strokeWidth: 0.5,
+    lineWidth: 0.5,
     inset: 0.5,
   },
   scale: {
@@ -154,7 +154,7 @@ chart.options({
     series: 'lineId',   // 每条等高线独立成一个系列
   },
   style: {
-    strokeWidth: 2,
+    lineWidth: 2,
     strokeOpacity: 0.8,
   },
   scale: {

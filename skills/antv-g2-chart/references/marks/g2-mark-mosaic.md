@@ -86,7 +86,7 @@ chart.options({
   },
   style: {
     stroke: '#fff',
-    strokeWidth: 2,
+    lineWidth: 2,
     inset: 2,
   },
 });

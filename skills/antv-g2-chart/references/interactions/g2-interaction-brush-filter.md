@@ -85,7 +85,7 @@ chart.options({
       maskFill: '#1890ff',
       maskFillOpacity: 0.15,
       maskStroke: '#1890ff',
-      maskStrokeWidth: 1.5,
+      maskLineWidth: 1.5,
     },
   },
 });

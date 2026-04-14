@@ -189,7 +189,7 @@ chart.options({
   },
   style: {
     stroke: '#333',
-    strokeWidth: 0.5,
+    lineWidth: 0.5,
     inset: 0.5,
   },
   scale: {

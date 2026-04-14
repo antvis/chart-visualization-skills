@@ -111,10 +111,10 @@ chart.options({
   style: { lineWidth: 0 },
 });
 
-// ✅ 设置合适的 strokeWidth 或调整图形类型如 point 更适合细粒度数据
+// ✅ 设置合适的 lineWidth 或调整图形类型如 point 更适合细粒度数据
 chart.options({
   type: 'point', // 对于大量密集数据更合适
-  style: { strokeWidth: 2 },
+  style: { lineWidth: 2 },
 });
 ```
 

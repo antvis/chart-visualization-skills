@@ -120,7 +120,7 @@ chart.options({
     fill: '#1890ff',
     fillOpacity: 0.3,
     stroke: '#1890ff',
-    strokeWidth: 1.5,
+    lineWidth: 1.5,
   },
 });
 ```

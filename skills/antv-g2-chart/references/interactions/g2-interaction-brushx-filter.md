@@ -122,7 +122,7 @@ interface BrushXFilterInteraction {
       fill?: string;
       fillOpacity?: number;
       stroke?: string;
-      strokeWidth?: number;
+      lineWidth?: number;
     };
     selection?: [number, number];  // [startRatio, endRatio]
     // 其他配置继承自 BrushFilter

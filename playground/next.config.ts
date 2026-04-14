@@ -3,7 +3,6 @@ import { config as loadEnv } from 'dotenv';
 import path from 'path';
 
 // Load the root-level .env so the playground doesn't need its own copy.
-// dotenv.config() is a no-op for keys already set in the environment,
 // so shell exports and CI secrets always take precedence.
 loadEnv({ path: path.resolve(__dirname, '../.env'), override: true });
 
