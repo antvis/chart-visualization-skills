@@ -20,10 +20,10 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
-    "zod": "4.3.6"
+    "zod": "4.3.6",
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
-    "dotenv": "^16.0.0",
     "@types/node": "^22.13.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
