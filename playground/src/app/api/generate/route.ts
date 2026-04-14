@@ -15,22 +15,18 @@ export async function POST(request: NextRequest) {
     library = 'g2',
     mode = 'skill',
     currentCode = null,
-    provider,
-    model
   }: {
     messages?: UIMessage[];
     library?: string;
     mode?: 'skill' | 'cli';
     currentCode?: string | null;
-    provider?: string;
-    model?: string;
   } = await request.json();
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return new Response('messages are required', { status: 400 });
   }
 
-  const llm = createLanguageModel(provider, model);
+  const llm = createLanguageModel();
 
   const system = [
     mode === 'skill' ? buildSkillSystemPrompt(library) : buildCliSystemPrompt(library),
@@ -53,12 +49,6 @@ export async function POST(request: NextRequest) {
     temperature: 0.3,
     maxOutputTokens: 4000,
     maxRetries: 5,
-    onToolCall: ({ toolCall }) => {
-      console.log('[generate] onToolCall:', toolCall.toolName, JSON.stringify(toolCall.args));
-    },
-    onError: ({ error }) => {
-      console.error('[generate] onError:', error);
-    },
   });
 
   return result.toUIMessageStreamResponse({
@@ -66,7 +56,7 @@ export async function POST(request: NextRequest) {
     messageMetadata: ({ part }) => {
       if (part.type === 'finish') {
         return {
-          provider,
+          provider: 'deepseek',
           model: llm.modelId,
           mode,
           usage: part.totalUsage
