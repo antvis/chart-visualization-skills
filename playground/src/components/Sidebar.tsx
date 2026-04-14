@@ -12,12 +12,12 @@ export default function Sidebar({ children }: SidebarProps) {
           <div className='brand-icon'>
             <img
               src='https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*FBLnQIAzx6cAAAAAQDAAAAgAemJ7AQ/original'
-              alt='AntV Copilot'
+              alt='AntV Visualization Skills Playground'
               width={24}
               height={24}
             />
           </div>
-          <span className='brand-name'>AntV Copilot</span>
+          <span className='brand-name'>AntV Visualization Skills Playground</span>
         </div>
       </div>
 

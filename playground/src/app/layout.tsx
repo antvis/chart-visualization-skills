@@ -2,10 +2,26 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AntV Copilot',
-  description: 'AntV Chart Code Generator with RAG and Tool Call',
+  title: 'AntV Visualization Skills Playground',
+  description:
+    'Interactive playground for AntV visualization skills — generate charts with AI using G2 and G6, powered by RAG and tool calls.',
+  keywords: [
+    'AntV',
+    'G2',
+    'G6',
+    'data visualization',
+    'chart generator',
+    'AI visualization',
+    'playground'
+  ],
   icons: {
     icon: 'https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*FBLnQIAzx6cAAAAAQDAAAAgAemJ7AQ/original'
+  },
+  openGraph: {
+    title: 'AntV Visualization Skills Playground',
+    description:
+      'Interactive playground for AntV visualization skills — generate charts with AI using G2 and G6.',
+    type: 'website'
   }
 };
 
