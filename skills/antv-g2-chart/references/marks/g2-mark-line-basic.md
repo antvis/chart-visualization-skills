@@ -210,6 +210,83 @@ chart.options({
 });
 ```
 
+## 宽表数据 + fold 转长表
+
+宽表每行含多个指标列，用 `fold` transform 转为长表再绘制多系列：
+
+```javascript
+const wideData = [
+  { date: '2024-01', DAU: 12000, MAU: 45000 },
+  { date: '2024-02', DAU: 13500, MAU: 47000 },
+  { date: '2024-03', DAU: 11800, MAU: 44500 },
+];
+
+chart.options({
+  type: 'line',
+   wideData,
+  transform: [
+    {
+      type: 'fold',
+      fields: ['DAU', 'MAU'],   // 要转换的列
+      key: 'metric',             // 新增列名（存原字段名）
+      value: 'count',            // 新增列名（存原字段值）
+    },
+  ],
+  encode: {
+    x: 'date',
+    y: 'count',      // fold 后使用 value 字段名
+    color: 'metric', // fold 后使用 key 字段名
+  },
+  labels: [
+    { text: 'metric', selector: 'last', position: 'right' },
+  ],
+});
+```
+
+## 双 Y 轴（不同量级系列）
+
+```javascript
+chart.options({
+  type: 'view',
+  children: [
+    {
+      type: 'line',
+      data: revenueData,
+      encode: { x: 'date', y: 'revenue', color: () => '收入(万元)' },
+      scale: { y: { key: 'revenue' } },   // key 唯一 → 独立 y 轴
+    },
+    {
+      type: 'line',
+      data: userCountData,
+      encode: { x: 'date', y: 'count', color: () => '用户数' },
+      scale: { y: { key: 'count' } },
+      axis: { y: { position: 'right' } },  // 右侧 y 轴
+    },
+  ],
+});
+```
+
+## 多系列 Tooltip 配置
+
+```javascript
+chart.options({
+  type: 'line',
+  data,
+  encode: { x: 'date', y: 'value', color: 'series' },
+  tooltip: {
+    title: (d) => {
+      const date = new Date(d.date);
+      return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    },
+    items: [
+      { field: 'series', name: '系列' },
+      { field: 'value', name: '数值', valueFormatter: (v) => v.toLocaleString() },
+    ],
+  },
+  interaction: [{ type: 'tooltip' }],
+});
+```
+
 ## Spec 字段速查
 
 | 字段 | 示例值 | 说明 |

@@ -74,13 +74,19 @@ export function getSkillInfo(library = DEFAULT_LIBRARY): SkillIndex['info'] {
  * @returns An array of skills matching the filters.
  */
 export function listSkills(options: ListOptions = {}): Skill[] {
-  const { library = DEFAULT_LIBRARY, category = null, tags = [], difficulty = null } = options;
+  const {
+    library = DEFAULT_LIBRARY,
+    category = null,
+    tags = [],
+    difficulty = null
+  } = options;
   const { skills } = loadIndex(library);
 
-  return skills.filter(skill => {
+  return skills.filter((skill) => {
     if (category && skill.category !== category) return false;
     if (difficulty && skill.difficulty !== difficulty) return false;
-    if (tags.length > 0 && !tags.some(t => skill.tags.includes(t))) return false;
+    if (tags.length > 0 && !tags.some((t) => skill.tags.includes(t)))
+      return false;
     return true;
   });
 }
