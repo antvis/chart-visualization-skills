@@ -27,7 +27,7 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 11. **`scale.color.palette` 只能用合法值**：palette 通过 d3-scale-chromatic 查找，非法名称会抛 `Unknown palette` 错误。**不要推断或创造不存在的名称**（如 `'blueOrange'`、`'redGreen'`、`'hot'`、`'jet'`、`'coolwarm'` 等均非法）。合法的常用值：顺序色阶 `'blues'|'greens'|'reds'|'ylOrRd'|'viridis'|'plasma'|'turbo'`；发散色阶 `'rdBu'|'rdYlGn'|'spectral'`；不确定时用 `range: ['#startColor', '#endColor']` 自定义替代
 12. **禁止在用户代码中使用 `d3.*`**：G2 内部使用 d3，但 `d3` 对象不会暴露到用户代码作用域，调用 `d3.sum()` 等会抛 `ReferenceError: d3 is not defined`。如需聚合，优先使用 G2 内置选项（如 `sortX` 的 `reducer: 'sum'`），不得不自定义时用原生 JS：`d3.sum(arr, d=>d.v)` → `arr.reduce((s,d)=>s+d.v,0)`；`d3.max(arr, d=>d.v)` → `Math.max(...arr.map(d=>d.v))`
 13. **用户未指定配色时，禁止使用白色或近白色作为图形填充色**：`style: { fill: '#fff' }`、`style: { fill: 'white' }`、`style: { fill: '#ffffff' }` 等在白色背景下会让图形完全不可见。未指定配色时应依赖 G2 的 `encode.color` 自动分配主题色，或使用有明确视觉区分度的颜色（如 `'#5B8FF9'`）。以下是合法例外：label 文字 `fill: '#fff'`（深色背景内标签）、分隔线 `stroke: '#fff'`（堆叠/pack/treemap 的分隔白线）
-15. **用户未指定容器时**： `container` 默认为 `'container'`，代码末尾必须有 `chart.render();`
+15. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
 
 ### 1.1 Forbidden Patterns / 禁止使用的写法
 
