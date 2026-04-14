@@ -17,8 +17,8 @@ const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 
 const LIBRARY_PATHS: Record<string, string> = {
-  g2: 'antv-g2-chart/references',
-  g6: 'antv-g6-graph/references',
+  g2: 'antv-g2-chart',
+  g6: 'antv-g6-graph',
 };
 
 function walkDir(dir: string, library: string): Skill[] {
@@ -61,7 +61,7 @@ function walkDir(dir: string, library: string): Skill[] {
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
         related: Array.isArray(meta.related) ? meta.related : [],
-        content,
+        content: parsed.content,
       });
     }
   }
@@ -77,10 +77,22 @@ function build(): void {
   }
 
   for (const [lib, libPath] of Object.entries(LIBRARY_PATHS)) {
-    const libDir = path.join(SKILLS_DIR, libPath);
-    const skills = walkDir(libDir, lib);
+    const libReferenceDir = path.join(SKILLS_DIR, libPath, 'references');
+    const skills = walkDir(libReferenceDir, lib);
 
-    console.log(`${lib.toUpperCase()}: Found ${skills.length} skills`);
+    console.log(`${lib.toUpperCase()}: Found ${skills.length} documents.`);
+
+    const skillMd = path.join(SKILLS_DIR, libPath, 'SKILL.md');
+    let info: SkillIndex['info'];
+    if (fs.existsSync(skillMd)) {
+      const parsed = matter(fs.readFileSync(skillMd, 'utf-8'));
+      const meta = parsed.data as Record<string, any>;
+      info = {
+        name: meta.name || libPath,
+        description: (meta.description || '').replace(/\n\s*/g, ' ').trim(),
+        content: parsed.content,
+      };
+    }
 
     const indexData: SkillIndex = {
       library: lib,
@@ -88,11 +100,12 @@ function build(): void {
       generated: new Date().toISOString().split('T')[0],
       total: skills.length,
       skills,
+      info,
     };
 
     const indexPath = path.join(INDEX_DIR, `${lib}.index.json`);
     fs.writeFileSync(indexPath, JSON.stringify(indexData), 'utf-8');
-    console.log(`  Written ${lib}.index.json`);
+    console.log(`  Written ${lib}.index.json\n`);
   }
 }
 

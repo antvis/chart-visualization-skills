@@ -49,21 +49,21 @@ export default function ControlsBar({
           <input
             type='radio'
             name='mode'
-            value='tool-call'
-            checked={mode === 'tool-call'}
-            onChange={() => onModeChange('tool-call')}
+            value='skill'
+            checked={mode === 'skill'}
+            onChange={() => onModeChange('skill')}
           />
-          <span className='seg-label'>Tool Call</span>
+          <span className='seg-label'>Skill</span>
         </label>
         <label>
           <input
             type='radio'
             name='mode'
-            value='bm25'
-            checked={mode === 'bm25'}
-            onChange={() => onModeChange('bm25')}
+            value='cli'
+            checked={mode === 'cli'}
+            onChange={() => onModeChange('cli')}
           />
-          <span className='seg-label'>BM25</span>
+          <span className='seg-label'>CLI</span>
         </label>
       </div>
     </div>
