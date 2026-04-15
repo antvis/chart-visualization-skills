@@ -1,0 +1,24 @@
+{
+  "name": "chart-visualization-skills-eval-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Eval dataset viewer & editor for chart-visualization-skills",
+  "scripts": {
+    "dev": "next dev --port 3200",
+    "build": "next build",
+    "start": "next start --port 3200"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.6.0",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "monaco-editor": "^0.52.2",
+    "typescript": "~5.7.2"
+  }
+}

@@ -5,6 +5,7 @@
   "description": "Evaluation suite for chart-visualization-skills",
   "type": "commonjs",
   "scripts": {
+    "studio": "pnpm --filter chart-visualization-skills-eval-studio dev",
     "view": "node result/server.js",
     "eval": "node eval-cli/index.js",
     "recall": "node eval-recall.js",

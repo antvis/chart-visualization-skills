@@ -64,8 +64,6 @@ src/index/
 
 # Playground (Next.js)
 playground/.next/
-playground/node_modules/
-playground/.env.local
 playground/out/
 
 
@@ -77,3 +75,10 @@ settings.local.json
 
 # temp
 temp/
+
+# eval studio (Next.js)
+eval/studio/.next/
+eval/studio/out/
+
+# WIP
+skills/antv-g6-graph
