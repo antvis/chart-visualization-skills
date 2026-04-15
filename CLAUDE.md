@@ -1,1 +1,1 @@
-See [Agent.md](./Agent.md) for project architecture and structure.
+See [AGENTS.md](./AGENTS.md) for project architecture and structure.
