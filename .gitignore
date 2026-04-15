@@ -74,3 +74,6 @@ playground/out/
 
 # AI
 settings.local.json
+
+# temp
+temp/

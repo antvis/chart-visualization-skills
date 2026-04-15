@@ -63,6 +63,7 @@ program
   .option('--score',                 'Enable VL visual scoring (disabled by default)')
   .option('--skip-score',            'Skip VL visual scoring (default, kept for compatibility)')
   .option('--score-threshold <n>',   'Fail threshold for visual score', (v) => parseFloat(v))
+  .option('--optimize-model <id>',   'Model to use for OptimizeAgent (overrides AI_MODEL for optimization only)')
   .option('--log <file>',            'Custom dry-run log file path')
   .option('--no-memory',             'Disable cross-iteration memory')
   .parse(process.argv);
@@ -78,7 +79,9 @@ const MAX_PASSES      = cfg.passes;
 const MAX_ITERATIONS  = cfg.maxIterations;
 const CONCURRENCY     = cfg.concurrency;
 const MODEL           = process.env.AI_MODEL || 'qwen3-coder-480b-a35b-instruct';
+const OPTIMIZE_MODEL  = cfg.optimizeModel || MODEL;
 const PROVIDER        = detectProviderFromModel(MODEL);
+const OPTIMIZE_PROVIDER = detectProviderFromModel(OPTIMIZE_MODEL);
 const DRY_RUN         = cfg.dryRun;
 const NO_WORKTREE     = !cfg.worktree;
 const SKIP_SCORE      = program.opts().score ? false : cfg.skipScore;
@@ -109,6 +112,9 @@ async function main() {
   console.log(`  Sample:         ${FULL ? 'full' : SAMPLE}`);
   console.log(`  Retrieval:      ${RETRIEVAL}`);
   console.log(`  Provider/Model: ${PROVIDER} / ${MODEL}`);
+  if (OPTIMIZE_MODEL !== MODEL) {
+    console.log(`  Optimize model: ${OPTIMIZE_PROVIDER} / ${OPTIMIZE_MODEL}`);
+  }
   console.log(`  Target passes:  ${MAX_PASSES}`);
   console.log(`  Max iterations: ${MAX_ITERATIONS}`);
   console.log(`  Concurrency:    ${CONCURRENCY}`);
@@ -432,8 +438,8 @@ async function main() {
 
     await registry.dispatch('optimize', {
       skillToErrors,
-      provider:       PROVIDER,
-      model:          MODEL,
+      provider:       OPTIMIZE_PROVIDER,
+      model:          OPTIMIZE_MODEL,
       rootDir:        activeRootDir,
       dryRun:         DRY_RUN,
       logFile:        LOG_FILE,

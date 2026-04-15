@@ -33,6 +33,7 @@ const DEFAULTS = {
   worktree: true,
   skipScore: true,
   scoreThreshold: 0.6,
+  optimizeModel: '',  // empty = fall back to AI_MODEL
   totalDuration: 0,
   highSimilarityCount: 0,
   issuesCount: 0,
@@ -54,6 +55,7 @@ const ENV_MAP = {
   HARNESS_NO_WORKTREE: 'worktree', // inverted: set to '1' → worktree: false
   HARNESS_SKIP_SCORE: 'skipScore',
   HARNESS_SCORE_THRESHOLD: 'scoreThreshold',
+  HARNESS_OPTIMIZE_MODEL: 'optimizeModel',
   // Legacy / existing env vars kept for backwards-compat
   LOOP_LIBRARY: 'library',
   LOOP_SAMPLE: 'sample',
