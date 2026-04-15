@@ -12,7 +12,7 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
   const chartInstanceRef = useRef<unknown>(null);
   const graphInstanceRef = useRef<unknown>(null);
 
-  const execCode = useCallback((container: HTMLDivElement) => {
+  const execCode = useCallback((container: HTMLDivElement): unknown => {
     const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
     // @ts-ignore
     const lib = isG6 ? window.G6 : window.G2;
@@ -21,7 +21,7 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       throw new Error(`${isG6 ? 'G6' : 'G2'} 库尚未加载，请稍后重试`);
     }
 
-    const t = code
+    let t = code
       .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
       .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
       .replace(/import\s+\w+\s+from\s*['"]@antv\/g2['"];?/g, '')
@@ -30,37 +30,41 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
       .replace(/container:\s*['"]container['"]/g, 'container: container');
 
+    // Rewrite the first chart/graph variable declaration so the instance is
+    // captured in __inst__, making it available for cleanup on the next render.
+    t = isG6
+      ? t.replace(/\bconst\s+(graph\w*)\s*=\s*new\s+Graph\s*\(/, 'const $1 = __inst__ =  new Graph(')
+      : t.replace(/\bconst\s+(chart\w*)\s*=\s*new\s+Chart\s*\(/, 'const $1 = __inst__ =  new Chart(');
+
     const exec = isG6
-      ? `const { Graph } = window.G6;\n${t}`
-      : `const { Chart } = window.G2;\n${t}`;
+      ? `const { Graph } = window.G6;\nlet __inst__ = null;\n${t}\nreturn __inst__;`
+      : `const { Chart } = window.G2;\nlet __inst__ = null;\n${t}\nreturn __inst__;`;
 
     const fn = new Function('container', exec);
-    fn(container);
+    return fn(container);
   }, [code]);
 
   const runCode = useCallback(() => {
     if (!code.trim() || !containerRef.current) return;
 
-    if (
-      chartInstanceRef.current &&
-      typeof (chartInstanceRef.current as { destroy: () => void }).destroy === 'function'
-    ) {
-      (chartInstanceRef.current as { destroy: () => void }).destroy();
-    }
-    if (
-      graphInstanceRef.current &&
-      typeof (graphInstanceRef.current as { destroy: () => void }).destroy === 'function'
-    ) {
-      (graphInstanceRef.current as { destroy: () => void }).destroy();
-    }
-    chartInstanceRef.current = null;
-    graphInstanceRef.current = null;
+    const destroy = (ref: React.MutableRefObject<unknown>) => {
+      if (ref.current && typeof (ref.current as { destroy?: () => void }).destroy === 'function') {
+        try { (ref.current as { destroy: () => void }).destroy(); } catch (_) { /* ignore */ }
+      }
+      ref.current = null;
+    };
+    destroy(chartInstanceRef);
+    destroy(graphInstanceRef);
 
     const container = containerRef.current;
     container.innerHTML = '';
 
     try {
-      execCode(container);
+      const inst = execCode(container);
+      // Store the captured instance so the next runCode call can destroy it
+      const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
+      if (isG6) graphInstanceRef.current = inst;
+      else chartInstanceRef.current = inst;
       onStatusChange('预览已更新', 'var(--green)');
     } catch (e) {
       console.error(e);

@@ -65,6 +65,7 @@ src/index/
 # Playground (Next.js)
 playground/.next/
 playground/out/
+playground/.env.local
 
 
 # TypeScript build cache
@@ -79,6 +80,7 @@ temp/
 # eval studio (Next.js)
 eval/studio/.next/
 eval/studio/out/
+eval/studio/.env.local
 
 # WIP
 skills/antv-g6-graph

@@ -21,7 +21,7 @@ function execChartCode(container: HTMLDivElement, code: string): unknown {
   const lib = isG6 ? window.G6 : window.G2;
   if (!lib) throw new Error(`${isG6 ? 'G6' : 'G2'} 未加载`);
 
-  const t = code
+  let t = code
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
     .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
     .replace(/import\s+\w+\s+from\s*['"]@antv\/g2['"];?/g, '')
@@ -30,11 +30,15 @@ function execChartCode(container: HTMLDivElement, code: string): unknown {
     .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
     .replace(/container:\s*['"]container['"]/g, 'container: container');
 
-  const exec = isG6
-    ? `const { Graph } = window.G6;\n${t}`
-    : `const { Chart } = window.G2;\n${t}`;
+  // Inject __inst__ capture so the instance can be stored and destroyed later
+  t = isG6
+    ? t.replace(/\bconst\s+(graph\w*)\s*=\s*new\s+Graph\s*\(/, 'const $1 = __inst__ = new Graph(')
+    : t.replace(/\bconst\s+(chart\w*)\s*=\s*new\s+Chart\s*\(/, 'const $1 = __inst__ = new Chart(');
 
-  // Return whatever the code returns (may be a chart/graph instance or a Promise)
+  const exec = isG6
+    ? `const { Graph } = window.G6;\nlet __inst__ = null;\n${t}\nreturn __inst__;`
+    : `const { Chart } = window.G2;\nlet __inst__ = null;\n${t}\nreturn __inst__;`;
+
   return new Function('container', exec)(container);
 }
 
@@ -85,6 +89,7 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
       (result as Promise<unknown>).then(
         () => {
           if (renderTickRef.current !== tick) return;
+          instanceRef.current = result;
           renderedCodeRef.current = caseData.codeString;
           setState('ok');
         },
@@ -94,6 +99,7 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
         }
       );
     } else {
+      instanceRef.current = result;
       renderedCodeRef.current = caseData.codeString;
       setState('ok');
     }
