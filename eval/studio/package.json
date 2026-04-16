@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "name": "eval-studio",
+=======
+  "name": "chart-visualization-skills-eval-studio",
+>>>>>>> feat/eval-studio
   "version": "0.1.0",
   "private": true,
   "description": "Eval dataset viewer & editor for chart-visualization-skills",

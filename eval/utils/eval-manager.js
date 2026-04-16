@@ -50,7 +50,7 @@ function buildRagSystemPrompt(library, skillContext) {
 }
 
 function buildRagUserMessage(library, query) {
-  return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}\n\n要求：\n1. 只输出可运行的代码，不需要解释\n2. 使用 @antv/${library} 包\n3. 确保 container 为 'container'\n4. 提供的数据不满足需求时，自动补充需要的数据\n5. 包含完整的 render() 调用`;
+  return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import 语句开头，从 @antv/${library} 引入所需模块，禁止使用 CDN URL\n3. container 直接使用变量，不要写成字符串 'container'\n4. 提供的数据不满足需求时，自动补充所需数据\n5. 包含完整的 render() 调用`;
 }
 
 class EvaluationManager {

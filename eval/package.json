@@ -6,7 +6,10 @@
   "type": "commonjs",
   "scripts": {
     "studio": "pnpm --filter chart-visualization-skills-eval-studio dev",
+<<<<<<< HEAD
     "view": "node result/server.js",
+=======
+>>>>>>> feat/eval-studio
     "eval": "node eval-cli/index.js",
     "recall": "node eval-recall.js",
     "tune": "node _tune-bm25.js"

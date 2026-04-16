@@ -89,7 +89,6 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'date', y: 'value', color: 'series' },
-  scale: { x: { type: 'time' } },
   labels: [{ text: 'series', selector: 'last', position: 'right' }],
 });
 ```

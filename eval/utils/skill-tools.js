@@ -265,6 +265,15 @@ function buildSystemPrompt(library) {
   const skillContent = loadMainSkill(library);
   return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
+## 输出格式（严格遵守）
+
+- **只输出纯 JavaScript 代码**，不要输出 HTML、Markdown 文档或任何解释文字
+- 代码必须以 \`import\` 语句开头，从 \`@antv/${library}\` 引入所需模块
+- 禁止使用 \`<script>\`、\`<!DOCTYPE>\`、\`<html>\` 等任何 HTML 标签
+- 禁止使用 CDN URL 引入（如 unpkg、jsdelivr）
+- container 变量直接使用，不要用字符串 'container'
+- 如需代码块，只用 \`\`\`javascript 包裹，不用其他格式
+
 ## 工具使用（必须遵循）
 
 你有两个工具可以查阅详细参考文档：

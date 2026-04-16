@@ -31,9 +31,9 @@ const LIBRARY_REGISTRY = {
     // If neither variable is set, refs is null and the optimizer falls back to
     // skill-only context (no ref lookups), which is the safe default for CI.
     refs: (() => {
-      const srcDir  = process.env.G2_SRC_DIR  || null;
+      const srcDir = process.env.G2_SRC_DIR || null;
       const docsDir = process.env.G2_DOCS_DIR || null;
-      return (srcDir || docsDir) ? { srcDir, docsDir } : null;
+      return srcDir || docsDir ? { srcDir, docsDir } : null;
     })()
   },
   g6: {
@@ -46,7 +46,12 @@ const LIBRARY_REGISTRY = {
     skillsPath: 'antv-g6-graph/references',
     buildCmd: 'node dist/scripts/build.js',
     detectPattern: '@antv/g6',
-    defaultDataset: 'g6-dataset.json' // TODO: provide a g6-specific dataset in eval/data/
+    defaultDataset: 'g6-dataset-100.json',
+    refs: (() => {
+      const srcDir = process.env.G6_SRC_DIR || null;
+      const docsDir = process.env.G6_DOCS_DIR || null;
+      return srcDir || docsDir ? { srcDir, docsDir } : null;
+    })()
   }
 };
 

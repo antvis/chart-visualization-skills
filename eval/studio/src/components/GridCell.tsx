@@ -1,6 +1,10 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
+<<<<<<< HEAD
+=======
+import { execChartCode } from '@/lib/execChartCode';
+>>>>>>> feat/eval-studio
 
 interface EvalCase {
   id?: string;
@@ -15,6 +19,7 @@ interface GridCellProps {
   onEdit: () => void;
 }
 
+<<<<<<< HEAD
 function execChartCode(container: HTMLDivElement, code: string): unknown {
   const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
   // @ts-ignore
@@ -42,6 +47,8 @@ function execChartCode(container: HTMLDivElement, code: string): unknown {
   return new Function('container', exec)(container);
 }
 
+=======
+>>>>>>> feat/eval-studio
 type RenderState = 'idle' | 'rendering' | 'ok' | 'error';
 
 export default function GridCell({ index, caseData, isSelected, onEdit }: GridCellProps) {
@@ -51,7 +58,10 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
   const [state, setState] = useState<RenderState>('idle');
   const [errMsg, setErrMsg] = useState('');
   const renderedCodeRef = useRef('');
+<<<<<<< HEAD
   // Track the current render attempt so stale async callbacks don't update state
+=======
+>>>>>>> feat/eval-studio
   const renderTickRef = useRef(0);
 
   const setError = useCallback((e: unknown) => {
@@ -65,7 +75,10 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
     if (!container || !caseData.codeString.trim()) return;
     if (renderedCodeRef.current === caseData.codeString) return;
 
+<<<<<<< HEAD
     // Destroy previous instance
+=======
+>>>>>>> feat/eval-studio
     const inst = instanceRef.current as { destroy?: () => void } | null;
     if (inst?.destroy) {
       try { inst.destroy(); } catch (_) { /* ignore cleanup errors */ }
@@ -126,7 +139,11 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+<<<<<<< HEAD
       renderTickRef.current = -1; // invalidate any pending async callbacks
+=======
+      renderTickRef.current = -1;
+>>>>>>> feat/eval-studio
       const inst = instanceRef.current as { destroy?: () => void } | null;
       if (inst?.destroy) {
         try { inst.destroy(); } catch (_) { /* ignore */ }
@@ -144,12 +161,18 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
       onClick={onEdit}
       title={desc}
     >
+<<<<<<< HEAD
       {/* Outer wrapper — position:relative anchor */}
       <div className="grid-cell-chart">
         {/* Chart mount point: only touched by imperative G2/G6 code, never by React */}
         <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
 
         {/* Overlays: managed exclusively by React, positioned absolutely over the chart */}
+=======
+      <div className="grid-cell-chart">
+        <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
+
+>>>>>>> feat/eval-studio
         {(state === 'idle' || state === 'rendering') && (
           <div className="grid-cell-placeholder">
             <div className="spinner" />

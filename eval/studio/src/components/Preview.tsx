@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
+<<<<<<< HEAD
+=======
+import { execChartCode } from '@/lib/execChartCode';
+>>>>>>> feat/eval-studio
 
 interface PreviewProps {
   code: string;
@@ -9,6 +13,7 @@ interface PreviewProps {
 
 export default function Preview({ code, onStatusChange }: PreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+<<<<<<< HEAD
   const chartInstanceRef = useRef<unknown>(null);
   const graphInstanceRef = useRef<unknown>(null);
 
@@ -43,10 +48,14 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
     const fn = new Function('container', exec);
     return fn(container);
   }, [code]);
+=======
+  const instanceRef = useRef<unknown>(null);
+>>>>>>> feat/eval-studio
 
   const runCode = useCallback(() => {
     if (!code.trim() || !containerRef.current) return;
 
+<<<<<<< HEAD
     const destroy = (ref: React.MutableRefObject<unknown>) => {
       if (ref.current && typeof (ref.current as { destroy?: () => void }).destroy === 'function') {
         try { (ref.current as { destroy: () => void }).destroy(); } catch (_) { /* ignore */ }
@@ -55,11 +64,19 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
     };
     destroy(chartInstanceRef);
     destroy(graphInstanceRef);
+=======
+    const inst = instanceRef.current as { destroy?: () => void } | null;
+    if (inst?.destroy) {
+      try { inst.destroy(); } catch (_) { /* ignore */ }
+    }
+    instanceRef.current = null;
+>>>>>>> feat/eval-studio
 
     const container = containerRef.current;
     container.innerHTML = '';
 
     try {
+<<<<<<< HEAD
       const inst = execCode(container);
       // Store the captured instance so the next runCode call can destroy it
       const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
@@ -68,11 +85,20 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       onStatusChange('预览已更新', 'var(--green)');
     } catch (e) {
       console.error(e);
+=======
+      instanceRef.current = execChartCode(container, code);
+      onStatusChange('预览已更新', 'var(--green)');
+    } catch (e) {
+>>>>>>> feat/eval-studio
       const error = e as Error;
       container.innerHTML = `<div class="error-block"><strong>运行错误</strong><br>${error.message}</div>`;
       onStatusChange('运行错误', 'var(--red)');
     }
+<<<<<<< HEAD
   }, [code, execCode, onStatusChange]);
+=======
+  }, [code, onStatusChange]);
+>>>>>>> feat/eval-studio
 
   useEffect(() => {
     if (!code.trim()) return;

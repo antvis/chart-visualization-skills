@@ -20,11 +20,25 @@ program
   .description('AntV Skills LLM Evaluation CLI')
   .version('0.1.0');
 
+const DEFAULT_DATASETS = {
+  g2: 'g2-dataset-174.json',
+  g6: 'g6-dataset-100.json',
+};
+
 program
   .command('eval', { isDefault: true })
   .description('Run LLM evaluation')
   .option('--model <id>', 'Model ID (default: from AI_MODEL env)')
-  .option('--dataset <file>', 'Test dataset file', 'g2-dataset-174.json')
+  .option(
+    '--library <lib>',
+    'Target library: g2 | g6 (sets default dataset; ignored when --dataset is explicit)',
+    (v) => {
+      const valid = ['g2', 'g6'];
+      if (!valid.includes(v)) throw new Error(`--library must be one of: ${valid.join(', ')}`);
+      return v;
+    }
+  )
+  .option('--dataset <file>', 'Test dataset file (overrides --library default)')
   .option('--sample <n>', 'Sample n random test cases', (v) => {
     const n = parseInt(v, 10);
     if (isNaN(n) || n <= 0) throw new Error(`--sample must be a positive integer, got: ${v}`);
@@ -52,9 +66,13 @@ program
   .action(runEvaluation);
 
 async function runEvaluation(opts) {
+  const library = opts.library || 'g2';
+  const dataset = opts.dataset || DEFAULT_DATASETS[library];
+
   const options = {
     model: opts.model || process.env.AI_MODEL,
-    dataset: opts.dataset,
+    library,
+    dataset,
     sample: opts.sample,
     full: opts.full || false,
     ids: opts.ids ? opts.ids.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
@@ -94,6 +112,7 @@ async function runEvaluation(opts) {
   console.log('='.repeat(60));
   console.log(`  Provider:    ${provider}`);
   console.log(`  Model:       ${options.model}`);
+  console.log(`  Library:     ${options.library}`);
   console.log(`  Dataset:     ${options.dataset}`);
   console.log(`  Sample:      ${options.ids ? `targeted (${options.ids.length} IDs)` : options.sample || (options.full ? 'all' : '5')}`);
   console.log(`  Concurrency: ${options.concurrency}`);

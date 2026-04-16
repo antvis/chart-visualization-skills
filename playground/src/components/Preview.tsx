@@ -23,6 +23,26 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       throw new Error(`${isG6 ? 'G6' : 'G2'} 库尚未加载，请稍后重试`);
     }
 
+    // Extract all named imports before stripping — handles multi-line, aliases, `type X`
+    const extractNames = (src: string, pkg: string): string[] => {
+      const names: string[] = [];
+      const re = new RegExp(
+        `import\\s+(?:type\\s+)?\\{([^}]*)\\}\\s*from\\s*['"]${pkg}['"];?`,
+        'gs'
+      );
+      for (const m of src.matchAll(re)) {
+        m[1].split(',').forEach((token) => {
+          const cleaned = token.trim().replace(/^type\s+/, '');
+          const name = cleaned.split(/\s+as\s+/).pop()?.trim();
+          if (name) names.push(name);
+        });
+      }
+      return names;
+    };
+
+    const g6Names = extractNames(code, '@antv/g6');
+    const g2Names = extractNames(code, '@antv/g2');
+
     let t = code
       .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
       .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
@@ -32,9 +52,12 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
       .replace(/container:\s*['"]container['"]/g, 'container: container');
 
+    const g6Destructure = [...new Set(['Graph', ...g6Names])].join(', ');
+    const g2Destructure = [...new Set(['Chart', ...g2Names])].join(', ');
+
     const exec = isG6
-      ? `const { Graph } = window.G6;\n${t}`
-      : `const { Chart } = window.G2;\n${t}`;
+      ? `const { ${g6Destructure} } = window.G6;\n${t}`
+      : `const { ${g2Destructure} } = window.G2;\n${t}`;
 
     const fn = new Function('container', exec);
     fn(container);
