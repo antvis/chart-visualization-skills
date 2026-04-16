@@ -44,14 +44,14 @@ import { Graph } from '@antv/g6';
 
 const nodes = Array.from({ length: 12 }, (_, i) => ({
   id: `n${i}`,
-       { label: `节点${i + 1}`, value: Math.random() * 100 },
+  data: { label: `节点${i + 1}`, value: Math.random() * 100 },
 }));
 
 const graph = new Graph({
   container: 'container',
   width: 800,
   height: 500,
-    { nodes, edges: [] },
+  data: { nodes, edges: [] },
   node: {
     type: 'circle',
     style: {

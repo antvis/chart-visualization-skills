@@ -130,15 +130,15 @@ const treeData = {
       id: 'branch1',
        data: { label: '分支1' },
       children: [
-        data: { id: 'leaf1', data: { label: '叶子1' } },
-        data: { id: 'leaf2', data: { label: '叶子2' } },
+        { id: 'leaf1', data: { label: '叶子1' } },
+        { id: 'leaf2', data: { label: '叶子2' } },
       ],
     },
     {
       id: 'branch2',
       data: { label: '分支2' },
       children: [
-        data: { id: 'leaf3', data: { label: '叶子3' } },
+        { id: 'leaf3', data: { label: '叶子3' } },
       ],
     },
   ],

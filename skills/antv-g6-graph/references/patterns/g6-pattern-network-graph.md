@@ -43,7 +43,7 @@ author: "antv-team"
 ## 完整示例
 
 ```javascript
-import { Graph } from '@antv/g6';
+import { Graph, GraphEvent } from '@antv/g6';
 
 const data = {
   nodes: [
@@ -135,8 +135,6 @@ const graph = new Graph({
 
   layout: {
     type: 'force',
-    preventOverlap: true,
-    nodeSize: 40,
     linkDistance: 100,
     nodeStrength: -30,
     gravity: 10,
@@ -182,6 +180,7 @@ const graph = new Graph({
   ],
 });
 
+graph.on(GraphEvent.AFTER_LAYOUT, () => graph.fitView({ padding: 20 }));
 graph.render();
 ```
 

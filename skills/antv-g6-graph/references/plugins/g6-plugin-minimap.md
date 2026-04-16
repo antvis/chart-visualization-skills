@@ -46,7 +46,7 @@ const graph = new Graph({
   container: 'container',
   width: 900,
   height: 600,
-    { nodes: [...], edges: [...] },
+   data: { nodes: [...], edges: [...] },
   layout: { type: 'force' },
   behaviors: ['drag-canvas', 'zoom-canvas'],
   plugins: [

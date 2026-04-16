@@ -50,12 +50,12 @@ const graph = new Graph({
   container: 'container',
   width: 800,
   height: 500,
-   {
+  data: {
     nodes: [
       { id: 'start', data: { label: '开始' } },
-      { id: 'process',  { label: '处理' } },
+      { id: 'process', data: { label: '处理' } },
       { id: 'decision', data: { label: '判断' } },
-      { id: 'end',  { label: '结束' } },
+      { id: 'end', data: { label: '结束' } },
     ],
     edges: [
       { source: 'start', target: 'process' },
@@ -133,11 +133,11 @@ const graph = new Graph({
   data: {
     nodes: [
       { id: 'ceo', data: { label: 'CEO' } },
-      { id: 'cto',  { label: 'CTO' } },
-      { id: 'cfo',  { label: 'CFO' } },
-      { id: 'dev1',  { label: '前端团队' } },
+      { id: 'cto', data: { label: 'CTO' } },
+      { id: 'cfo', data: { label: 'CFO' } },
+      { id: 'dev1', data: { label: '前端团队' } },
       { id: 'dev2', data: { label: '后端团队' } },
-      { id: 'finance',  { label: '财务部' } },
+      { id: 'finance', data: { label: '财务部' } },
     ],
     edges: [
       { source: 'ceo', target: 'cto' },

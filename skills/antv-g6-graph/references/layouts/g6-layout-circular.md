@@ -46,7 +46,7 @@ import { Graph } from '@antv/g6';
 
 const nodes = Array.from({ length: 8 }, (_, i) => ({
   id: `n${i}`,
-       { label: `节点${i + 1}` },
+  data: { label: `节点${i + 1}` },
 }));
 
 const edges = nodes.map((n, i) => ({
@@ -58,7 +58,7 @@ const graph = new Graph({
   container: 'container',
   width: 600,
   height: 600,
-    { nodes, edges },
+  data: { nodes, edges },
   node: {
     type: 'circle',
     style: {

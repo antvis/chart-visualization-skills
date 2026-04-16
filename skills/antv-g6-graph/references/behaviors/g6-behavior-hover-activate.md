@@ -96,7 +96,7 @@ const graph = new Graph({
       },
     },
   },
-  layout: { type: 'force', preventOverlap: true, nodeSize: 40 },
+  layout: { type: 'force' },
   behaviors: [
     'drag-canvas',
     'zoom-canvas',

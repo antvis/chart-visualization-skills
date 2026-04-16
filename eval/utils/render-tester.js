@@ -72,24 +72,23 @@ function detectBlankScreen(container) {
         const ctx = canvas.getContext('2d');
         if (!ctx) continue;
         const w = canvas.width, h = canvas.height;
+        // Phase 1: 13-point spread sample
         const points = [
-          [w * 0.25, h * 0.25], [w * 0.5, h * 0.5], [w * 0.75, h * 0.75],
-          [w * 0.5, h * 0.25], [w * 0.25, h * 0.5], [w * 0.75, h * 0.5]
+          [w*0.1,h*0.1],[w*0.5,h*0.1],[w*0.9,h*0.1],
+          [w*0.1,h*0.5],[w*0.5,h*0.5],[w*0.9,h*0.5],
+          [w*0.1,h*0.9],[w*0.5,h*0.9],[w*0.9,h*0.9],
+          [w*0.3,h*0.3],[w*0.7,h*0.3],[w*0.3,h*0.7],[w*0.7,h*0.7]
         ];
         for (const [x, y] of points) {
           const p = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
-          if (p[3] > 0 && !(p[0] === 255 && p[1] === 255 && p[2] === 255 && p[3] === 255)) {
-            return false;
-          }
+          if (p[3] > 0) return false;
         }
-        const stride = Math.max(1, Math.floor(w * h / 1000));
+        // Phase 2: thorough sweep — ~40 000 samples regardless of canvas size
+        const stride = Math.max(1, Math.floor(w * h / 40000));
         const img = ctx.getImageData(0, 0, w, h).data;
         for (let i = 0; i < img.length; i += stride * 4) {
-          if (img[i + 3] > 0 && !(img[i] === 255 && img[i + 1] === 255 && img[i + 2] === 255 && img[i + 3] === 255)) {
-            return false;
-          }
+          if (img[i + 3] > 0) return false;
         }
-        return true;
       } catch (e) {
         return false;
       }
@@ -102,6 +101,31 @@ function detectBlankScreen(container) {
 `;
 
 // ── Code transform (strip ESM imports, fix container refs) ────────────────────
+
+/**
+ * Extract all named export identifiers from import statements for a given package.
+ * Handles multi-line braces, `as` aliases, and `type X` prefixes.
+ * @param {string} src
+ * @param {string} pkg  e.g. '@antv/g6'
+ * @returns {string[]}
+ */
+function extractImportNames(src, pkg) {
+  const names = [];
+  const escaped = pkg.replace(/\//g, '\\/').replace(/\./g, '\\.');
+  // `gs` flags: g = all matches, s = dotAll (. matches newlines for multi-line braces)
+  const re = new RegExp(
+    `import\\s+(?:type\\s+)?\\{([^}]*)\\}\\s*from\\s*['"]${escaped}['"];?`,
+    'gs'
+  );
+  for (const m of src.matchAll(re)) {
+    m[1].split(',').forEach((token) => {
+      const cleaned = token.trim().replace(/^type\s+/, '');
+      const name = cleaned.split(/\s+as\s+/).pop()?.trim();
+      if (name) names.push(name);
+    });
+  }
+  return names;
+}
 
 function transformCode(code) {
   return code
@@ -163,7 +187,13 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
       return { status: 'error', error: `Library load failed after ${CDN_RETRIES} attempts: ${libErr.message}` };
     }
     // Step 3: Execute the generated code and detect blank screen
-    const libSetup = isG6 ? 'const { Graph } = window.G6;' : 'const { Chart } = window.G2;';
+    const g6Names = extractImportNames(code, '@antv/g6');
+    const g2Names = extractImportNames(code, '@antv/g2');
+    const g6Destructure = [...new Set(['Graph', ...g6Names])].join(', ');
+    const g2Destructure = [...new Set(['Chart', ...g2Names])].join(', ');
+    const libSetup = isG6
+      ? `const { ${g6Destructure} } = window.G6;`
+      : `const { ${g2Destructure} } = window.G2;`;
     const userCode = libSetup + '\n' + transformCode(code);
 
     const result = await page.evaluate(

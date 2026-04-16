@@ -114,11 +114,11 @@ import { Graph, treeToGraphData } from '@antv/g6';
 
 const orgData = {
   id: 'ceo',
-       { label: 'CEO', dept: '董事会' },
+      data: { label: 'CEO', dept: '董事会' },
   children: [
     {
       id: 'cto',
-           { label: 'CTO', dept: '技术部' },
+      data: { label: 'CTO', dept: '技术部' },
       children: [
          { id: 'dev1', data: { label: '前端负责人', dept: '前端组' } },
          { id: 'dev2', data: { label: '后端负责人', dept: '后端组' } },
@@ -126,7 +126,7 @@ const orgData = {
     },
     {
       id: 'cmo',
-           { label: 'CMO', dept: '市场部' },
+      data: { label: 'CMO', dept: '市场部' },
     },
   ],
 };
@@ -135,7 +135,7 @@ const graph = new Graph({
   container: 'container',
   width: 800,
   height: 600,
-   treeToGraphData(orgData),
+  data: treeToGraphData(orgData),
   node: {
     type: 'rect',
     style: {

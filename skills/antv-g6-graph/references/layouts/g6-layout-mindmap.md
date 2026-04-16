@@ -57,7 +57,7 @@ const treeData = {
   children: [
     {
       id: 'branch1',
-           { label: '分支1' },
+      data: { label: '分支1' },
       children: [
          { id: 'leaf1', data: { label: '子项1.1' } },
          { id: 'leaf2', data: { label: '子项1.2' } },
@@ -65,7 +65,7 @@ const treeData = {
     },
     {
       id: 'branch2',
-           { label: '分支2' },
+      data: { label: '分支2' },
       children: [
          { id: 'leaf3', data: { label: '子项2.1' } },
          { id: 'leaf4', data: { label: '子项2.2' } },
@@ -74,7 +74,7 @@ const treeData = {
     },
     {
       id: 'branch3',
-           { label: '分支3' },
+      data: { label: '分支3' },
     },
   ],
 };
@@ -83,7 +83,7 @@ const graph = new Graph({
   container: 'container',
   width: 900,
   height: 600,
-   treeToGraphData(treeData),
+  data: treeToGraphData(treeData),
   node: {
     type: 'rect',
     style: {
@@ -204,7 +204,7 @@ const graph = new Graph({
 // ✅ 使用 treeToGraphData 转换
 import { treeToGraphData } from '@antv/g6';
 const graph = new Graph({
-   treeToGraphData(treeData),
+  data: treeToGraphData(treeData),
   layout: { type: 'mindmap' },
 });
 ```

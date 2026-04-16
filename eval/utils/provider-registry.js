@@ -89,6 +89,20 @@ const PROVIDERS = {
     modelEnv: 'OPENAI_MODEL',
     defaultEndpoint: 'https://api.openai.com',
     defaultPath: '/v1/chat/completions'
+  },
+  claude: {
+    id: 'claude',
+    name: 'Claude',
+    type: 'openai-compatible',
+    models: [
+      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4-6', isDefault: true }
+    ],
+    apiKeyEnv: 'CLAUDE_API_KEY',
+    endpointEnv: 'CLAUDE_API_ENDPOINT',
+    pathEnv: 'CLAUDE_API_PATH',
+    modelEnv: 'CLAUDE_MODEL',
+    defaultEndpoint: 'https://api.clauude.ai',
+    defaultPath: '/v1/chat/completions'
   }
 };
 

@@ -61,14 +61,14 @@ const graph = new Graph({
     nodes: [
       {
         id: 'n1',
-         {
+        data: {
           name: '张三',
           avatar: 'https://gw.alipayobjects.com/zos/antfincdn/XAosXuNZyF/BiazfanxmamNRoxxVxka.png',
         },
       },
       {
         id: 'n2',
-         {
+        data: {
           name: '李四',
           avatar: 'https://gw.alipayobjects.com/zos/antfincdn/YXH2wo1%26Kb/Avatar.png',
         },
@@ -149,7 +149,7 @@ const graph = new Graph({
     nodes: [
       {
         id: 'github',
-         {
+        data: {
           name: 'GitHub',
           // 使用在线 icon
           icon: 'https://github.githubassets.com/favicons/favicon.svg',
@@ -157,7 +157,7 @@ const graph = new Graph({
       },
       {
         id: 'npm',
-         {
+        data: {
           name: 'NPM',
           icon: 'https://static.npmjs.com/favicon-32x32.png',
         },
