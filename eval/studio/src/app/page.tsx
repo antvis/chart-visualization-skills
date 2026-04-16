@@ -1,10 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-<<<<<<< HEAD
-=======
 import Link from 'next/link';
->>>>>>> feat/eval-studio
 import CodeEditor, { type CodeEditorHandle } from '@/components/CodeEditor';
 import Preview from '@/components/Preview';
 import GridView from '@/components/GridView';
@@ -263,15 +260,16 @@ export default function App() {
 
         <div className='eval-toolbar-sep' />
 
-<<<<<<< HEAD
-=======
-        <Link href='/results' className='eval-nav-link' title='切换到结果查看器'>
+        <Link
+          href='/results'
+          className='eval-nav-link'
+          title='切换到结果查看器'
+        >
           Results →
         </Link>
 
         <div className='eval-toolbar-sep' />
 
->>>>>>> feat/eval-studio
         <select
           className='eval-file-select'
           value={currentFile}

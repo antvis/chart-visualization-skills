@@ -1,10 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-<<<<<<< HEAD
-=======
 import { execChartCode } from '@/lib/execChartCode';
->>>>>>> feat/eval-studio
 
 interface EvalCase {
   id?: string;
@@ -19,49 +16,20 @@ interface GridCellProps {
   onEdit: () => void;
 }
 
-<<<<<<< HEAD
-function execChartCode(container: HTMLDivElement, code: string): unknown {
-  const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
-  // @ts-ignore
-  const lib = isG6 ? window.G6 : window.G2;
-  if (!lib) throw new Error(`${isG6 ? 'G6' : 'G2'} 未加载`);
-
-  let t = code
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g2['"];?/g, '')
-    .replace(/import\s*\{[^}]*\}\s*from\s*['"]@antv\/g6['"];?/g, '')
-    .replace(/import\s+\w+\s+from\s*['"]@antv\/g2['"];?/g, '')
-    .replace(/import\s+\w+\s+from\s*['"]@antv\/g6['"];?/g, '')
-    .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g2['"];?/g, '')
-    .replace(/import\s*\*\s*as\s+\w+\s*from\s*['"]@antv\/g6['"];?/g, '')
-    .replace(/container:\s*['"]container['"]/g, 'container: container');
-
-  // Inject __inst__ capture so the instance can be stored and destroyed later
-  t = isG6
-    ? t.replace(/\bconst\s+(graph\w*)\s*=\s*new\s+Graph\s*\(/, 'const $1 = __inst__ = new Graph(')
-    : t.replace(/\bconst\s+(chart\w*)\s*=\s*new\s+Chart\s*\(/, 'const $1 = __inst__ = new Chart(');
-
-  const exec = isG6
-    ? `const { Graph } = window.G6;\nlet __inst__ = null;\n${t}\nreturn __inst__;`
-    : `const { Chart } = window.G2;\nlet __inst__ = null;\n${t}\nreturn __inst__;`;
-
-  return new Function('container', exec)(container);
-}
-
-=======
->>>>>>> feat/eval-studio
 type RenderState = 'idle' | 'rendering' | 'ok' | 'error';
 
-export default function GridCell({ index, caseData, isSelected, onEdit }: GridCellProps) {
+export default function GridCell({
+  index,
+  caseData,
+  isSelected,
+  onEdit
+}: GridCellProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<unknown>(null);
   const [state, setState] = useState<RenderState>('idle');
   const [errMsg, setErrMsg] = useState('');
   const renderedCodeRef = useRef('');
-<<<<<<< HEAD
-  // Track the current render attempt so stale async callbacks don't update state
-=======
->>>>>>> feat/eval-studio
   const renderTickRef = useRef(0);
 
   const setError = useCallback((e: unknown) => {
@@ -75,13 +43,13 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
     if (!container || !caseData.codeString.trim()) return;
     if (renderedCodeRef.current === caseData.codeString) return;
 
-<<<<<<< HEAD
-    // Destroy previous instance
-=======
->>>>>>> feat/eval-studio
     const inst = instanceRef.current as { destroy?: () => void } | null;
     if (inst?.destroy) {
-      try { inst.destroy(); } catch (_) { /* ignore cleanup errors */ }
+      try {
+        inst.destroy();
+      } catch (_) {
+        /* ignore cleanup errors */
+      }
     }
     instanceRef.current = null;
     container.innerHTML = '';
@@ -123,7 +91,9 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
     const el = rootRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) render(); },
+      ([entry]) => {
+        if (entry.isIntersecting) render();
+      },
       { rootMargin: '200px' }
     );
     observer.observe(el);
@@ -139,14 +109,14 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-<<<<<<< HEAD
-      renderTickRef.current = -1; // invalidate any pending async callbacks
-=======
       renderTickRef.current = -1;
->>>>>>> feat/eval-studio
       const inst = instanceRef.current as { destroy?: () => void } | null;
       if (inst?.destroy) {
-        try { inst.destroy(); } catch (_) { /* ignore */ }
+        try {
+          inst.destroy();
+        } catch (_) {
+          /* ignore */
+        }
       }
     };
   }, []);
@@ -161,44 +131,48 @@ export default function GridCell({ index, caseData, isSelected, onEdit }: GridCe
       onClick={onEdit}
       title={desc}
     >
-<<<<<<< HEAD
-      {/* Outer wrapper — position:relative anchor */}
-      <div className="grid-cell-chart">
-        {/* Chart mount point: only touched by imperative G2/G6 code, never by React */}
+      <div className='grid-cell-chart'>
         <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
 
-        {/* Overlays: managed exclusively by React, positioned absolutely over the chart */}
-=======
-      <div className="grid-cell-chart">
-        <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
-
->>>>>>> feat/eval-studio
         {(state === 'idle' || state === 'rendering') && (
-          <div className="grid-cell-placeholder">
-            <div className="spinner" />
+          <div className='grid-cell-placeholder'>
+            <div className='spinner' />
           </div>
         )}
         {state === 'error' && (
-          <div className="grid-cell-error">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="8" cy="8" r="6" />
-              <path d="M8 5v3M8 10.5v.5" strokeLinecap="round" />
+          <div className='grid-cell-error'>
+            <svg
+              viewBox='0 0 16 16'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='1.5'
+            >
+              <circle cx='8' cy='8' r='6' />
+              <path d='M8 5v3M8 10.5v.5' strokeLinecap='round' />
             </svg>
             <span>{errMsg}</span>
           </div>
         )}
       </div>
 
-      <div className="grid-cell-footer">
-        <span className="grid-cell-num">#{index + 1}</span>
-        <span className="grid-cell-desc">{shortDesc}</span>
+      <div className='grid-cell-footer'>
+        <span className='grid-cell-num'>#{index + 1}</span>
+        <span className='grid-cell-desc'>{shortDesc}</span>
         <button
-          className="grid-cell-edit"
-          onClick={(e) => { e.stopPropagation(); onEdit(); }}
-          title="编辑此 case"
+          className='grid-cell-edit'
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          title='编辑此 case'
         >
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4">
-            <path d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z" strokeLinejoin="round" />
+          <svg
+            viewBox='0 0 14 14'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='1.4'
+          >
+            <path d='M9.5 2.5l2 2-7 7H2.5v-2l7-7z' strokeLinejoin='round' />
           </svg>
           编辑
         </button>
