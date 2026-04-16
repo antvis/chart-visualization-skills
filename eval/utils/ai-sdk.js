@@ -27,6 +27,7 @@ function detectProviderFromModel(model) {
   if (modelLower.startsWith('deepseek')) return 'deepseek';
   if (modelLower.startsWith('qwen')) return 'qwen';
   if (modelLower.startsWith('glm')) return 'glm';
+  if (modelLower.startsWith('claude')) return 'claude';
   if (modelLower.startsWith('kimi') || modelLower.startsWith('moonshot'))
     return 'kimi';
   if (model in PROVIDERS) return model;
@@ -98,8 +99,7 @@ async function callAI(options) {
       onFailedAttempt(err) {
         const statusCode = err.status || err.statusCode || err.response?.status;
         const isRetryable =
-          RETRY_STATUS_CODES.has(statusCode) ||
-          RETRY_ERROR_CODES.has(err.code);
+          RETRY_STATUS_CODES.has(statusCode) || RETRY_ERROR_CODES.has(err.code);
         if (!isRetryable) {
           throw new pRetry.AbortError(err);
         }

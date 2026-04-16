@@ -12,7 +12,6 @@ const {
   TOOLS,
   loadSkillFile,
   extractKeySections,
-  toolListReferences,
   toolReadSkills,
   buildSystemPrompt
 } = require('./skill-tools');
@@ -309,7 +308,6 @@ class EvaluationManager {
       maxRounds: MAX_TOOL_ROUNDS,
       tools: TOOLS,
       toolHandlers: {
-        // list_references: toolListReferences,
         read_skills: toolReadSkills
       },
       debug: false

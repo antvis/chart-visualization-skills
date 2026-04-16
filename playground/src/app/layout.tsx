@@ -45,7 +45,7 @@ export default function RootLayout({
         />
         {/* G2 and G6 libraries loaded via CDN for runtime execution */}
         <script src='https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js' defer />
-        <script src='https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js' defer />
+        <script src='https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js' defer />
       </head>
       <body>{children}</body>
     </html>

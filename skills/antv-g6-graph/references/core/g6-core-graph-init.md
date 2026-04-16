@@ -60,13 +60,13 @@ const graph = new Graph({
   height: 600,
   data: {
     nodes: [
-       { id: 'node1', data: { label: '节点1' } },
-       { id: 'node2', data: { label: '节点2' } },
-       { id: 'node3', data: { label: '节点3' } },
+      { id: 'node1', data: { label: '节点1' } },
+      { id: 'node2', data: { label: '节点2' } },
+      { id: 'node3', data: { label: '节点3' } },
     ],
     edges: [
-       { source: 'node1', target: 'node2' },
-       { source: 'node2', target: 'node3' },
+      { id: 'e1', source: 'node1', target: 'node2' },
+      { id: 'e2', source: 'node2', target: 'node3' },
     ],
   },
   layout: { type: 'force' },
@@ -117,13 +117,13 @@ const graph = new Graph({
   // 数据
   data: {
     nodes: [
-       { id: 'n1', data: { label: '产品', type: 'product', value: 80 } },
-       { id: 'n2', data: { label: '用户', type: 'user', value: 50 } },
-       { id: 'n3', data: { label: '订单', type: 'order', value: 30 } },
+      { id: 'n1', data: { label: '产品', type: 'product', value: 80 } },
+      { id: 'n2', data: { label: '用户', type: 'user', value: 50 } },
+      { id: 'n3', data: { label: '订单', type: 'order', value: 30 } },
     ],
     edges: [
-       { id: 'e1', source: 'n1', target: 'n2', data: { label: '购买' } },
-       { id: 'e2', source: 'n2', target: 'n3', data: { label: '生成' } },
+      { id: 'e1', source: 'n1', target: 'n2', data: { label: '购买' } },
+      { id: 'e2', source: 'n2', target: 'n3', data: { label: '生成' } },
     ],
   },
 
@@ -174,6 +174,46 @@ const graph = new Graph({
 });
 
 await graph.render();
+```
+
+## 边数据的 ID 规则
+
+**⚠️ 重要：边的 ID 自动生成规则**
+
+当边数据中未指定 `id` 时，G6 会自动以 `${source}-${target}` 格式生成边 ID。
+
+**这意味着：如果两条边的 source 和 target 相同（即平行边），它们会生成相同的 ID，导致 `Edge already exists` 错误。**
+
+```javascript
+// ❌ 错误：两条边 source/target 相同，自动生成的 id 均为 "A-B"，报错
+edges: [
+  { source: 'A', target: 'B' },
+  { source: 'A', target: 'B' },  // 重复！
+]
+
+// ✅ 正确：为每条边显式指定唯一 id
+edges: [
+  { id: 'e1', source: 'A', target: 'B' },
+  { id: 'e2', source: 'A', target: 'B' },
+]
+```
+
+**最佳实践：始终为边数据显式指定唯一 `id`，避免自动生成 ID 冲突。**
+
+```javascript
+// ✅ 推荐写法：每条边都有唯一 id
+const edges = [
+  { id: 'e-0-1', source: '0', target: '1' },
+  { id: 'e-0-2', source: '0', target: '2' },
+  { id: 'e-1-2', source: '1', target: '2' },
+];
+
+// ✅ 动态生成边时，使用索引确保 id 唯一
+const edges = rawEdges.map((e, i) => ({
+  id: `edge-${i}`,
+  source: e.source,
+  target: e.target,
+}));
 ```
 
 ## 生命周期方法
@@ -232,6 +272,35 @@ graph.translateTo([400, 300]);
 // 定位到某元素
 graph.focusElement('n1');
 ```
+
+## 树形数据转换
+
+如果数据是树形结构（有父子层级关系），需要使用 `treeToGraphData` 工具函数将其转换为 G6 标准图数据格式后再传入 `data`。
+
+```javascript
+import { Graph, treeToGraphData } from '@antv/g6';
+
+const treeData = {
+  id: 'root',
+  children: [
+    { id: 'child1', children: [{ id: 'leaf1' }] },
+    { id: 'child2' },
+  ],
+};
+
+const graph = new Graph({
+  container: 'container',
+  width: 800,
+  height: 600,
+  data: treeToGraphData(treeData),   // ✅ 必须转换后传入
+  layout: { type: 'compact-box' },
+  behaviors: ['drag-canvas', 'zoom-canvas'],
+});
+
+graph.render();
+```
+
+> ⚠️ `treeToGraphData` 需从 `@antv/g6` 中显式导入，不可直接调用未导入的函数。
 
 ## 常见错误
 
@@ -304,5 +373,69 @@ const graph = new Graph({
   autoFit: 'view',   // 或 'center'，或 false（手动控制）
   width: 800,
   height: 600,
+});
+```
+
+### 错误6：边 ID 冲突导致 "Edge already exists"
+
+当动态生成边数据时，若多条边的 source 和 target 相同（平行边），未指定 id 会导致自动生成的 id 重复，抛出 `Edge already exists` 错误。
+
+```javascript
+// ❌ 错误：随机生成边时可能产生重复的 source-target 对
+const edges = [];
+for (let i = 0; i < 34; i++) {
+  for (let j = 0; j < 3; j++) {
+    const target = Math.floor(Math.random() * 34);
+    if (target !== i) {
+      edges.push({ source: `${i}`, target: `${target}` }); // 没有 id，可能重复！
+    }
+  }
+}
+
+// ✅ 正确方案1：为每条边指定唯一 id（推荐）
+const edges = [];
+let edgeIndex = 0;
+for (let i = 0; i < 34; i++) {
+  for (let j = 0; j < 3; j++) {
+    const target = Math.floor(Math.random() * 34);
+    if (target !== i) {
+      edges.push({ id: `edge-${edgeIndex++}`, source: `${i}`, target: `${target}` });
+    }
+  }
+}
+
+// ✅ 正确方案2：对已有边数组去重后添加 id
+const edgeSet = new Set();
+const edges = [];
+let edgeIndex = 0;
+for (let i = 0; i < 34; i++) {
+  for (let j = 0; j < 3; j++) {
+    const target = Math.floor(Math.random() * 34);
+    const key = `${i}-${target}`;
+    if (target !== i && !edgeSet.has(key)) {
+      edgeSet.add(key);
+      edges.push({ id: `edge-${edgeIndex++}`, source: `${i}`, target: `${target}` });
+    }
+  }
+}
+```
+
+### 错误7：树形数据未转换直接传入
+
+```javascript
+// ❌ 错误：树形结构数据不能直接传给 data
+const graph = new Graph({
+  data: { id: 'root', children: [...] },  // 错误！
+});
+
+// ❌ 错误：treeToGraphData 未导入就使用
+const graph = new Graph({
+  data: treeToGraphData(treeData),  // ReferenceError: treeToGraphData is not defined
+});
+
+// ✅ 正确：从 @antv/g6 导入后使用
+import { Graph, treeToGraphData } from '@antv/g6';
+const graph = new Graph({
+  data: treeToGraphData(treeData),
 });
 ```

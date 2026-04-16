@@ -32,6 +32,7 @@ use_cases:
 anti_patterns:
   - "不要把业务属性直接放在节点顶层，应放在 data 字段"
   - "不要在 style 中放业务逻辑数据，style 只放渲染相关属性"
+  - "不要生成重复边（相同 source+target 的边），会导致 Edge already exists 错误"
 
 difficulty: "beginner"
 completeness: "full"
@@ -65,11 +66,11 @@ const graph = new Graph({
   height: 600,
   data: {
     nodes: [
-       { id: 'n1', data: { name: '节点A', type: 'user' } },
-       { id: 'n2', data: { name: '节点B', type: 'product' } },
+      { id: 'n1', data: { name: '节点A', type: 'user' } },
+      { id: 'n2', data: { name: '节点B', type: 'product' } },
     ],
     edges: [
-       { id: 'e1', source: 'n1', target: 'n2', data: { weight: 5 } },
+      { id: 'e1', source: 'n1', target: 'n2', data: { weight: 5 } },
     ],
   },
   node: {
@@ -100,7 +101,7 @@ const nodes = [
   {
     id: 'user-001',
     type: 'circle',                  // 覆盖全局节点类型
-     {
+    data: {
       name: '张三',
       role: 'admin',
       score: 95,
@@ -161,23 +162,23 @@ interface ComboData {
 // 示例：节点分组
 const data = {
   nodes: [
-     { id: 'n1', combo: 'group1', data: { label: '成员1' } },
-     { id: 'n2', combo: 'group1', data: { label: '成员2' } },
-     { id: 'n3', combo: 'group2', data: { label: '成员3' } },
+    { id: 'n1', combo: 'group1', data: { label: '成员1' } },
+    { id: 'n2', combo: 'group1', data: { label: '成员2' } },
+    { id: 'n3', combo: 'group2', data: { label: '成员3' } },
   ],
   edges: [
-     { source: 'n1', target: 'n3' },
+    { source: 'n1', target: 'n3' },
   ],
   combos: [
-     { id: 'group1', data: { label: '团队A' } },
-     { id: 'group2', data: { label: '团队B' } },
+    { id: 'group1', data: { label: '团队A' } },
+    { id: 'group2', data: { label: '团队B' } },
   ],
 };
 ```
 
 ## 树形数据
 
-树形布局（mindmap、compact-box 等）使用 `treeToGraphData()` 转换：
+树形布局（mindmap、compact-box 等）使用 `treeToGraphData()` 转换，必须从 `@antv/g6` 中导入：
 
 ```javascript
 import { Graph, treeToGraphData } from '@antv/g6';
@@ -185,14 +186,14 @@ import { Graph, treeToGraphData } from '@antv/g6';
 // 树形结构数据
 const treeData = {
   id: 'root',
-       { label: '根节点' },
+  data: { label: '根节点' },
   children: [
     {
       id: 'child1',
-           { label: '子节点1' },
+      data: { label: '子节点1' },
       children: [
-         { id: 'grandchild1', data: { label: '孙节点1' } },
-         { id: 'grandchild2', data: { label: '孙节点2' } },
+        { id: 'grandchild1', data: { label: '孙节点1' } },
+        { id: 'grandchild2', data: { label: '孙节点2' } },
       ],
     },
     {
@@ -255,16 +256,16 @@ const oneEdge = graph.getEdgeData('e1');
 
 // 新增
 graph.addNodeData([
-   { id: 'n10', data: { label: '新节点' } },
+  { id: 'n10', data: { label: '新节点' } },
 ]);
 graph.addEdgeData([
-   { source: 'n1', target: 'n10' },
+  { source: 'n1', target: 'n10' },
 ]);
 await graph.draw();
 
 // 更新
 graph.updateNodeData([
-   { id: 'n1', data: { label: '更新后' }, style: { fill: 'red' } },
+  { id: 'n1', data: { label: '更新后' }, style: { fill: 'red' } },
 ]);
 await graph.draw();
 
@@ -283,8 +284,8 @@ await graph.draw();
 ```javascript
 // ✅ 推荐：业务数据放 data，样式通过回调函数从 data 计算
 const nodes = [
-   { id: 'n1', data: { name: '高优先级', priority: 'high', value: 100 } },
-   { id: 'n2', data: { name: '低优先级', priority: 'low', value: 30 } },
+  { id: 'n1', data: { name: '高优先级', priority: 'high', value: 100 } },
+  { id: 'n2', data: { name: '低优先级', priority: 'low', value: 30 } },
 ];
 
 const graph = new Graph({
@@ -301,7 +302,7 @@ const graph = new Graph({
 });
 ```
 
-## 常见错误
+## 常见错误与修正
 
 ### 错误1：业务属性放在节点顶层
 
@@ -328,14 +329,14 @@ const graph = new Graph({
 ```javascript
 // ❌ 错误：id 重复会导致渲染异常
 const nodes = [
-   { id: 'node1', data: { label: 'A' } },
-   { id: 'node1', data: { label: 'B' } },   // 重复 id
+  { id: 'node1', data: { label: 'A' } },
+  { id: 'node1', data: { label: 'B' } },   // 重复 id
 ];
 
 // ✅ 正确：每个节点 id 必须唯一
 const nodes = [
-   { id: 'node-a', data: { label: 'A' } },
-   { id: 'node-b', data: { label: 'B' } },
+  { id: 'node-a', data: { label: 'A' } },
+  { id: 'node-b', data: { label: 'B' } },
 ];
 ```
 
@@ -344,8 +345,87 @@ const nodes = [
 ```javascript
 // ❌ 错误：引用了不存在的节点 id
 const edges = [
-   { source: 'n1', target: 'n999' },  // n999 不存在
+  { source: 'n1', target: 'n999' },  // n999 不存在
 ];
 
 // ✅ 正确：确保 source 和 target 都存在于 nodes 中
+```
+
+### 错误5：重复边导致 "Edge already exists" 错误
+
+G6 不允许存在重复边（相同 source 和 target 的边）。动态生成边时必须去重，否则会抛出 `Edge already exists: xxx-yyy` 错误。
+
+```javascript
+// ❌ 错误：随机生成边时可能产生重复边
+const edges = [];
+for (let i = 0; i < 34; i++) {
+  for (let j = 0; j < 3; j++) {
+    const target = Math.floor(Math.random() * 34);
+    if (target !== i) {
+      edges.push({ source: `${i}`, target: `${target}` }); // 可能重复！
+    }
+  }
+}
+
+// ✅ 正确：使用 Set 去重，确保每对 source-target 唯一
+const edges = [];
+const edgeSet = new Set();
+for (let i = 0; i < 34; i++) {
+  for (let j = 0; j < 3; j++) {
+    const target = Math.floor(Math.random() * 34);
+    const key = `${i}-${target}`;
+    const reverseKey = `${target}-${i}`;
+    if (target !== i && !edgeSet.has(key) && !edgeSet.has(reverseKey)) {
+      edgeSet.add(key);
+      edges.push({ source: `${i}`, target: `${target}` });
+    }
+  }
+}
+```
+
+**最佳实践：优先使用明确的静态边数据，避免随机生成边。** 如果必须动态生成，务必在添加前检查重复：
+
+```javascript
+// ✅ 推荐：使用明确的边数据，不依赖随机生成
+const data = {
+  nodes: Array.from({ length: 10 }, (_, i) => ({ id: `${i}` })),
+  edges: [
+    { source: '0', target: '1' },
+    { source: '0', target: '2' },
+    { source: '1', target: '3' },
+    { source: '2', target: '3' },
+    // 每对 source-target 只出现一次
+  ],
+};
+
+const graph = new Graph({
+  container: 'container',
+  autoFit: 'view',
+  data,
+  node: {
+    style: {
+      labelText: (d) => d.id,
+      labelPlacement: 'center',
+      labelFill: '#fff',
+    },
+  },
+  layout: { type: 'circular' },
+  behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
+});
+
+graph.render();
+```
+
+### 错误6：treeToGraphData 未导入
+
+```javascript
+// ❌ 错误：忘记从 @antv/g6 导入 treeToGraphData
+import { Graph } from '@antv/g6';
+// ...
+data: treeToGraphData(treeData),  // ReferenceError: treeToGraphData is not defined
+
+// ✅ 正确：必须显式导入
+import { Graph, treeToGraphData } from '@antv/g6';
+// ...
+data: treeToGraphData(treeData),
 ```

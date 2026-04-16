@@ -71,8 +71,6 @@ const graph = new Graph({
   container: 'container',
   width: 960,
   height: 640,
-  autoFit: 'view',
-
   data,
 
   node: {
@@ -136,7 +134,6 @@ const graph = new Graph({
   layout: {
     type: 'force',
     linkDistance: 100,
-    nodeStrength: -30,
     gravity: 10,
   },
 

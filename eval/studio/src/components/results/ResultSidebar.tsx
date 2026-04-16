@@ -55,7 +55,7 @@ export default function ResultSidebar({
   onFileChange,
   onFilterChange,
   onSearchChange,
-  onSelect,
+  onSelect
 }: ResultSidebarProps) {
   const results = run?.results ?? [];
 
@@ -84,102 +84,125 @@ export default function ResultSidebar({
   const summary = run?.summary;
 
   return (
-    <aside className="rs-sidebar">
+    <aside className='rs-sidebar'>
       {/* Header */}
-      <div className="rs-sidebar-header">
-        <div className="rs-sidebar-title">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <rect x="2" y="2" width="12" height="12" rx="2" />
-            <path d="M5 8h6M5 5h3M5 11h4" strokeLinecap="round" />
-          </svg>
+      <div className='rs-sidebar-header'>
+        <div className='rs-sidebar-title'>
+          <img
+            width={24}
+            height={24}
+            src='https://mdn.alipayobjects.com/huamei_qa8qxu/afts/img/A*FBLnQIAzx6cAAAAAQDAAAAgAemJ7AQ/original'
+            alt='Eval'
+          ></img>
           Eval Results
         </div>
 
         <select
-          className="rs-dataset-select"
+          className='rs-dataset-select'
           value={currentFile}
           onChange={(e) => onFileChange(e.target.value)}
         >
           {datasets.map((d) => {
-            const label = d.name
-              .replace(/^eval-/, '')
-              .replace(/\.json$/, '');
+            const label = d.name.replace(/^eval-/, '').replace(/\.json$/, '');
             const pct = d.summary?.avgSimilarity
               ? ` · ${(d.summary.avgSimilarity * 100).toFixed(0)}%`
               : '';
             return (
               <option key={d.name} value={d.name} title={d.name}>
-                {label}{pct}
+                {label}
+                {pct}
               </option>
             );
           })}
         </select>
 
         {summary && (
-          <div className="rs-stats-grid">
-            <div className="rs-stat">
-              <div className="rs-stat-value accent">{summary.totalTests}</div>
-              <div className="rs-stat-label">Total</div>
+          <div className='rs-stats-grid'>
+            <div className='rs-stat'>
+              <div className='rs-stat-value accent'>{summary.totalTests}</div>
+              <div className='rs-stat-label'>Total</div>
             </div>
-            <div className="rs-stat">
-              <div className="rs-stat-value green">{summary.successCount}</div>
-              <div className="rs-stat-label">OK</div>
+            <div className='rs-stat'>
+              <div className='rs-stat-value green'>{summary.successCount}</div>
+              <div className='rs-stat-label'>OK</div>
             </div>
-            <div className="rs-stat">
-              <div className="rs-stat-value accent">
-                {summary.avgSimilarity ? `${(summary.avgSimilarity * 100).toFixed(0)}%` : '—'}
+            <div className='rs-stat'>
+              <div className='rs-stat-value accent'>
+                {summary.avgSimilarity
+                  ? `${(summary.avgSimilarity * 100).toFixed(0)}%`
+                  : '—'}
               </div>
-              <div className="rs-stat-label">Avg Sim</div>
+              <div className='rs-stat-label'>Avg Sim</div>
             </div>
-            <div className="rs-stat">
-              <div className="rs-stat-value">
-                {summary.avgDuration ? `${summary.avgDuration.toFixed(0)}ms` : '—'}
+            <div className='rs-stat'>
+              <div className='rs-stat-value'>
+                {summary.avgDuration
+                  ? `${summary.avgDuration.toFixed(0)}ms`
+                  : '—'}
               </div>
-              <div className="rs-stat-label">Avg Time</div>
+              <div className='rs-stat-label'>Avg Time</div>
             </div>
           </div>
         )}
 
         {/* Search */}
-        <div className="rs-search-wrap">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="7" cy="7" r="4" />
-            <path d="M10.5 10.5L14 14" strokeLinecap="round" />
+        <div className='rs-search-wrap'>
+          <svg
+            viewBox='0 0 16 16'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='1.5'
+          >
+            <circle cx='7' cy='7' r='4' />
+            <path d='M10.5 10.5L14 14' strokeLinecap='round' />
           </svg>
           <input
-            type="text"
-            placeholder="搜索 ID、query、library…"
+            type='text'
+            placeholder='搜索 ID、query、library…'
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
           {search && (
-            <button className="rs-search-clear" onClick={() => onSearchChange('')}>✕</button>
+            <button
+              className='rs-search-clear'
+              onClick={() => onSearchChange('')}
+            >
+              ✕
+            </button>
           )}
         </div>
 
         {/* Filters */}
-        <div className="rs-filters">
-          {(['all', 'bad', 'blank', 'render_error', 'g2', 'g6'] as FilterType[]).map((f) => (
+        <div className='rs-filters'>
+          {(
+            ['all', 'bad', 'blank', 'render_error', 'g2', 'g6'] as FilterType[]
+          ).map((f) => (
             <button
               key={f}
               className={`rs-filter-btn${filter === f ? ' active' : ''}`}
               onClick={() => onFilterChange(f)}
             >
-              {f === 'all' ? 'All' :
-               f === 'bad' ? 'Bad' :
-               f === 'blank' ? 'Blank' :
-               f === 'render_error' ? 'Error' :
-               f.toUpperCase()}
+              {f === 'all'
+                ? 'All'
+                : f === 'bad'
+                  ? 'Bad'
+                  : f === 'blank'
+                    ? 'Blank'
+                    : f === 'render_error'
+                      ? 'Error'
+                      : f.toUpperCase()}
             </button>
           ))}
           {(search || filter !== 'all') && (
-            <span className="rs-filter-count">{filtered.length}/{results.length}</span>
+            <span className='rs-filter-count'>
+              {filtered.length}/{results.length}
+            </span>
           )}
         </div>
       </div>
 
       {/* Result list */}
-      <div className="rs-result-list">
+      <div className='rs-result-list'>
         {filtered.map(({ r, i }) => {
           const sim = r.evaluation?.similarity ?? 0;
           const rs = renderResults[r.id ?? `test-${i}`];
@@ -192,26 +215,42 @@ export default function ResultSidebar({
               className={`rs-result-item${i === currentIndex ? ' active' : ''}${bad ? ' bad' : ''}`}
               onClick={() => onSelect(i)}
             >
-              <div className="rs-result-meta">
-                <span className={`rs-lib-badge ${lib}`}>{lib.toUpperCase()}</span>
-                <span className="rs-result-id">{r.id ?? `#${i + 1}`}</span>
-                {rs === 'success' && <span className="rs-render-dot success" title="Render OK">✓</span>}
-                {rs === 'blank'   && <span className="rs-render-dot blank"   title="Blank">◻</span>}
-                {rs === 'error'   && <span className="rs-render-dot error"   title="Error">✗</span>}
+              <div className='rs-result-meta'>
+                <span className={`rs-lib-badge ${lib}`}>
+                  {lib.toUpperCase()}
+                </span>
+                <span className='rs-result-id'>{r.id ?? `#${i + 1}`}</span>
+                {rs === 'success' && (
+                  <span className='rs-render-dot success' title='Render OK'>
+                    ✓
+                  </span>
+                )}
+                {rs === 'blank' && (
+                  <span className='rs-render-dot blank' title='Blank'>
+                    ◻
+                  </span>
+                )}
+                {rs === 'error' && (
+                  <span className='rs-render-dot error' title='Error'>
+                    ✗
+                  </span>
+                )}
               </div>
-              <div className="rs-result-query">{r.query}</div>
-              <div className="rs-result-foot">
-                <span className={`rs-sim ${simClass(sim)}`}>{(sim * 100).toFixed(0)}%</span>
-                <span className="rs-dur">{r.duration ?? 0}ms</span>
-                {r.error && <span className="rs-badge error">✗ Error</span>}
-                {!r.error && r.evaluation?.hasIssues && <span className="rs-badge warn">⚠ Issues</span>}
+              <div className='rs-result-query'>{r.query}</div>
+              <div className='rs-result-foot'>
+                <span className={`rs-sim ${simClass(sim)}`}>
+                  {(sim * 100).toFixed(0)}%
+                </span>
+                <span className='rs-dur'>{r.duration ?? 0}ms</span>
+                {r.error && <span className='rs-badge error'>✗ Error</span>}
+                {!r.error && r.evaluation?.hasIssues && (
+                  <span className='rs-badge warn'>⚠ Issues</span>
+                )}
               </div>
             </div>
           );
         })}
-        {filtered.length === 0 && (
-          <div className="rs-empty">暂无匹配结果</div>
-        )}
+        {filtered.length === 0 && <div className='rs-empty'>暂无匹配结果</div>}
       </div>
     </aside>
   );

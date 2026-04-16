@@ -97,7 +97,6 @@ const graph = new Graph({
   layout: {
     type: 'force',
     linkDistance: 100,
-    nodeStrength: -50,
     gravity: 10,
   },
   behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
@@ -113,8 +112,6 @@ graph.render();
 ```javascript
 layout: {
   type: 'force',
-  // 节点斥力强度（负值为斥力，越大节点间距越大）
-  nodeStrength: -50,
   // 边的理想长度
   linkDistance: 100,
   // 向心力强度（越大节点越聚向中心）
@@ -244,15 +241,8 @@ layout: {
   nodeSize: 40,           // 无效
 },
 
-// ✅ 方案 A：增大 nodeStrength（斥力）自然展开节点
-layout: {
-  type: 'force',
-  nodeStrength: -100,     // 增大斥力，节点自然散开
-  linkDistance: 120,
-  gravity: 5,
-},
 
-// ✅ 方案 B：改用 d3-force + collide 碰撞检测（推荐）
+// ✅ 改用 d3-force + collide 碰撞检测（推荐）
 layout: {
   type: 'd3-force',
   link: { distance: 100, strength: 0.8 },

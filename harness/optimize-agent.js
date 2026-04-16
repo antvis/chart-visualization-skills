@@ -314,7 +314,7 @@ async function optimizeSkill(
     : '';
 
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
-${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}${historySection}
+${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : '\n注意：当前没有可用的外部查阅工具，请直接基于 skill 内容和错误案例进行分析，不要尝试调用任何工具。\n'}${historySection}
 注意：当前 skill 是候选归因之一，不一定是错误的根本原因。请先判断错误是否确实由本 skill 的内容缺失或错误描述引起。
 - 如果是：输出修正后的完整 skill 文档（以 --- 开头）。
 - 如果不是（错误由其他 skill 或模型行为导致）：原样输出当前 skill 文档，不做任何修改。
@@ -330,7 +330,7 @@ ${skillContent}
 
 ${errorContext}
 
-请分析错误原因，按需查阅参考文档，然后优化该 skill 文档。要求：
+请分析错误原因，${refs ? '按需查阅参考文档，' : ''}然后优化该 skill 文档。要求：
 1. 保持 YAML Front Matter 不变（id、title、description、library、version、category、tags 等字段）
 2. 重点修正或补充导致上述错误的文档描述
 3. 确保最小可运行示例代码正确无误且可直接运行
@@ -461,7 +461,7 @@ async function createNewSkills(
     : '';
 
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
-${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : ''}
+${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : '\n注意：当前没有可用的外部查阅工具，请直接基于错误案例进行分析，不要尝试调用任何工具。\n'}
 你的任务是为没有现有 skill 覆盖的错误案例创建新的 skill 文档。
 
 输出格式：每个新 skill 文档用以下分隔符包裹：
@@ -475,7 +475,7 @@ ${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读�
 
 ${errorContext}
 
-请分析这些错误的共同主题，按需查阅参考文档，然后创建必要的新 skill 文档。要求：
+请分析这些错误的共同主题，${refs ? '按需查阅参考文档，' : ''}然后创建必要的新 skill 文档。要求：
 1. YAML Front Matter 必须包含：id、title、description、library、version、category、tags
 2. 文档语言与现有 skill 保持一致（中文说明 + 代码示例）
 3. 必须包含「最小可运行示例」章节，代码可直接运行

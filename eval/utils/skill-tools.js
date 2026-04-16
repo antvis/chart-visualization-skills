@@ -2,11 +2,10 @@
  * Shared skill tools for both eval and web modules.
  *
  * Exports:
- *   TOOLS               - LLM tool definitions (list_references, read_skills)
+ *   TOOLS               - LLM tool definitions (read_skills)
  *   loadSkillFile       - Load a skill markdown file (strips front matter)
  *   loadMainSkill       - Load SKILL.md for a library
  *   extractKeySections  - Extract key sections from skill markdown
- *   toolListReferences  - Tool handler: list reference docs
  *   toolReadSkills      - Tool handler: read skill doc content
  *   buildSystemPrompt   - Build tool-call system prompt with SKILL.md overview
  */
@@ -32,30 +31,6 @@ function resolveLibraryDir(library) {
 // ── Tool definitions ──────────────────────────────────────────────────────────
 
 const TOOLS = [
-  // {
-  //   type: 'function',
-  //   function: {
-  //     name: 'list_references',
-  //     description:
-  //       '列出 references 目录下可用的参考文档文件。返回文件路径、标题、描述等信息。',
-  //     parameters: {
-  //       type: 'object',
-  //       properties: {
-  //         library: {
-  //           type: 'string',
-  //           description: '库：g2、g6',
-  //           enum: ['g2', 'g6']
-  //         },
-  //         category: {
-  //           type: 'string',
-  //           description:
-  //             '可选，过滤分类：marks、transforms、components、scales、coordinates、interactions、data、layouts、elements、behaviors、plugins、events、themes、patterns、recipes'
-  //         }
-  //       },
-  //       required: ['library']
-  //     }
-  //   }
-  // },
   {
     type: 'function',
     function: {
@@ -186,54 +161,6 @@ function extractKeySections(content, maxChars = 5000) {
 
 // ── Tool handlers ─────────────────────────────────────────────────────────────
 
-/**
- * list_references tool handler.
- * @param {{ library: string, category?: string }} args
- * @param {boolean} verbose
- */
-function toolListReferences(args, verbose = false) {
-  const { library, category } = args;
-  const dir = resolveLibraryDir(library);
-  const referencesDir = path.join(SKILLS_DIR, dir, 'references');
-  if (!fs.existsSync(referencesDir)) return [];
-
-  const results = [];
-  const categories = category ? [category] : fs.readdirSync(referencesDir);
-
-  for (const cat of categories) {
-    const catDir = path.join(referencesDir, cat);
-    if (!fs.existsSync(catDir) || !fs.statSync(catDir).isDirectory()) continue;
-
-    for (const file of fs
-      .readdirSync(catDir)
-      .filter((f) => f.endsWith('.md'))) {
-      const raw = fs.readFileSync(path.join(catDir, file), 'utf-8');
-      const yamlMatch = raw.match(/^---\n([\s\S]*?)\n---/);
-      let meta = {};
-      if (yamlMatch) {
-        const yaml = yamlMatch[1];
-        const idMatch = yaml.match(/^id:\s*["']?([^'"\n]+)["']?/m);
-        const titleMatch = yaml.match(/^title:\s*["']?([^'"\n]+)["']?/m);
-        const descMatch = yaml.match(
-          /^description:\s*\|?\s*([\s\S]*?)(?=^[a-z]|\s*$)/m
-        );
-        meta = {
-          id: idMatch ? idMatch[1].trim() : file.replace('.md', ''),
-          title: titleMatch ? titleMatch[1].trim() : file,
-          description: descMatch ? descMatch[1].trim().slice(0, 100) : ''
-        };
-      }
-      results.push({
-        ...meta,
-        category: cat,
-        path: `skills/${dir}/references/${cat}/${file}`
-      });
-    }
-  }
-
-  if (verbose) logger.debug({ count: results.length }, '列出参考文档');
-  return results;
-}
 
 /**
  * read_skills tool handler.
@@ -276,10 +203,9 @@ function buildSystemPrompt(library) {
 
 ## 工具使用（必须遵循）
 
-你有两个工具可以查阅详细参考文档：
+你有一个工具可以查阅详细参考文档：
 
-1. **list_references(library, category?)** - 列出参考文档目录，返回文件路径和标题
-2. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
+1. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
 
 **工作流程**：
 1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
@@ -300,7 +226,6 @@ module.exports = {
   loadSkillFile,
   loadMainSkill,
   extractKeySections,
-  toolListReferences,
   toolReadSkills,
   buildSystemPrompt
 };

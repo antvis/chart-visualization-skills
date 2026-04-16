@@ -22,7 +22,7 @@
 
 ### 布局规范
 - `layout` 配置放在 Graph 选项中：`{ type: 'force', ... }`
-- `force` 布局**不支持** `preventOverlap` / `nodeSize`（G6 v4 参数，v5 静默忽略）；防重叠请改用 `d3-force` + `collide` 或增大 `nodeStrength`
+- `force` 布局**不支持** `preventOverlap` / `nodeSize`（G6 v4 参数，v5 静默忽略）；防重叠请改用 `d3-force` + `collide`
 - 树形布局（mindmap, compact-box, dendrogram, indented）需要树形数据或 `treeToGraphData()` 转换
 - 力导向布局异步运行，`graph.render()` 后会持续迭代
 

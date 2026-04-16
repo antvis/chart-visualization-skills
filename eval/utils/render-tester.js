@@ -18,7 +18,7 @@ const { scoreScreenshot } = require('./visual-scorer');
 const logger = require('./logger');
 
 const G2_CDN = 'https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js';
-const G6_CDN = 'https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js';
+const G6_CDN = 'https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js';
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 function findLocalLib(pkg, distFile) {
@@ -27,9 +27,9 @@ function findLocalLib(pkg, distFile) {
 }
 
 const LIB_LOAD_TIMEOUT_MS = 10000; // max wait for addScriptTag (CDN)
-const RENDER_TIMEOUT_MS = 5000;    // max wait for render() promise
-const BLANK_WAIT_MS = 600;         // wait after render for paint
-const CASE_TIMEOUT_MS = 30000;     // hard per-case wall-clock limit (covers lib load + render + score)
+const RENDER_TIMEOUT_MS = 5000; // max wait for render() promise
+const BLANK_WAIT_MS = 600; // wait after render for paint
+const CASE_TIMEOUT_MS = 30000; // hard per-case wall-clock limit (covers lib load + render + score)
 
 let _browser = null;
 
@@ -120,7 +120,10 @@ function extractImportNames(src, pkg) {
   for (const m of src.matchAll(re)) {
     m[1].split(',').forEach((token) => {
       const cleaned = token.trim().replace(/^type\s+/, '');
-      const name = cleaned.split(/\s+as\s+/).pop()?.trim();
+      const name = cleaned
+        .split(/\s+as\s+/)
+        .pop()
+        ?.trim();
       if (name) names.push(name);
     });
   }
@@ -160,7 +163,10 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
       : findLocalLib('@antv/g2', 'g2.min.js');
 
     // Step 1: Set a minimal shell — no external scripts, never hangs
-    await page.setContent(SHELL_HTML, { waitUntil: 'domcontentloaded', timeout: 5000 });
+    await page.setContent(SHELL_HTML, {
+      waitUntil: 'domcontentloaded',
+      timeout: 5000
+    });
 
     // Step 2: Load the library (local first, then CDN with retries)
     const CDN_RETRIES = 3;
@@ -172,7 +178,10 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
     } else {
       for (let attempt = 1; attempt <= CDN_RETRIES; attempt++) {
         try {
-          await page.addScriptTag({ url: cdnUrl, timeout: LIB_LOAD_TIMEOUT_MS });
+          await page.addScriptTag({
+            url: cdnUrl,
+            timeout: LIB_LOAD_TIMEOUT_MS
+          });
           libLoaded = true;
           break;
         } catch (err) {
@@ -184,7 +193,10 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
       }
     }
     if (!libLoaded) {
-      return { status: 'error', error: `Library load failed after ${CDN_RETRIES} attempts: ${libErr.message}` };
+      return {
+        status: 'error',
+        error: `Library load failed after ${CDN_RETRIES} attempts: ${libErr.message}`
+      };
     }
     // Step 3: Execute the generated code and detect blank screen
     const g6Names = extractImportNames(code, '@antv/g6');
@@ -201,14 +213,21 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
         try {
           const container = document.getElementById('container');
           // eslint-disable-next-line no-new-func
-          const detectBlankScreen = new Function('container', detectBlankFn + '\nreturn detectBlankScreen(container);');
+          const detectBlankScreen = new Function(
+            'container',
+            detectBlankFn + '\nreturn detectBlankScreen(container);'
+          );
           const fn = new Function('container', userCode);
           let ret = fn(container);
           if (ret && typeof ret.then === 'function') {
             await Promise.race([
               ret,
               new Promise((_, reject) =>
-                setTimeout(() => reject(new Error(`Render timeout (${renderTimeoutMs}ms)`)), renderTimeoutMs)
+                setTimeout(
+                  () =>
+                    reject(new Error(`Render timeout (${renderTimeoutMs}ms)`)),
+                  renderTimeoutMs
+                )
               )
             ]);
           }
@@ -251,7 +270,7 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
   } finally {
     await Promise.race([
       page.close(),
-      new Promise((r) => setTimeout(r, 5000))  // don't hang if close itself stalls
+      new Promise((r) => setTimeout(r, 5000)) // don't hang if close itself stalls
     ]);
   }
 }
@@ -268,7 +287,10 @@ async function testRender(code, { query = '', skipScore = false } = {}) {
  * @param {Function} [opts.onProgress]      - Called after each test: ({ done, total, result })
  * @returns {Array} same array with `renderStatus`/`renderError`/`visualScore` added to each
  */
-async function testAllResults(results, { concurrency = 5, skipScore = false, onProgress } = {}) {
+async function testAllResults(
+  results,
+  { concurrency = 5, skipScore = false, onProgress } = {}
+) {
   const output = new Array(results.length);
   let done = 0;
   let index = 0;
@@ -280,7 +302,11 @@ async function testAllResults(results, { concurrency = 5, skipScore = false, onP
       let tested;
 
       if (result.error || !result.generatedCode) {
-        tested = { ...result, renderStatus: 'error', renderError: result.error || 'no code' };
+        tested = {
+          ...result,
+          renderStatus: 'error',
+          renderError: result.error || 'no code'
+        };
       } else {
         try {
           const caseTimeout = new Promise((_, reject) =>
@@ -289,25 +315,46 @@ async function testAllResults(results, { concurrency = 5, skipScore = false, onP
               CASE_TIMEOUT_MS
             )
           );
-          const { status, error, visualScore, visualDimensions, visualReasoning } =
-            await Promise.race([
-              testRender(result.generatedCode, { query: result.query || '', skipScore }),
-              caseTimeout
-            ]);
-          tested = { ...result, renderStatus: status, renderError: error,
-            ...(visualScore != null ? { visualScore, visualDimensions, visualReasoning } : {}) };
+          const {
+            status,
+            error,
+            visualScore,
+            visualDimensions,
+            visualReasoning
+          } = await Promise.race([
+            testRender(result.generatedCode, {
+              query: result.query || '',
+              skipScore
+            }),
+            caseTimeout
+          ]);
+          tested = {
+            ...result,
+            renderStatus: status,
+            renderError: error,
+            ...(visualScore != null
+              ? { visualScore, visualDimensions, visualReasoning }
+              : {})
+          };
         } catch (err) {
-          tested = { ...result, renderStatus: 'error', renderError: err.message };
+          tested = {
+            ...result,
+            renderStatus: 'error',
+            renderError: err.message
+          };
         }
       }
 
       output[i] = tested;
       done++;
-      if (onProgress) onProgress({ done, total: results.length, result: tested });
+      if (onProgress)
+        onProgress({ done, total: results.length, result: tested });
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, results.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, results.length) }, worker)
+  );
   return output;
 }
 

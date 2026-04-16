@@ -40,7 +40,7 @@ const LIBRARY_REGISTRY = {
     id: 'g6',
     friendlyName: 'AntV G6',
     npmPackage: '@antv/g6',
-    cdnUrl: 'https://unpkg.com/@antv/g6@5.0.42/dist/g6.min.js',
+    cdnUrl: 'https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js',
     windowGlobal: 'G6',
     entry: 'Graph',
     skillsPath: 'antv-g6-graph/references',
