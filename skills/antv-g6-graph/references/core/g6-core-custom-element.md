@@ -54,11 +54,9 @@ import {
 } from '@antv/g6';
 
 class StatusNode extends BaseNode {
-  // getKeyShape 返回节点的主要形状（必须实现）
-  // 也可以重写 render() 获得完全控制权
-  
   /**
    * 绘制节点主体
+   * 重写 render() 获得完全控制权，需自行管理所有子形状
    */
   render(attributes, container) {
     super.render(attributes, container);
@@ -134,7 +132,7 @@ const graph = new Graph({
     type: 'status-node',
     style: {
       size: [130, 50],
-      // 自定义属性通过 style 或直接写在 node 配置中
+      // 自定义属性通过 style 回调映射
       status: (d) => d.data.status,
       label: (d) => d.data.label,
     },
@@ -164,6 +162,97 @@ const { x, y } = this.getPosition();
 
 ---
 
+## 继承内置节点扩展（推荐）
+
+对于简单的样式扩展（如添加动画、光晕效果），推荐继承内置节点（如 `Circle`、`Rect`）而非 `BaseNode`，可以复用内置节点的绘制逻辑：
+
+```javascript
+import { Circle, ExtensionCategory, Graph, register } from '@antv/g6';
+
+// 继承内置 Circle 节点，添加呼吸动画光晕
+class BreathingCircle extends Circle {
+  // onCreate 在元素完成创建并执行完入场动画后调用
+  // 适合启动循环动画，避免与入场动画冲突
+  onCreate() {
+    const halo = this.shapeMap.halo;
+    if (halo) {
+      halo.animate([{ lineWidth: 0 }, { lineWidth: 20 }], {
+        duration: 1000,
+        iterations: Infinity,
+        direction: 'alternate',
+      });
+    }
+  }
+}
+
+register(ExtensionCategory.NODE, 'breathing-circle', BreathingCircle);
+
+const graph = new Graph({
+  container: 'container',
+  width: 800,
+  height: 600,
+  data: {
+    nodes: [
+      { id: 'node-0' },
+      { id: 'node-1' },
+      { id: 'node-2' },
+      { id: 'node-3' },
+    ],
+  },
+  node: {
+    type: 'breathing-circle',
+    style: {
+      size: 50,
+      halo: true,  // 开启光晕形状
+    },
+    palette: ['#3875f6', '#efb041', '#ec5b56', '#72c240'],
+  },
+  layout: {
+    type: 'grid',
+  },
+  behaviors: ['drag-canvas', 'zoom-canvas'],
+});
+
+graph.render();
+```
+
+### 生命周期钩子
+
+自定义节点/边支持以下生命周期钩子：
+
+```typescript
+class MyNode extends BaseNode {
+  /**
+   * 在元素完成创建并执行完入场动画后调用
+   * 适合启动循环动画、绑定事件等一次性初始化操作
+   */
+  onCreate() {
+    const keyShape = this.shapeMap['key'];
+    // 启动呼吸动画
+    keyShape.animate(
+      [{ r: 20 }, { r: 25 }, { r: 20 }],
+      { duration: 2000, iterations: Infinity }
+    );
+  }
+
+  /**
+   * 在元素更新并执行完过渡动画后调用
+   */
+  onUpdate() {
+    console.log('Node updated:', this.id);
+  }
+
+  /**
+   * 在元素完成退场动画并销毁后调用
+   */
+  onDestroy() {
+    console.log('Node destroyed:', this.id);
+  }
+}
+```
+
+---
+
 ## 自定义边
 
 ```javascript
@@ -178,9 +267,11 @@ import {
 class ArrowEdge extends BaseEdge {
   /**
    * 返回边的 SVG Path 数据（必须实现）
+   * 使用 this.getEndpoints(attributes) 获取起点和终点坐标
    */
   getKeyPath(attributes) {
-    const { sourcePoint, targetPoint } = attributes;
+    // 获取起点和终点坐标（已考虑连接桩、节点边界等因素）
+    const [sourcePoint, targetPoint] = this.getEndpoints(attributes, false);
     
     if (!sourcePoint || !targetPoint) return [['M', 0, 0]];
     
@@ -223,7 +314,7 @@ import { BaseEdge, ExtensionCategory, Graph, register } from '@antv/g6';
 
 class DashEdge extends BaseEdge {
   getKeyPath(attributes) {
-    const { sourcePoint, targetPoint } = attributes;
+    const [sourcePoint, targetPoint] = this.getEndpoints(attributes);
     if (!sourcePoint || !targetPoint) return [['M', 0, 0]];
     const [sx, sy] = sourcePoint;
     const [tx, ty] = targetPoint;
@@ -294,72 +385,57 @@ register(ExtensionCategory.PLUGIN, 'my-plugin', MyPluginClass);
 
 ---
 
-## 自定义节点动画
+## 常见错误与修正
 
-在 `render()` 中通过 `upsert` 拿到形状引用后，调用 Web Animations API 的 `.animate()`：
+### 错误：在 render() 中启动循环动画导致白屏或动画异常
 
 ```javascript
-import { BaseNode, Circle, Text, ExtensionCategory, Graph, register } from '@antv/g6';
-
-class BreathingCircleNode extends BaseNode {
+// ❌ render() 在元素创建和更新时都会被调用，在此处启动动画会导致：
+//    1. 动画重复启动，性能问题
+//    2. 与入场动画冲突，可能导致白屏
+//    3. 更新时动画被重置
+class BreathingNode extends BaseNode {
   render(attributes, container) {
     super.render(attributes, container);
-
-    const { color = '#1783FF', label } = attributes;
-
-    // upsert 返回形状实例
-    const circle = this.upsert('key', Circle, {
-      cx: 0, cy: 0, r: 20,
-      fill: color, stroke: '#fff', lineWidth: 2,
-    }, container);
-
-    // Web Animations API — 属性名与 @antv/g 形状属性一致
+    const circle = this.upsert('key', Circle, { cx: 0, cy: 0, r: 30 }, container);
+    
+    // 错误：在 render 中启动动画
     circle.animate(
-      [
-        { r: 20, fill: color },
-        { r: 25, fill: `${color}DD` },
-        { r: 20, fill: color },
-      ],
-      { duration: 2000, iterations: Infinity },
+      [{ r: 30 }, { r: 40 }, { r: 30 }],
+      { duration: 2000, iterations: Infinity }
     );
-
-    if (label) {
-      this.upsert('label', Text, {
-        x: 0, y: 35,
-        text: label, fill: '#333',
-        fontSize: 12, textAlign: 'center', textBaseline: 'middle',
-      }, container);
-    }
   }
 }
 
-register(ExtensionCategory.NODE, 'breathing-circle', BreathingCircleNode);
+// ✅ 使用 onCreate 生命周期钩子，在入场动画完成后启动循环动画
+class BreathingNode extends BaseNode {
+  render(attributes, container) {
+    super.render(attributes, container);
+    this.upsert('key', Circle, { cx: 0, cy: 0, r: 30 }, container);
+  }
+  
+  onCreate() {
+    const keyShape = this.shapeMap['key'];
+    keyShape.animate(
+      [{ r: 30 }, { r: 40 }, { r: 30 }],
+      { duration: 2000, iterations: Infinity }
+    );
+  }
+}
 
-const graph = new Graph({
-  container: 'container',
-  width: 800, height: 600,
-  data: {
-    nodes: [
-      { id: 'n1', data: { label: '节点1', color: '#1783FF' } },
-      { id: 'n2', data: { label: '节点2', color: '#FF6B6B' } },
-    ],
-    edges: [{ source: 'n1', target: 'n2' }],
-  },
-  node: {
-    type: 'breathing-circle',
-    style: {
-      color: (d) => d.data.color,
-      label: (d) => d.data.label,
-    },
-  },
-  behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
-});
-graph.render();
+// ✅ 或者继承内置节点，利用内置的 halo 形状实现呼吸效果（推荐）
+class BreathingCircle extends Circle {
+  onCreate() {
+    const halo = this.shapeMap.halo;
+    if (halo) {
+      halo.animate(
+        [{ lineWidth: 0 }, { lineWidth: 20 }, { lineWidth: 0 }],
+        { duration: 2000, iterations: Infinity }
+      );
+    }
+  }
+}
 ```
-
----
-
-## 常见错误
 
 ### 错误：使用已移除的 extend API
 
@@ -461,3 +537,28 @@ circle.animate(
   { duration: 2000, iterations: Infinity }
 );
 ```
+
+### 错误：自定义边中直接访问 attributes.sourcePoint → 白屏
+
+```javascript
+// ❌ attributes 中不存在 sourcePoint / targetPoint 属性
+// 直接访问返回 undefined，解构赋值后计算会抛出异常导致白屏
+class MyEdge extends BaseEdge {
+  getKeyPath(attributes) {
+    const { sourcePoint, targetPoint } = attributes;  // undefined!
+    const [sx, sy] = sourcePoint;  // TypeError: Cannot read properties of undefined
+    return [['M', sx, sy], ['L', tx, ty]];
+  }
+}
+
+// ✅ 使用 this.getEndpoints(attributes) 获取起点和终点
+class MyEdge extends BaseEdge {
+  getKeyPath(attributes) {
+    const [sourcePoint, targetPoint] = this.getEndpoints(attributes, false);
+    const [sx, sy] = sourcePoint;
+    const [tx, ty] = targetPoint;
+    return [['M', sx, sy], ['L', tx, ty]];
+  }
+}
+```
+</skill>

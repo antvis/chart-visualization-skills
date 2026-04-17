@@ -201,7 +201,31 @@ graph.setElementState('node1', 'error');
 graph.setElementState('n1', ['selected', 'highlight']);
 ```
 
-## 常见错误
+## 在渲染完成后操作状态
+
+如果需要在图表渲染完成后执行状态相关操作，可以使用 `await graph.render()` 或监听生命周期事件：
+
+```javascript
+import { Graph, GraphEvent } from '@antv/g6';
+
+const graph = new Graph({ /* ... */ });
+
+// 方式1：使用 await
+await graph.render();
+graph.setElementState('node1', 'selected');
+
+// 方式2：使用 GraphEvent（需要从 @antv/g6 导入）
+graph.on(GraphEvent.AFTER_RENDER, () => {
+  graph.setElementState('node1', 'selected');
+});
+
+// 方式3：使用字符串事件名（无需导入）
+graph.on('afterrender', () => {
+  graph.setElementState('node1', 'selected');
+});
+```
+
+## 常见错误与修正
 
 ### 错误1：状态样式中使用回调函数
 
@@ -239,4 +263,29 @@ node: {
     selected: { fill: '#ff4d4f', lineWidth: 3 },
   },
 },
+```
+
+### 错误3：使用 GraphEvent 但未导入
+
+```javascript
+// ❌ 错误：GraphEvent 未定义
+import { Graph } from '@antv/g6';
+
+graph.on(GraphEvent.AFTER_RENDER, () => {  // GraphEvent is not defined
+  // ...
+});
+
+// ✅ 正确：从 @antv/g6 导入 GraphEvent
+import { Graph, GraphEvent } from '@antv/g6';
+
+graph.on(GraphEvent.AFTER_RENDER, () => {
+  // ...
+});
+
+// ✅ 或者使用字符串事件名（无需导入）
+import { Graph } from '@antv/g6';
+
+graph.on('afterrender', () => {
+  // ...
+});
 ```

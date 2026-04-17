@@ -15,6 +15,8 @@ const fs = require('fs');
 const path = require('path');
 const { AgentLoop } = require('../eval/utils/ai-sdk');
 const { getLibraryConfig } = require('./config');
+const { withRetry } = require('./retry-utils');
+const { classify } = require('./error-classifier');
 
 // ── Dry-run log writer ────────────────────────────────────────────────────────
 
@@ -315,9 +317,7 @@ async function optimizeSkill(
 
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
 ${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : '\n注意：当前没有可用的外部查阅工具，请直接基于 skill 内容和错误案例进行分析，不要尝试调用任何工具。\n'}${historySection}
-注意：当前 skill 是候选归因之一，不一定是错误的根本原因。请先判断错误是否确实由本 skill 的内容缺失或错误描述引起。
-- 如果是：输出修正后的完整 skill 文档（以 --- 开头）。
-- 如果不是（错误由其他 skill 或模型行为导致）：原样输出当前 skill 文档，不做任何修改。
+注意：本 skill 已经过归因分析，是这批错误案例中最相关的候选文件。请判断 skill 内容是否有改善空间（如缺失关键 API 说明、用法示例有误、缺少常见错误提示等），若有则输出优化后的完整 skill 文档；若 skill 内容已充分、错误由模型能力或其他因素导致，则原样输出当前 skill 文档。
 不要输出任何解释文字，只输出完整的 skill 文档内容。`;
 
   const userMessage = `以下是当前 skill 文件：
@@ -341,15 +341,26 @@ ${errorContext}
     ? buildRefTools(refs)
     : { tools: [], toolHandlers: {} };
 
-  const loop = new AgentLoop({
-    provider,
-    model,
-    maxRounds: 6,
-    tools,
-    toolHandlers
-  });
-
-  const result = await loop.run(systemPrompt, userMessage);
+  const result = await withRetry(
+    () => {
+      // Recreate AgentLoop on each attempt — reusing a failed loop risks stale state.
+      const loop = new AgentLoop({ provider, model, maxRounds: 6, tools, toolHandlers });
+      return loop.run(systemPrompt, userMessage);
+    },
+    {
+      maxAttempts: 4,
+      baseMs:      10_000,
+      shouldRetry(err) {
+        const { action } = classify(err);
+        return action.shouldRetry && !action.abort;
+      },
+      onRetry(err, attempt, delayMs) {
+        console.warn(
+          `    [retry] ${skillName}: ${err.message} — attempt ${attempt} in ${(delayMs / 1000).toFixed(1)}s...`
+        );
+      },
+    }
+  );
 
   if (result.toolCallsLog.length > 0) {
     console.log(
@@ -592,11 +603,16 @@ async function run(
 
   if (skillToErrors.size > 0) {
     console.log(`\nOptimizing ${skillToErrors.size} skill(s) in parallel...`);
-    await Promise.all(
+    const results = await Promise.allSettled(
       [...skillToErrors.entries()].map(([skillPath, cases]) =>
         optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath])
       )
     );
+    for (const r of results) {
+      if (r.status === 'rejected') {
+        console.error(`  Skill optimization failed: ${r.reason?.message ?? r.reason}`);
+      }
+    }
   }
 
   if (orphanCases.length > 0 && skillsRefDir) {

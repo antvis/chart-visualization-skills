@@ -436,25 +436,60 @@ async function main() {
         )
       : {};
 
-    await registry.dispatch('optimize', {
-      skillToErrors,
-      provider:       OPTIMIZE_PROVIDER,
-      model:          OPTIMIZE_MODEL,
-      rootDir:        activeRootDir,
-      dryRun:         DRY_RUN,
-      logFile:        LOG_FILE,
-      iteration,
-      allErrorCases:  errorCases,
-      orphanCases,
-      libraryId:      LIBRARY_ID,
-      skillsRefDir,
-      historyContext,
-    });
+    let optimizeOk = false;
+    try {
+      await withRetry(
+        () => registry.dispatch('optimize', {
+          skillToErrors,
+          provider:       OPTIMIZE_PROVIDER,
+          model:          OPTIMIZE_MODEL,
+          rootDir:        activeRootDir,
+          dryRun:         DRY_RUN,
+          logFile:        LOG_FILE,
+          iteration,
+          allErrorCases:  errorCases,
+          orphanCases,
+          libraryId:      LIBRARY_ID,
+          skillsRefDir,
+          historyContext,
+        }),
+        {
+          maxAttempts: 3,
+          baseMs:      10_000,
+          shouldRetry(err) {
+            const { action } = classify(err);
+            return action.shouldRetry && !action.abort;
+          },
+          onRetry(err, attempt, delayMs) {
+            const { reason } = classify(err);
+            console.warn(
+              `[optimize] attempt ${attempt} failed (${reason}): ${err.message}. ` +
+              `Retrying in ${(delayMs / 1000).toFixed(1)}s...`
+            );
+          },
+        }
+      );
+      optimizeOk = true;
+    } catch (err) {
+      const { reason, action } = classify(err);
+      if (action.abort) {
+        logger.error({ err: err.message, reason }, 'Optimize step — unrecoverable error');
+        if (worktree) worktree.cleanup();
+        process.exit(1);
+      }
+      // Transient failure (connection / timeout) — log and continue to next iteration.
+      // The failing cases will be retested in the next eval round.
+      logger.warn({ err: err.message, reason }, 'Optimize step failed — skipping this iteration');
+      console.warn(`\n[optimize] Skipped (${reason}): ${err.message}`);
+      consecutivePasses = 0;
+    }
 
     if (DRY_RUN) {
       console.log('[dry-run] Stopping after first failure.');
       break;
     }
+
+    if (!optimizeOk) continue;
 
     // ── Step 4b: Record optimization in memory ────────────────────────────────
     if (USE_MEMORY) {

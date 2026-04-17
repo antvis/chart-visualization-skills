@@ -58,39 +58,105 @@ function resolveSkillPath(ref, rootDir, skillsDir) {
 /**
  * Collect all candidate skill refs from an error case.
  *
- * Returns every skill the model actually read (tool-call) or retrieved (bm25).
- * The optimizer receives the full candidate set and decides which skill(s) to
- * change — avoiding the "last-read = guilty" single-point-of-failure assumption.
- *
  * @param {object} errorCase
  * @returns {string[]} ordered list of skill refs (may be empty)
  */
 function pickAllRefs(errorCase) {
   const loaded = errorCase.loadedSkillPaths || [];
   if (loaded.length > 0) return loaded;
-
-  const retrieved = errorCase.retrievedSkillIds || [];
-  return retrieved;
+  return errorCase.retrievedSkillIds || [];
 }
 
 /**
- * Analyze error cases and group them by every candidate skill file.
+ * Score how relevant a skill file is to a specific error case.
  *
- * Each failed case is attributed to all skills the model loaded, not just the
- * last one. The errorCase is annotated with `candidateSkillPaths` so the
- * optimizer knows the full context and can self-select the true root cause.
+ * Uses two signals:
+ *   1. CamelCase identifier overlap — class/method names from the generated code
+ *      found in the skill content indicate the skill covers those APIs.
+ *   2. Query keyword match in the skill header — words from the natural-language
+ *      query that appear in the skill's YAML front matter / title area suggest
+ *      the skill is topically aligned with what the user asked for.
+ *
+ * @param {string} skillContent - full skill file content (already lowercased)
+ * @param {object} errorCase
+ * @returns {number}
+ */
+function scoreSkillForCase(skillContent, errorCase) {
+  let score = 0;
+
+  // Signal 1: CamelCase identifiers from generated code found in skill content
+  const identifiers = new Set(
+    (errorCase.generatedCode || '').match(/\b[A-Z][a-zA-Z]{2,}\b/g) || []
+  );
+  for (const id of identifiers) {
+    if (skillContent.includes(id.toLowerCase())) score += 2;
+  }
+
+  // Signal 2: query keywords matched against the skill header (first 600 chars)
+  const header = skillContent.slice(0, 600);
+  const queryTokens = (errorCase.query || '')
+    .toLowerCase()
+    .split(/[\s,，。？!、\n]+/)
+    .filter((t) => t.length > 1);
+  for (const token of queryTokens) {
+    if (header.includes(token)) score += 3;
+    else if (skillContent.includes(token)) score += 1;
+  }
+
+  return score;
+}
+
+/**
+ * Pick the single most relevant skill path for an error case.
+ *
+ * Reads each candidate skill file and scores it; returns the highest scorer.
+ * Falls back to the first candidate (highest BM25 rank from retrieval) when
+ * scores are tied or files cannot be read.
+ *
+ * @param {object} errorCase
+ * @param {string[]} candidatePaths - resolved, deduplicated skill paths
+ * @returns {string}
+ */
+function pickMostRelevantSkill(errorCase, candidatePaths) {
+  if (candidatePaths.length === 1) return candidatePaths[0];
+
+  let bestPath  = candidatePaths[0]; // fallback: highest BM25 relevance
+  let bestScore = -1;
+
+  for (const skillPath of candidatePaths) {
+    let content;
+    try {
+      content = fs.readFileSync(skillPath, 'utf-8').toLowerCase();
+    } catch {
+      continue;
+    }
+    const score = scoreSkillForCase(content, errorCase);
+    if (score > bestScore) {
+      bestScore = score;
+      bestPath  = skillPath;
+    }
+  }
+
+  return bestPath;
+}
+
+/**
+ * Analyze error cases and attribute each one to the single most relevant skill.
+ *
+ * For each failed case all loaded skill paths are collected as candidates, then
+ * pickMostRelevantSkill() selects the one most likely to need a fix.  The full
+ * candidate list is preserved on the annotated case so the optimizer retains
+ * context about which other skills were involved.
  *
  * @param {object[]} errorCases  - failed render results from render-agent
  * @param {object} opts
- * @param {string} opts.rootDir  - project root directory
+ * @param {string} opts.rootDir   - project root directory
  * @param {string} opts.skillsDir - absolute path to skills directory
  * @returns {{ skillToErrors: Map<string, object[]>, orphanCases: object[] }}
- *   skillToErrors: map from skill file path to error cases
- *   orphanCases: error cases with no resolvable skill refs (candidates for new skill creation)
  */
 function run(errorCases, { rootDir, skillsDir }) {
   const skillToErrors = new Map();
-  const orphanCases = [];
+  const orphanCases   = [];
 
   for (const errorCase of errorCases) {
     const allRefs = pickAllRefs(errorCase);
@@ -99,7 +165,6 @@ function run(errorCases, { rootDir, skillsDir }) {
       .map((ref) => resolveSkillPath(ref, rootDir, skillsDir))
       .filter(Boolean);
 
-    // Deduplicate (same file may appear under different ref forms)
     const uniquePaths = [...new Set(resolvedPaths)];
 
     if (uniquePaths.length === 0) {
@@ -108,13 +173,19 @@ function run(errorCases, { rootDir, skillsDir }) {
       continue;
     }
 
-    // Annotate the case so the optimizer knows which skills are candidates
-    const annotated = { ...errorCase, candidateSkillPaths: uniquePaths };
+    // Pick the single most relevant skill; keep full candidate list for context.
+    const attributed = pickMostRelevantSkill(errorCase, uniquePaths);
+    const annotated  = { ...errorCase, candidateSkillPaths: uniquePaths };
 
-    for (const skillPath of uniquePaths) {
-      if (!skillToErrors.has(skillPath)) skillToErrors.set(skillPath, []);
-      skillToErrors.get(skillPath).push(annotated);
+    if (uniquePaths.length > 1) {
+      console.log(
+        `  Attributed: ${errorCase.id} → ${path.basename(attributed, '.md')}` +
+        ` (${uniquePaths.length} candidates)`
+      );
     }
+
+    if (!skillToErrors.has(attributed)) skillToErrors.set(attributed, []);
+    skillToErrors.get(attributed).push(annotated);
   }
 
   return { skillToErrors, orphanCases };

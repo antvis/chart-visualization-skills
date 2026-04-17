@@ -20,6 +20,7 @@ const Reason = Object.freeze({
   BILLING:          'billing',          // 402 — abort
   CONTEXT_OVERFLOW: 'context_overflow', // too many tokens — reduce sample
   TIMEOUT:          'timeout',          // request timeout — retry
+  CONNECTION:       'connection',       // network-level failure — retry with backoff
   EVAL_FAILED:      'eval_failed',      // eval CLI exited non-zero
   INDEX_FAILED:     'index_failed',     // index build failed
   NOT_FOUND:        'not_found',        // 404 — wrong endpoint / model
@@ -45,6 +46,7 @@ const ACTIONS = {
   [Reason.BILLING]:          { shouldRetry: false, maxRetries: 0, reduceSample: false, abort: true,  suggestedDelayMs:      0 },
   [Reason.CONTEXT_OVERFLOW]: { shouldRetry: true,  maxRetries: 2, reduceSample: true,  abort: false, suggestedDelayMs:  1_000 },
   [Reason.TIMEOUT]:          { shouldRetry: true,  maxRetries: 3, reduceSample: false, abort: false, suggestedDelayMs:  5_000 },
+  [Reason.CONNECTION]:       { shouldRetry: true,  maxRetries: 4, reduceSample: false, abort: false, suggestedDelayMs: 10_000 },
   [Reason.EVAL_FAILED]:      { shouldRetry: true,  maxRetries: 2, reduceSample: false, abort: false, suggestedDelayMs:  2_000 },
   [Reason.INDEX_FAILED]:     { shouldRetry: true,  maxRetries: 2, reduceSample: false, abort: false, suggestedDelayMs:  3_000 },
   [Reason.NOT_FOUND]:        { shouldRetry: false, maxRetries: 0, reduceSample: false, abort: true,  suggestedDelayMs:      0 },
@@ -85,6 +87,12 @@ function classify(err) {
     reason = Reason.CONTEXT_OVERFLOW;
   } else if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('econnreset') || msg.includes('socket hang up')) {
     reason = Reason.TIMEOUT;
+  } else if (
+    msg.includes('connection error') || msg.includes('econnrefused') ||
+    msg.includes('network error')    || msg.includes('fetch failed')  ||
+    msg.includes('enotfound')        || msg.includes('epipe')
+  ) {
+    reason = Reason.CONNECTION;
   } else if (msg.includes('eval process exited')) {
     reason = Reason.EVAL_FAILED;
   } else if (msg.includes('index build exited')) {
