@@ -21,17 +21,27 @@ interface ResultDetailProps {
   onShowCompare: () => void;
 }
 
+const renderBadgeCls: Record<RenderState, string> = {
+  success: 'bg-green/10 text-green',
+  blank:   'bg-amber-dim text-amber',
+  error:   'bg-red-dim text-red',
+  pending: 'bg-active text-fg-subtle',
+};
+
+const renderBadgeLabel: Record<RenderState, string> = {
+  success: '✓ OK',
+  blank:   '◻ Blank',
+  error:   '✗ Error',
+  pending: '⏳ Pending',
+};
+
+const simColorCls = (sim: number) => sim >= 0.5 ? 'text-green' : sim >= 0.3 ? 'text-amber' : 'text-red';
+
+const btnBase = 'inline-flex items-center gap-1 h-[28px] px-[11px] border rounded-[6px] text-[12px] font-medium font-[inherit] cursor-pointer transition-all duration-150 whitespace-nowrap disabled:opacity-35 disabled:cursor-not-allowed';
+
 export default function ResultDetail({
-  run,
-  currentIndex,
-  renderResults,
-  onRenderResult,
-  onPrev,
-  onNext,
-  onRunAll,
-  isRunningAll,
-  onShowStats,
-  onShowCompare,
+  run, currentIndex, renderResults, onRenderResult,
+  onPrev, onNext, onRunAll, isRunningAll, onShowStats, onShowCompare,
 }: ResultDetailProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<unknown>(null);
@@ -41,14 +51,10 @@ export default function ResultDetail({
   const result: EvalResult | null = run?.results[currentIndex] ?? null;
   const code = result?.generatedCode ?? '';
 
-  // Sync editor when result changes
   useEffect(() => {
-    if (editorRef.current && code !== editorRef.current.getValue()) {
-      editorRef.current.setValue(code);
-    }
+    if (editorRef.current && code !== editorRef.current.getValue()) editorRef.current.setValue(code);
   }, [code]);
 
-  // Reflect cached render state when switching results
   useEffect(() => {
     if (!result) return;
     const cached = renderResults[result.id ?? `test-${currentIndex}`];
@@ -69,7 +75,6 @@ export default function ResultDetail({
 
     try {
       let instance = execChartCode(container, src);
-
       if (instance && typeof (instance as Promise<unknown>).then === 'function') {
         instance = await Promise.race([
           instance as Promise<unknown>,
@@ -78,12 +83,9 @@ export default function ResultDetail({
       }
       instanceRef.current = instance;
 
-      // G6 uses RAF-based async rendering: even after render() resolves the canvas
-      // may not be painted yet. Wait for 2 animation frames then add a safety buffer.
       const isG6 = src.includes('@antv/g6') || src.includes('new Graph(');
       await new Promise<void>((resolve) => {
         if (isG6) {
-          // Wait 2 RAFs + 200ms to cover slow layouts / large graphs
           requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(resolve, 200)));
         } else {
           setTimeout(resolve, 300);
@@ -101,7 +103,6 @@ export default function ResultDetail({
     }
   }, [code, result, currentIndex, onRenderResult]);
 
-  // Auto-run when result changes
   useEffect(() => {
     if (!code.trim()) return;
     const isG6 = code.includes('@antv/g6') || code.includes('new Graph(');
@@ -110,18 +111,14 @@ export default function ResultDetail({
       const check = () => {
         // @ts-ignore
         const ready = isG6 ? !!window.G6 : !!window.G2;
-        if (ready) { runCode(); }
-        else { poll = setTimeout(check, 200); }
+        if (ready) { runCode(); } else { poll = setTimeout(check, 200); }
       };
       check();
     }, 400);
     return () => { clearTimeout(timer); clearTimeout(poll!); };
-  }, [currentIndex]); // intentionally only re-run when index changes, not on code edit
+  }, [currentIndex, run?.dataset]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const copyCode = () => {
-    const src = editorRef.current?.getValue() ?? code;
-    navigator.clipboard.writeText(src);
-  };
+  const copyCode = () => { navigator.clipboard.writeText(editorRef.current?.getValue() ?? code); };
 
   const exportBadCases = () => {
     if (!run) return;
@@ -141,40 +138,37 @@ export default function ResultDetail({
   };
 
   const sim = result?.evaluation?.similarity ?? 0;
-  const simClass = sim >= 0.5 ? 'high' : sim >= 0.3 ? 'medium' : 'low';
+  const simCls = sim >= 0.5 ? 'high' : sim >= 0.3 ? 'medium' : 'low';
   const totalVisible = run?.results.length ?? 0;
 
   return (
-    <div className="rs-detail">
+    <div className="flex-1 flex flex-col overflow-hidden min-w-0">
       {/* Toolbar */}
-      <div className="rs-toolbar">
-        <Link href="/" className="rs-btn" title="切换到数据集编辑器">← Studio</Link>
-        <div className="rs-toolbar-sep" />
-        <button className="rs-btn primary" onClick={() => runCode()}>▶ Run</button>
-        <button
-          className="rs-btn purple"
-          onClick={onRunAll}
-          disabled={isRunningAll || !run}
-          title="Run all results sequentially"
-        >
+      <div className="h-11 bg-surface-subtle border-b border-border-subtle flex items-center px-3 gap-[6px] shrink-0">
+        <Link href="/" className={`${btnBase} bg-transparent border-border text-fg-muted hover:bg-hover hover:text-fg hover:border-border-focus`} title="切换到数据集编辑器">← Studio</Link>
+        <div className="w-px h-5 bg-border mx-[2px] shrink-0" />
+        <button className={`${btnBase} bg-accent border-accent text-white hover:bg-accent-hover hover:border-accent-hover`} onClick={() => runCode()}>▶ Run</button>
+        <button className={`${btnBase} bg-purple border-purple text-white hover:bg-[#9333ea] hover:border-[#9333ea] disabled:bg-border disabled:border-border disabled:text-fg-subtle`} onClick={onRunAll} disabled={isRunningAll || !run} title="Run all results sequentially">
           {isRunningAll ? '⏳ Running…' : '▶▶ Run All'}
         </button>
-        <button className="rs-btn" onClick={copyCode}>Copy</button>
-        <button className="rs-btn green" onClick={onShowStats} disabled={!run}>Stats</button>
-        <button className="rs-btn amber" onClick={onShowCompare} disabled={!run}>Compare</button>
-        <button className="rs-btn red" onClick={exportBadCases} disabled={!run}>Export Bad</button>
-        <div className="rs-toolbar-spacer" />
-        <button className="rs-btn" onClick={onPrev} disabled={currentIndex <= 0}>◀ Prev</button>
-        <span className="rs-nav-pos">{run ? `${currentIndex + 1} / ${totalVisible}` : '—'}</span>
-        <button className="rs-btn" onClick={onNext} disabled={!run || currentIndex >= totalVisible - 1}>Next ▶</button>
+        <button className={`${btnBase} bg-transparent border-border text-fg-muted hover:bg-hover hover:text-fg hover:border-border-focus`} onClick={copyCode}>Copy</button>
+        <button className={`${btnBase} bg-green border-green text-white hover:bg-[#16a34a] hover:border-[#16a34a]`} onClick={onShowStats} disabled={!run}>Stats</button>
+        <button className={`${btnBase} bg-amber border-amber text-white hover:bg-[#d97706] hover:border-[#d97706]`} onClick={onShowCompare} disabled={!run}>Compare</button>
+        <button className={`${btnBase} bg-red border-red text-white hover:bg-[#dc2626] hover:border-[#dc2626]`} onClick={exportBadCases} disabled={!run}>Export Bad</button>
+        <div className="flex-1" />
+        <button className={`${btnBase} bg-transparent border-border text-fg-muted hover:bg-hover hover:text-fg hover:border-border-focus`} onClick={onPrev} disabled={currentIndex <= 0}>◀ Prev</button>
+        <span className="text-[11px] text-fg-subtle min-w-[48px] text-center tabular-nums">{run ? `${currentIndex + 1} / ${totalVisible}` : '—'}</span>
+        <button className={`${btnBase} bg-transparent border-border text-fg-muted hover:bg-hover hover:text-fg hover:border-border-focus`} onClick={onNext} disabled={!run || currentIndex >= totalVisible - 1}>Next ▶</button>
       </div>
 
       {/* Content */}
-      <div className="rs-content">
+      <div className="flex-1 flex overflow-hidden">
         {/* Code panel */}
-        <div className="rs-code-panel">
-          <div className="rs-panel-header">Generated Code</div>
-          <div className="rs-code-editor">
+        <div className="w-[44%] min-w-[300px] flex flex-col border-r border-border-subtle bg-surface-subtle">
+          <div className="h-9 flex items-center px-[14px] gap-2 border-b border-border-subtle bg-panel shrink-0 text-[11px] font-semibold text-fg-muted uppercase tracking-[0.6px]">
+            Generated Code
+          </div>
+          <div className="flex-1 overflow-hidden">
             <MonacoEditor
               height="100%"
               language="javascript"
@@ -198,51 +192,52 @@ export default function ResultDetail({
         </div>
 
         {/* Preview + info */}
-        <div className="rs-preview-panel">
-          <div className="rs-panel-header">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="h-9 flex items-center px-[14px] gap-2 border-b border-border-subtle bg-panel shrink-0 text-[11px] font-semibold text-fg-muted uppercase tracking-[0.6px]">
             Preview
-            <span className={`rs-render-badge ${renderStatus}`}>
-              {renderStatus === 'success' ? '✓ OK' :
-               renderStatus === 'blank'   ? '◻ Blank' :
-               renderStatus === 'error'   ? '✗ Error' : '⏳ Pending'}
+            <span className={`text-[11px] font-medium px-2 py-[2px] rounded-full ml-[6px] ${renderBadgeCls[renderStatus]}`}>
+              {renderBadgeLabel[renderStatus]}
             </span>
           </div>
-          <div className="rs-preview-container">
+          <div className="flex-1 overflow-auto p-4">
             <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: 360 }} />
           </div>
 
           {/* Info panel */}
           {result && (
-            <div className="rs-info-panel">
+            <div className="border-t border-border-subtle px-[14px] py-3 bg-surface-subtle flex flex-col gap-[10px] max-h-[180px] overflow-y-auto shrink-0">
               {/* Similarity bar */}
-              <div className="rs-sim-bar-wrap">
-                <div className="rs-sim-bar-label">
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between text-[11px] text-fg-subtle">
                   <span>Similarity</span>
-                  <span className={`rs-sim-value ${simClass}`}>{(sim * 100).toFixed(1)}%</span>
+                  <span className={`font-semibold ${simColorCls(sim)}`}>{(sim * 100).toFixed(1)}%</span>
                 </div>
-                <div className="rs-sim-bar-bg">
-                  <div className={`rs-sim-bar-fill ${simClass}`} style={{ width: `${sim * 100}%` }} />
+                <div className="h-[6px] bg-active rounded-[3px] overflow-hidden">
+                  <div
+                    className={`h-full rounded-[3px] transition-[width] duration-300 ${simCls === 'high' ? 'bg-green' : simCls === 'medium' ? 'bg-amber' : 'bg-red'}`}
+                    style={{ width: `${sim * 100}%` }}
+                  />
                 </div>
               </div>
 
               {/* Skills */}
               {(result.loadedSkillPaths ?? []).length > 0 && (
-                <div className="rs-info-row">
-                  <span className="rs-info-label">Skills</span>
-                  <div className="rs-tags">
+                <div className="flex items-start gap-2">
+                  <span className="text-[11px] text-fg-subtle shrink-0 pt-[2px]">Skills</span>
+                  <div className="flex flex-wrap gap-1">
                     {[...new Set((result.loadedSkillPaths ?? []).map((p) => p.split('/').pop()?.replace('.md', '') ?? p))].map((s) => (
-                      <span key={s} className="rs-tag amber">{s}</span>
+                      <span key={s} className="px-[7px] py-[1px] rounded-full text-[10px] font-medium bg-amber-dim text-amber">{s}</span>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Issues / errors */}
+              {/* Issues */}
               {(result.error || (result.evaluation?.hasIssues && (result.evaluation.issues ?? []).length > 0)) && (
-                <div className="rs-issues">
-                  {result.error && <div className="rs-issue-item err">✗ {result.error}</div>}
+                <div className="flex flex-col gap-1">
+                  {result.error && <div className="text-[11px] py-[3px] text-red">✗ {result.error}</div>}
                   {(result.evaluation?.issues ?? []).map((issue, i) => (
-                    <div key={i} className="rs-issue-item warn">⚠ {issue}</div>
+                    <div key={i} className="text-[11px] py-[3px] text-amber">⚠ {issue}</div>
                   ))}
                 </div>
               )}

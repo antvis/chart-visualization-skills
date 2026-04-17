@@ -19,8 +19,8 @@ interface GridViewProps {
 export default function GridView({ filteredCases, selectedIdx, onEdit }: GridViewProps) {
   if (filteredCases.length === 0) {
     return (
-      <div className="grid-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
+      <div className="flex flex-col items-center justify-center gap-3 py-[60px] text-fg-subtle text-[13px]">
+        <svg className="w-10 h-10 opacity-25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
           <rect x="3" y="3" width="8" height="8" rx="1.5" />
           <rect x="13" y="3" width="8" height="8" rx="1.5" />
           <rect x="3" y="13" width="8" height="8" rx="1.5" />
@@ -32,7 +32,7 @@ export default function GridView({ filteredCases, selectedIdx, onEdit }: GridVie
   }
 
   return (
-    <div className="grid-view">
+    <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
       {filteredCases.map(({ c, i }) => (
         <ErrorBoundary key={c.id || i} index={i}>
           <GridCell

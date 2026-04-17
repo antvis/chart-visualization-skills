@@ -35,7 +35,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     }));
 
     return (
-      <div className="code-editor">
+      <div className="flex-1 relative overflow-hidden">
         <MonacoEditor
           height="100%"
           language="javascript"

@@ -26,7 +26,6 @@ export default function ResultsPage() {
   const [showStats, setShowStats] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
 
-  // Load dataset list
   useEffect(() => {
     fetch('/api/results')
       .then((r) => r.json())
@@ -37,7 +36,6 @@ export default function ResultsPage() {
       .catch(console.error);
   }, []);
 
-  // Load run when file changes
   useEffect(() => {
     if (!currentFile) return;
     setLoading(true);
@@ -66,14 +64,11 @@ export default function ResultsPage() {
     setRenderResults({});
     for (let i = 0; i < run.results.length; i++) {
       setCurrentIndex(i);
-      // ResultDetail will auto-run via its useEffect on currentIndex change
-      // Wait enough time for render + blank detection
       await new Promise((r) => setTimeout(r, 1200));
     }
     setIsRunningAll(false);
   }, [run, isRunningAll]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement).tagName;
@@ -86,7 +81,7 @@ export default function ResultsPage() {
   }, [run]);
 
   return (
-    <div className="rs-page">
+    <div className="flex h-screen overflow-hidden">
       {loading && <div className="rs-loading-bar" />}
 
       <ResultSidebar

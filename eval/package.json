@@ -1,11 +1,11 @@
 {
-  "name": "chart-visualization-skills-eval",
+  "name": "eval",
   "version": "0.1.0",
   "private": true,
   "description": "Evaluation suite for chart-visualization-skills",
   "type": "commonjs",
   "scripts": {
-    "studio": "pnpm --filter chart-visualization-skills-eval-studio dev",
+    "studio": "pnpm --filter eval-studio dev",
     "eval": "node eval-cli/index.js",
     "recall": "node eval-recall.js",
     "tune": "node _tune-bm25.js"

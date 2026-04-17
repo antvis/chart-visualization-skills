@@ -18,12 +18,7 @@ interface GridCellProps {
 
 type RenderState = 'idle' | 'rendering' | 'ok' | 'error';
 
-export default function GridCell({
-  index,
-  caseData,
-  isSelected,
-  onEdit
-}: GridCellProps) {
+export default function GridCell({ index, caseData, isSelected, onEdit }: GridCellProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<unknown>(null);
@@ -45,11 +40,7 @@ export default function GridCell({
 
     const inst = instanceRef.current as { destroy?: () => void } | null;
     if (inst?.destroy) {
-      try {
-        inst.destroy();
-      } catch (_) {
-        /* ignore cleanup errors */
-      }
+      try { inst.destroy(); } catch (_) { /* ignore */ }
     }
     instanceRef.current = null;
     container.innerHTML = '';
@@ -65,7 +56,6 @@ export default function GridCell({
       return;
     }
 
-    // G2 chart.render() returns a Promise — catch async failures
     if (result && typeof (result as Promise<unknown>).then === 'function') {
       (result as Promise<unknown>).then(
         () => {
@@ -86,37 +76,28 @@ export default function GridCell({
     }
   }, [caseData.codeString, setError]);
 
-  // Lazy render via IntersectionObserver
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) render();
-      },
+      ([entry]) => { if (entry.isIntersecting) render(); },
       { rootMargin: '200px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [render]);
 
-  // Re-render when code changes (only if already rendered at least once)
   useEffect(() => {
     if (state !== 'idle') render();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseData.codeString]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       renderTickRef.current = -1;
       const inst = instanceRef.current as { destroy?: () => void } | null;
       if (inst?.destroy) {
-        try {
-          inst.destroy();
-        } catch (_) {
-          /* ignore */
-        }
+        try { inst.destroy(); } catch (_) { /* ignore */ }
       }
     };
   }, []);
@@ -127,52 +108,47 @@ export default function GridCell({
   return (
     <div
       ref={rootRef}
-      className={`grid-cell${isSelected ? ' selected' : ''}`}
+      className={`bg-surface border rounded-[12px] overflow-hidden cursor-pointer transition-[box-shadow,border-color,transform] duration-150 flex flex-col group
+        ${isSelected
+          ? 'border-accent shadow-[0_0_0_2px_var(--color-accent-dim),0_4px_16px_rgba(99,102,241,0.15)]'
+          : 'border-border hover:border-accent hover:shadow-[0_4px_16px_rgba(99,102,241,0.12)] hover:-translate-y-px'
+        }`}
       onClick={onEdit}
       title={desc}
     >
-      <div className='grid-cell-chart'>
+      <div className="h-[220px] relative overflow-hidden bg-app border-b border-border-subtle">
         <div ref={chartRef} style={{ width: '100%', height: '100%' }} />
 
         {(state === 'idle' || state === 'rendering') && (
-          <div className='grid-cell-placeholder'>
-            <div className='spinner' />
+          <div className="absolute inset-0 flex items-center justify-center bg-app z-[1] pointer-events-none">
+            <div className="spinner" />
           </div>
         )}
         {state === 'error' && (
-          <div className='grid-cell-error'>
-            <svg
-              viewBox='0 0 16 16'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='1.5'
-            >
-              <circle cx='8' cy='8' r='6' />
-              <path d='M8 5v3M8 10.5v.5' strokeLinecap='round' />
+          <div className="absolute inset-0 z-[1] flex flex-col items-center justify-center gap-2 p-4 bg-red-dim text-red text-[11px] text-center">
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <circle cx="8" cy="8" r="6" />
+              <path d="M8 5v3M8 10.5v.5" strokeLinecap="round" />
             </svg>
-            <span>{errMsg}</span>
+            <span className="break-words opacity-80">{errMsg}</span>
           </div>
         )}
       </div>
 
-      <div className='grid-cell-footer'>
-        <span className='grid-cell-num'>#{index + 1}</span>
-        <span className='grid-cell-desc'>{shortDesc}</span>
+      <div className="flex items-center gap-2 px-3 py-[10px] bg-surface min-h-[48px]">
+        <span className={`text-[10px] font-bold shrink-0 font-mono ${isSelected ? 'text-accent' : 'text-fg-subtle'}`}>
+          #{index + 1}
+        </span>
+        <span className="flex-1 text-[11.5px] text-fg-muted leading-[1.4] overflow-hidden line-clamp-2 break-all">
+          {shortDesc}
+        </span>
         <button
-          className='grid-cell-edit'
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          title='编辑此 case'
+          className="inline-flex items-center gap-1 h-[26px] px-2 bg-accent-dim border border-accent/30 rounded-[6px] text-accent text-[11px] font-medium font-[inherit] cursor-pointer transition-all duration-150 whitespace-nowrap shrink-0 opacity-0 group-hover:opacity-100 hover:bg-accent hover:text-white hover:border-accent"
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          title="编辑此 case"
         >
-          <svg
-            viewBox='0 0 14 14'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.4'
-          >
-            <path d='M9.5 2.5l2 2-7 7H2.5v-2l7-7z' strokeLinejoin='round' />
+          <svg className="w-[11px] h-[11px]" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4">
+            <path d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z" strokeLinejoin="round" />
           </svg>
           编辑
         </button>

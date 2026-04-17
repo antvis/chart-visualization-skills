@@ -545,70 +545,70 @@ graph.on(GraphEvent.AFTER_LAYOUT, () => console.log('布局完成'));
 ## Reference 文档索引
 
 ### 核心
-- `g6-core-graph-init`：Graph 初始化完整配置
-- `g6-core-data-structure`：数据结构规范
-- `g6-core-graph-api`：Graph 实例 API（增删改查、视口、状态）
-- `g6-core-events`：事件系统（元素事件、画布事件、生命周期）
-- `g6-core-custom-element`：自定义节点/边（register + BaseNode/BaseEdge）
-- `g6-core-transforms-animation`：数据变换（map-node-size）与动画配置
+- [`g6-core-graph-init`](references/core/g6-core-graph-init.md)：Graph 初始化完整配置
+- [`g6-core-data-structure`](references/core/g6-core-data-structure.md)：数据结构规范
+- [`g6-core-graph-api`](references/core/g6-core-graph-api.md)：Graph 实例 API（增删改查、视口、状态）
+- [`g6-core-events`](references/core/g6-core-events.md)：事件系统（元素事件、画布事件、生命周期）
+- [`g6-core-custom-element`](references/core/g6-core-custom-element.md)：自定义节点/边（register + BaseNode/BaseEdge）
+- [`g6-core-transforms-animation`](references/core/g6-core-transforms-animation.md)：数据变换（map-node-size）与动画配置
 
 ### 节点类型
-- `g6-node-circle`：圆形（通用）
-- `g6-node-rect`：矩形（流程图）
-- `g6-node-image`：图片节点
-- `g6-node-diamond-ellipse-hexagon`：菱形/椭圆/六边形
-- `g6-node-star-triangle-donut`：五角星/三角形/环形进度
-- `g6-node-html`：HTML 富文本节点
-- `g6-node-react`：React/Vue 自定义节点（@antv/g6-extension-react）
+- [`g6-node-circle`](references/elements/nodes/g6-node-circle.md)：圆形（通用）
+- [`g6-node-rect`](references/elements/nodes/g6-node-rect.md)：矩形（流程图）
+- [`g6-node-image`](references/elements/nodes/g6-node-image.md)：图片节点
+- [`g6-node-diamond-ellipse-hexagon`](references/elements/nodes/g6-node-diamond-ellipse-hexagon.md)：菱形/椭圆/六边形
+- [`g6-node-star-triangle-donut`](references/elements/nodes/g6-node-star-triangle-donut.md)：五角星/三角形/环形进度
+- [`g6-node-html`](references/elements/nodes/g6-node-html.md)：HTML 富文本节点
+- [`g6-node-react`](references/elements/nodes/g6-node-react.md)：React/Vue 自定义节点（@antv/g6-extension-react）
 
 ### Combo
-- `g6-combo-overview`：Combo 分组（circle/rect，折叠展开）
+- [`g6-combo-overview`](references/elements/combos/g6-combo-overview.md)：Combo 分组（circle/rect，折叠展开）
 
 ### 边类型
-- `g6-edge-line`：直线边
-- `g6-edge-cubic`：三次贝塞尔曲线边
-- `g6-edge-cubic-directional`：有向三次曲线（cubic-horizontal 水平 / cubic-vertical 垂直）
-- `g6-edge-polyline`：折线边
-- `g6-edge-quadratic-loop`：二次曲线与自环边
+- [`g6-edge-line`](references/elements/edges/g6-edge-line.md)：直线边
+- [`g6-edge-cubic`](references/elements/edges/g6-edge-cubic.md)：三次贝塞尔曲线边
+- [`g6-edge-cubic-directional`](references/elements/edges/g6-edge-cubic-directional.md)：有向三次曲线（cubic-horizontal 水平 / cubic-vertical 垂直）
+- [`g6-edge-polyline`](references/elements/edges/g6-edge-polyline.md)：折线边
+- [`g6-edge-quadratic-loop`](references/elements/edges/g6-edge-quadratic-loop.md)：二次曲线与自环边
 
 ### 布局
-- `g6-layout-force`：力导向（force/d3-force）
-- `g6-layout-dagre`：层次/流程图（dagre）
-- `g6-layout-circular`：环形
-- `g6-layout-grid`：网格
-- `g6-layout-mindmap`：思维导图
-- `g6-layout-advanced`：同心圆/辐射/mds/fruchterman
-- `g6-layout-combo-fishbone`：复合布局（combo-combined）+ 鱼骨布局（fishbone）
+- [`g6-layout-force`](references/layouts/g6-layout-force.md)：力导向（force/d3-force）
+- [`g6-layout-dagre`](references/layouts/g6-layout-dagre.md)：层次/流程图（dagre）
+- [`g6-layout-circular`](references/layouts/g6-layout-circular.md)：环形
+- [`g6-layout-grid`](references/layouts/g6-layout-grid.md)：网格
+- [`g6-layout-mindmap`](references/layouts/g6-layout-mindmap.md)：思维导图
+- [`g6-layout-advanced`](references/layouts/g6-layout-advanced.md)：同心圆/辐射/mds/fruchterman
+- [`g6-layout-combo-fishbone`](references/layouts/g6-layout-combo-fishbone.md)：复合布局（combo-combined）+ 鱼骨布局（fishbone）
 
 ### 数据变换
-- `g6-core-transforms-animation`：map-node-size 与动画配置
-- `g6-transform-parallel-edges-radial`：平行边处理（process-parallel-edges）+ 径向标签（place-radial-labels）
+- [`g6-core-transforms-animation`](references/core/g6-core-transforms-animation.md)：map-node-size 与动画配置
+- [`g6-transform-parallel-edges-radial`](references/transforms/g6-transform-parallel-edges-radial.md)：平行边处理（process-parallel-edges）+ 径向标签（place-radial-labels）
 
 ### 交互行为
-- `g6-behavior-click-select`：点击选中
-- `g6-behavior-drag-element`：拖拽节点
-- `g6-behavior-canvas-nav`：画布拖拽+缩放
-- `g6-behavior-hover-activate`：悬停激活
-- `g6-behavior-lasso-collapse`：套索选择 + 折叠展开
-- `g6-behavior-create-edge-focus`：创建边 + 聚焦元素
-- `g6-behavior-advanced`：fix-element-size / auto-adapt-label / drag-element-force
+- [`g6-behavior-click-select`](references/behaviors/g6-behavior-click-select.md)：点击选中
+- [`g6-behavior-drag-element`](references/behaviors/g6-behavior-drag-element.md)：拖拽节点
+- [`g6-behavior-canvas-nav`](references/behaviors/g6-behavior-canvas-nav.md)：画布拖拽+缩放
+- [`g6-behavior-hover-activate`](references/behaviors/g6-behavior-hover-activate.md)：悬停激活
+- [`g6-behavior-lasso-collapse`](references/behaviors/g6-behavior-lasso-collapse.md)：套索选择 + 折叠展开
+- [`g6-behavior-create-edge-focus`](references/behaviors/g6-behavior-create-edge-focus.md)：创建边 + 聚焦元素
+- [`g6-behavior-advanced`](references/behaviors/g6-behavior-advanced.md)：fix-element-size / auto-adapt-label / drag-element-force
 
 ### 插件
-- `g6-plugin-tooltip`：悬停提示框
-- `g6-plugin-minimap`：缩略图
-- `g6-plugin-contextmenu-toolbar`：右键菜单 + 工具栏
-- `g6-plugin-history-legend`：撤销重做 + 图例
-- `g6-plugin-fisheye-hull-watermark`：鱼眼放大 + 轮廓包围 + 水印
-- `g6-plugin-timebar-gridline`：时间轴 + 网格线
-- `g6-plugin-background-snapline`：画布背景（background）+ 对齐线（snapline）
-- `g6-plugin-edge-bundling-bubble`：边绑定（edge-bundling）+ 气泡集（bubble-sets）
-- `g6-plugin-fullscreen-title`：全屏（fullscreen）+ 图标题（title）
+- [`g6-plugin-tooltip`](references/plugins/g6-plugin-tooltip.md)：悬停提示框
+- [`g6-plugin-minimap`](references/plugins/g6-plugin-minimap.md)：缩略图
+- [`g6-plugin-contextmenu-toolbar`](references/plugins/g6-plugin-contextmenu-toolbar.md)：右键菜单 + 工具栏
+- [`g6-plugin-history-legend`](references/plugins/g6-plugin-history-legend.md)：撤销重做 + 图例
+- [`g6-plugin-fisheye-hull-watermark`](references/plugins/g6-plugin-fisheye-hull-watermark.md)：鱼眼放大 + 轮廓包围 + 水印
+- [`g6-plugin-timebar-gridline`](references/plugins/g6-plugin-timebar-gridline.md)：时间轴 + 网格线
+- [`g6-plugin-background-snapline`](references/plugins/g6-plugin-background-snapline.md)：画布背景（background）+ 对齐线（snapline）
+- [`g6-plugin-edge-bundling-bubble`](references/plugins/g6-plugin-edge-bundling-bubble.md)：边绑定（edge-bundling）+ 气泡集（bubble-sets）
+- [`g6-plugin-fullscreen-title`](references/plugins/g6-plugin-fullscreen-title.md)：全屏（fullscreen）+ 图标题（title）
 
 ### 状态与主题
-- `g6-state-overview`：元素状态系统
-- `g6-theme-overview`：主题系统
+- [`g6-state-overview`](references/states/g6-state-overview.md)：元素状态系统
+- [`g6-theme-overview`](references/themes/g6-theme-overview.md)：主题系统
 
 ### 场景模板
-- `g6-pattern-network-graph`：网络关系图
-- `g6-pattern-tree-graph`：树形图/组织架构
-- `g6-pattern-flow-chart`：流程图
+- [`g6-pattern-network-graph`](references/patterns/g6-pattern-network-graph.md)：网络关系图
+- [`g6-pattern-tree-graph`](references/patterns/g6-pattern-tree-graph.md)：树形图/组织架构
+- [`g6-pattern-flow-chart`](references/patterns/g6-pattern-flow-chart.md)：流程图

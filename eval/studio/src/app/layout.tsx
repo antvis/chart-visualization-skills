@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang='zh-CN'>
-      <body>
+      <body className="bg-app text-fg text-[13px] leading-[1.5] h-screen overflow-hidden antialiased">
         {children}
         {/* G2 & G6 via CDN for chart preview */}
         <Script
