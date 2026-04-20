@@ -60,11 +60,11 @@ Harness Engineering approach has been rigorously tested against 174 chart genera
 
 | **Model** | **G2** | **G6** |
 | :---: | :---: | :---: |
-| qwen3-coder-480b-a35b-instruct | **98.2%**  </br>  <small style="color:#009955;">+18.2%</small> | 94.8% |
-| Kimi-K2.5 | 97.7%  </br>  <small style="color:#009955;">+17.7%</small> | 96.9% |
-| GLM-5.1 | 93.6%  </br>  <small style="color:#009955;">+13.6%</small> | 92.78% |
-| DeepSeek-V3.2 | 90.8%  </br>  <small style="color:#009955;">+10.8%</small> | **97.9%** |
-| Context7 Baseline | 80% | - |
+| qwen3-coder-480b-a35b-instruct | ✨ 98.2% <sup><sub>+17.7%</sub></sup> | 94.8% <sup><sub>+15.6%</sub></sup> |
+| Kimi-K2.5 | 97.7% <sup><sub>+17.2%</sub></sup> | 96.9% <sup><sub>+17.7%</sub></sup> |
+| GLM-5.1 | 93.6% <sup><sub>+13.1%</sub></sup> | 92.8% <sup><sub>+13.6%</sub></sup> |
+| DeepSeek-V3.2 | 90.8% <sup><sub>+10.3%</sub></sup> | ✨ 97.9% <sup><sub>+18.7%</sub></sup> |
+| Context7 <sub>Baseline</sub> | 80.5% | 79.2% |
 
 The results show that Harness Engineering enables LLMs to achieve near-production-ready accuracy (up to 98.2%), significantly outperforming the Context7 baseline approach.
 
