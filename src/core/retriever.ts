@@ -28,16 +28,16 @@ export function availableLibraries(): string[] {
  * @returns The skill index for the specified library.
  */
 export function loadIndex(library: string): SkillIndex {
-  const libs = availableLibraries();
-  if (libs.length > 0 && !libs.includes(library)) {
-    throw new Error(
-      `Unknown library: "${library}". Available: ${libs.join(', ')}`
-    );
-  }
-
   const indexFile = path.join(DEFAULT_INDEX_DIR, `${library}.index.json`);
+
   if (!fs.existsSync(indexFile)) {
-    throw new Error(`Index file not found for "${library}". Run build first.`);
+    // Only scan the directory on the error path to build a helpful message.
+    const libs = availableLibraries();
+    throw new Error(
+      libs.length > 0
+        ? `Unknown library: "${library}". Available: ${libs.join(', ')}`
+        : `Index file not found for "${library}". Run build first.`
+    );
   }
 
   return JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
@@ -73,7 +73,9 @@ export function retrieve(
 
   let skills: Skill[];
   if (library) {
-    skills = getBM25Index(library).search(query, topK).map((r) => r.skill);
+    skills = getBM25Index(library)
+      .search(query, topK)
+      .map((r) => r.skill);
   } else {
     skills = availableLibraries()
       .flatMap((lib) => getBM25Index(lib).search(query, topK))

@@ -1,12 +1,5 @@
 #!/usr/bin/env node
 
-// Catch unhandled errors thrown inside Commander action handlers and
-// print only the message — no stack trace for expected CLI errors.
-process.on('uncaughtException', (err) => {
-  console.error(`Error: ${err.message}`);
-  process.exit(1);
-});
-
 import { Command } from 'commander';
 import path from 'path';
 import { registerRetrieveCommand } from './commands/retrieve';
@@ -21,11 +14,26 @@ const program = new Command();
 program
   .name('antv')
   .description('CLI tool for AntV chart visualization skills retrieval')
-  .version(pkg.version);
+  .version(pkg.version)
+  .option('--debug', 'Show full stack trace on error');
 
 registerRetrieveCommand(program);
 registerGetCommand(program);
 registerListCommand(program);
 registerInfoCommand(program);
 
-program.parse();
+// Wrap parse() so errors thrown inside synchronous action handlers are caught
+// here rather than relying on the global uncaughtException hook, which would
+// also swallow unexpected programming errors (TypeError, ReferenceError, etc.).
+// Pass --debug to see the full stack when debugging unexpected failures.
+try {
+  program.parse();
+} catch (err) {
+  const debug = process.argv.includes('--debug');
+  if (debug) {
+    console.error(err);
+  } else {
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  process.exit(1);
+}
