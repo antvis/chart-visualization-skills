@@ -6,8 +6,8 @@ export function registerInfoCommand(program: Command): void {
     .command('info')
     .description('Show skill info from SKILL.md')
     .option('--library <lib>', 'Library to show info for (g2 or g6)', 'g2')
-    .option('--json', 'Output as JSON (for scripting)')
-    .action((opts: { library: string; json?: true }) => {
+    .option('--output <format>', 'Output format: json | text', 'text')
+    .action((opts: { library: string; output: string }) => {
       const skill = getSkillInfo(opts.library);
 
       if (!skill) {
@@ -15,7 +15,7 @@ export function registerInfoCommand(program: Command): void {
         process.exit(1);
       }
 
-      if (opts.json) {
+      if (opts.output === 'json') {
         console.log(JSON.stringify(skill, null, 2));
         return;
       }

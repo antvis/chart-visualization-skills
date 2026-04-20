@@ -96,11 +96,20 @@ npm install -g @antv/chart-visualization-skills
 # Retrieve skills by query
 antv retrieve "bar chart" --library g2 --topk 10 --content
 
+# Retrieve skills and output as JSON
+antv retrieve "bar chart" --library g2 --output json
+
 # List all available skills
 antv list --library g2 --category core
 
+# List skills and output as JSON
+antv list --output json
+
 # Show skill info
 antv info --library g2
+
+# Show skill info as JSON
+antv info --library g2 --output json
 ```
 
 **Usage for the command**:
@@ -116,9 +125,13 @@ Options:
 
 Commands:
   retrieve [options] <query>  Search for skills matching a query
+  get [options] <id>          Get a skill by its exact ID
   list [options]              List all available skills
   info [options]              Show skill info from SKILL.md
   help [command]              display help for command
+
+Options shared by all commands:
+  --output <format>           Output format: json | text (default: "text")
 ```
 
 ### API Usage

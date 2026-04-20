@@ -13,16 +13,14 @@ export function registerListCommand(program: Command): void {
       '--difficulty <level>',
       'Filter by difficulty (beginner|intermediate|advanced)'
     )
-    .option('--stats', 'Show category statistics instead of full list')
-    .option('--json', 'Output as JSON (for scripting)')
+    .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       (opts: {
         library?: string;
         category?: string;
         tags?: string;
         difficulty?: string;
-        stats?: true;
-        json?: true;
+        output: string;
       }) => {
         const skills = listSkills({
           library: opts.library,
@@ -31,27 +29,8 @@ export function registerListCommand(program: Command): void {
           difficulty: opts.difficulty || null
         });
 
-        if (opts.json) {
+        if (opts.output === 'json') {
           console.log(JSON.stringify(skills, null, 2));
-          return;
-        }
-
-        if (opts.stats) {
-          const byCategory = skills.reduce(
-            (acc: Record<string, number>, skill) => {
-              acc[skill.category] = (acc[skill.category] || 0) + 1;
-              return acc;
-            },
-            {}
-          );
-          const grouped = Object.entries(byCategory).sort(
-            ([, a], [, b]) => b - a
-          );
-          const libLabel = opts.library ? opts.library.toUpperCase() : 'ALL';
-          console.log(`${libLabel}  (${skills.length} skills total)`);
-          for (const [cat, count] of grouped) {
-            console.log(`  ${cat.padEnd(20)} ${count}`);
-          }
           return;
         }
 

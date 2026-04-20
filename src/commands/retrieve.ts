@@ -8,11 +8,11 @@ export function registerRetrieveCommand(program: Command): void {
     .option('--library <lib>', 'Filter by library (g2 or g6)')
     .option('--topk <n>', 'Number of results to return', '7')
     .option('--content', 'Include markdown content body')
-    .option('--json', 'Output as JSON (for scripting)')
+    .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       (
         query: string,
-        opts: { library?: string; topk: string; content?: true; json?: true }
+        opts: { library?: string; topk: string; content?: true; output: string }
       ) => {
         const topK = parseInt(opts.topk, 10) || 7;
         const skills = retrieve(query, {
@@ -21,7 +21,7 @@ export function registerRetrieveCommand(program: Command): void {
           content: !!opts.content
         });
 
-        if (opts.json) {
+        if (opts.output === 'json') {
           console.log(JSON.stringify(skills, null, 2));
           return;
         }

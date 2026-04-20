@@ -6,8 +6,8 @@ export function registerGetCommand(program: Command): void {
     .command('get <id>')
     .description('Get a skill by its exact ID')
     .option('--library <lib>', 'Restrict search to a specific library')
-    .option('--json', 'Output as JSON (for scripting)')
-    .action((id: string, opts: { library?: string; json?: true }) => {
+    .option('--output <format>', 'Output format: json | text', 'text')
+    .action((id: string, opts: { library?: string; output: string }) => {
       const skill = getSkillById(id, opts.library);
 
       if (!skill) {
@@ -17,7 +17,7 @@ export function registerGetCommand(program: Command): void {
         process.exit(1);
       }
 
-      if (opts.json) {
+      if (opts.output === 'json') {
         console.log(JSON.stringify(skill, null, 2));
         return;
       }
