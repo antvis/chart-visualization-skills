@@ -69,9 +69,18 @@ export function retrieve(
   query: string,
   options: RetrieveOptions = {}
 ): Skill[] {
-  const { library = DEFAULT_LIBRARY, topK = 7, content = false } = options;
-  const index = getBM25Index(library);
-  const skills = index.search(query, topK).map(({ skill }) => skill);
+  const { library, topK = 7, content = false } = options;
+
+  let skills: Skill[];
+  if (library) {
+    skills = getBM25Index(library).search(query, topK).map((r) => r.skill);
+  } else {
+    skills = availableLibraries()
+      .flatMap((lib) => getBM25Index(lib).search(query, topK))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK)
+      .map((r) => r.skill);
+  }
 
   if (!content) {
     return skills.map(({ content, ...skill }) => skill);
@@ -112,15 +121,12 @@ export function getSkillById(id: string, library?: string): Skill | undefined {
  * @returns An array of skills matching the filters.
  */
 export function listSkills(options: ListOptions = {}): Skill[] {
-  const {
-    library = DEFAULT_LIBRARY,
-    category = null,
-    tags = [],
-    difficulty = null
-  } = options;
-  const { skills } = loadIndex(library);
+  const { library, category = null, tags = [], difficulty = null } = options;
 
-  return skills.filter((skill) => {
+  const libs = library ? [library] : availableLibraries();
+  const allSkills = libs.flatMap((lib) => loadIndex(lib).skills);
+
+  return allSkills.filter((skill) => {
     if (category && skill.category !== category) return false;
     if (difficulty && skill.difficulty !== difficulty) return false;
     if (tags.length > 0 && !tags.some((t) => skill.tags.includes(t)))

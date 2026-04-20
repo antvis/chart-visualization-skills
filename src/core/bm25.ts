@@ -31,6 +31,7 @@ const STOP_WORDS = new Set([
 ]);
 
 const PRIMARY_CHART_TOKENS = new Set([
+  // G2 statistical chart types
   'beeswarm', 'sankey', 'chord', 'treemap', 'sunburst', 'boxplot', 'waterfall', 'funnel',
   'gauge', 'gantt', 'wordcloud', 'candlestick', 'bullet', 'density', 'liquid', 'venn',
   'pack', 'spiral', 'contour', 'violin', 'ridgeline', 'marimekko', 'mosaic', 'bump',
@@ -38,6 +39,10 @@ const PRIMARY_CHART_TOKENS = new Set([
   '蜂群图', '漏斗图', '玫瑰图', '仪表盘', '甘特图', '词云', '箱线图', '旭日图',
   '矩形树图', '桑基图', '和弦图', '密度图', '打包图', '瀑布图', 'K线图', '子弹图',
   '韦恩图', '液体图', '螺旋图', '小提琴图',
+  // G6 graph types and layouts
+  'dagre', 'fishbone', 'mindmap', 'radial', 'dendrogram',
+  '关系图', '网络图', '拓扑图', '流程图', '思维导图', '鱼骨图', '组织架构图', '知识图谱',
+  '层次图', '辐射图',
 ]);
 
 const SYNONYMS = new Map<string, string[]>([
@@ -74,6 +79,28 @@ const SYNONYMS = new Map<string, string[]>([
   ['暗色', ['theme', 'dark']], ['深色', ['theme', 'dark']],
   ['动画', ['animation', 'animate']], ['交互', ['interaction']],
   ['框选', ['brush']], ['高亮', ['highlight', 'elementhighlight']],
+  // G6: Chinese → English
+  ['关系图', ['network', 'graph']], ['网络图', ['network', 'graph']],
+  ['拓扑图', ['network', 'topology']], ['知识图谱', ['network', 'knowledge']],
+  ['流程图', ['flow', 'dag', 'dagre']], ['有向无环图', ['dag', 'dagre']],
+  ['思维导图', ['mindmap']], ['组织架构图', ['tree', 'dendrogram']],
+  ['鱼骨图', ['fishbone']], ['层次图', ['dagre', 'hierarchy']],
+  ['辐射图', ['radial']], ['树状图', ['tree', 'dendrogram']],
+  ['力导向', ['force']], ['力导向布局', ['force']],
+  ['层次布局', ['dagre', 'hierarchy']], ['环形布局', ['circular']],
+  ['辐射布局', ['radial']], ['网格布局', ['grid']],
+  ['节点', ['node']], ['连线', ['edge', 'link']], ['组合', ['combo']],
+  ['套索', ['lasso']], ['折叠', ['collapse']], ['展开', ['expand']],
+  ['缩略图', ['minimap']], ['时间轴', ['timebar']], ['工具栏', ['toolbar']],
+  ['拖拽画布', ['drag-canvas']], ['缩放画布', ['zoom-canvas']],
+  ['点击选中', ['click-select']], ['拖拽元素', ['drag-element']],
+  // G6: English → Chinese
+  ['dagre', ['流程图', '层次']], ['fishbone', ['鱼骨图']],
+  ['mindmap', ['思维导图']], ['radial', ['辐射']],
+  ['dendrogram', ['树状图', '组织架构']],
+  ['node', ['节点']], ['combo', ['组合']],
+  ['minimap', ['缩略图']], ['timebar', ['时间轴']], ['toolbar', ['工具栏']],
+  ['lasso', ['套索', '框选']], ['collapse', ['折叠']], ['expand', ['展开']],
   ['line', ['折线']], ['bar', ['柱状']], ['pie', ['饼图']],
   ['interval', ['柱状']], ['scatter', ['散点']], ['point', ['散点']],
   ['area', ['面积']], ['heatmap', ['热力']], ['cell', ['热力']],
@@ -88,6 +115,7 @@ const SYNONYMS = new Map<string, string[]>([
 ]);
 
 const EXTRA_DICT = new Set([
+  // common interaction/config
   '点击', '拖拽', '缩放', '悬停', '选中', '过滤',
   '渲染', '更新', '刷新', '加载', '切换', '联动',
   '指标', '目标', '数值', '百分比', '进度', '占比',
@@ -96,6 +124,10 @@ const EXTRA_DICT = new Set([
   '布局', '容器', '宽度', '高度', '间距', '边距',
   '颜色', '透明度', '圆角', '虚线', '实线',
   '字体', '字号', '粗细', '旋转', '偏移',
+  // G6-specific
+  '节点', '连线', '组合', '套索', '折叠', '展开',
+  '关系', '拓扑', '层次', '辐射', '力导向',
+  '缩略图', '时间轴', '工具栏', '画布', '边框',
 ]);
 
 const _DICT_TERMS = [
