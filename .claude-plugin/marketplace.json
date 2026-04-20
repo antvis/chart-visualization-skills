@@ -55,6 +55,15 @@
       ]
     },
     {
+      "name": "antv-g6-graph",
+      "description": "Generate G6 v5 graph visualization code. Use when user asks for G6 graphs, network graphs, tree graphs, flow charts, mind maps, or any relational/graph-structured data visualization with the G6 library.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/antv-g6-graph"
+      ]
+    },
+    {
       "name": "antv-s2-expert",
       "description": "S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.",
       "source": "./",
