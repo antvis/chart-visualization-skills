@@ -6,11 +6,17 @@ export function registerInfoCommand(program: Command): void {
     .command('info')
     .description('Show skill info from SKILL.md')
     .option('--library <lib>', 'Library to show info for (g2 or g6)', 'g2')
-    .action((opts: { library: string }) => {
+    .option('--json', 'Output as JSON (for scripting)')
+    .action((opts: { library: string; json?: true }) => {
       const skill = getSkillInfo(opts.library);
 
       if (!skill) {
-        console.log(`No skill info found for library: ${opts.library}`);
+        console.error(`No skill info found for library: ${opts.library}`);
+        process.exit(1);
+      }
+
+      if (opts.json) {
+        console.log(JSON.stringify(skill, null, 2));
         return;
       }
 
