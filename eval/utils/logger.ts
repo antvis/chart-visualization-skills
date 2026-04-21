@@ -1,17 +1,11 @@
 'use strict';
-
 /**
  * Shared pino logger for eval and harness modules.
- *
- * Outputs structured JSON in non-TTY environments (CI/piped),
- * and human-readable pretty-printed lines when stdout is a TTY.
- *
- * Override log level with LOG_LEVEL env var (trace|debug|info|warn|error).
  */
 
-const pino = require('pino');
+import pino from 'pino';
 
-const level = process.env.LOG_LEVEL || 'info';
+const level = process.env.LOG_LEVEL ?? 'info';
 
 const transport =
   process.stderr.isTTY || process.stdout.isTTY
@@ -28,4 +22,4 @@ const transport =
 
 const logger = pino({ level }, transport);
 
-module.exports = logger;
+export default logger;

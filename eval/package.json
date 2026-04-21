@@ -3,25 +3,32 @@
   "version": "0.1.0",
   "private": true,
   "description": "Evaluation suite for chart-visualization-skills",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "studio": "pnpm --filter eval-studio dev",
-    "eval": "node eval-cli/index.js",
-    "recall": "node eval-recall.js",
-    "tune": "node _tune-bm25.js"
+    "eval": "tsx eval-cli/index.ts",
+    "recall": "tsx eval-recall.ts",
+    "tune": "tsx _tune-bm25.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai": "3.0.52",
+    "ai": "6.0.158",
     "commander": "^12.1.0",
     "cors": "^2.8.6",
     "dotenv": "^16.0.0",
     "express": "^5.2.1",
-    "openai": "^4.104.0",
     "p-limit": "^3.1.0",
-    "p-retry": "^4.0.0",
     "pino": "^9.0.0",
     "pino-pretty": "^13.0.0",
     "playwright": "^1.59.1",
     "uuid": "^13.0.0",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
   }
 }

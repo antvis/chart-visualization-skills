@@ -1,0 +1,1162 @@
+{
+  "id": "8dd4a924-58bc-42bb-8f57-6b767716cf2e",
+  "provider": "kimi",
+  "model": "Kimi-K2.5",
+  "dataset": "g2-dataset-174.json",
+  "algorithm": "tool-call",
+  "timestamp": "2026-04-21T03:24:00.345Z",
+  "endTime": "2026-04-21T03:28:59.789Z",
+  "status": "completed",
+  "summary": {
+    "totalTests": 10,
+    "successCount": 10,
+    "avgDuration": 29941,
+    "avgSimilarity": 0.7650312177465363,
+    "highSimilarityCount": 9,
+    "issuesCount": 1,
+    "avgToolCalls": 1.5,
+    "skillHitRate": 1
+  },
+  "results": [
+    {
+      "id": "case-149",
+      "query": "根据描述绘制图表，使用G2创建一个极坐标折线图，对比'华为 Mate'和'中兴 Grand Memo'在五个性能维度（易用性、功能、拍照、跑分、续航）上的得分表现。数据按性能指标分组，颜色区分设备类型，Y轴范围0-100，启用交互提示和网格背景样式。参考数据：\n[{\"performance\":\"易用性\",\"type\":\"华为 Mate\",\"score\":80},{\"performance\":\"功能\",\"type\":\"华为 Mate\",\"score\":90},{\"performance\":\"拍照\",\"type\":\"华为 Mate\",\"score\":80},{\"performance\":\"跑分\",\"type\":\"华为 Mate\",\"score\":70},{\"performance\":\"续航\",\"type\":\"华为 Mate\",\"score\":90},{\"performance\":\"易用性\",\"type\":\"中兴 Grand Memo\",\"score\":70},{\"performance\":\"功能\",\"type\":\"中兴 Grand Memo\",\"score\":82},{\"performance\":\"拍照\",\"type\":\"中兴 Grand Memo\",\"score\":81},{\"performance\":\"跑分\",\"type\":\"中兴 Grand Memo\",\"score\":82},{\"performance\":\"续航\",\"type\":\"中兴 Grand Memo\",\"score\":78}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  theme: 'classic',\n});\n\nchart.options({\n  type: 'line',\n  coordinate: {\n    type: 'polar',\n  },\n  autoFit: true,\n  data: [\n    { performance: '易用性', type: '华为 Mate', score: 80 },\n    { performance: '功能', type: '华为 Mate', score: 90 },\n    { performance: '拍照', type: '华为 Mate', score: 80 },\n    { performance: '跑分', type: '华为 Mate', score: 70 },\n    { performance: '续航', type: '华为 Mate', score: 90 },\n    { performance: '易用性', type: '中兴 Grand Memo', score: 70 },\n    { performance: '功能', type: '中兴 Grand Memo', score: 82 },\n    { performance: '拍照', type: '中兴 Grand Memo', score: 81 },\n    { performance: '跑分', type: '中兴 Grand Memo', score: 82 },\n    { performance: '续航', type: '中兴 Grand Memo', score: 78 },\n  ],\n  encode: { x: 'performance', y: 'score', color: 'type' },\n  scale: {\n    x: { padding: 0.5, align: 0 },\n    y: {\n      domainMin: 0,\n      domainMax: 100,\n      tickCount: 5,\n      label: false,\n    },\n  },\n  style: {\n    fillOpacity: 0.5,\n    lineWidth: 2,\n  },\n  axis: {\n    x: { grid: true, tick: false, gridLineDash: [0, 0] },\n    y: {\n      tick: false,\n      grid: true,\n      title: false,\n      zIndex: 1,\n      gridLineDash: [0, 0],\n      gridAreaFill: (_dataum, index, _data) => {\n        return index % 2 === 1 ? 'rgba(0, 0, 0, 0.04)' : '';\n      },\n    },\n  },\n  interaction: {\n    tooltip: { crosshairsLineDash: [4, 4] },\n  },\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 500,\n  height: 500,\n});\n\nconst data = [\n  { performance: '易用性', type: '华为 Mate', score: 80 },\n  { performance: '功能', type: '华为 Mate', score: 90 },\n  { performance: '拍照', type: '华为 Mate', score: 80 },\n  { performance: '跑分', type: '华为 Mate', score: 70 },\n  { performance: '续航', type: '华为 Mate', score: 90 },\n  { performance: '易用性', type: '中兴 Grand Memo', score: 70 },\n  { performance: '功能', type: '中兴 Grand Memo', score: 82 },\n  { performance: '拍照', type: '中兴 Grand Memo', score: 81 },\n  { performance: '跑分', type: '中兴 Grand Memo', score: 82 },\n  { performance: '续航', type: '中兴 Grand Memo', score: 78 },\n];\n\nchart.options({\n  type: 'view',\n  data,\n  coordinate: { type: 'polar' },\n  scale: {\n    x: { padding: 0.5, align: 0 },\n    y: { domain: [0, 100] },\n  },\n  axis: {\n    x: { grid: true, title: false },\n    y: { grid: true, title: false, labelFormatter: (d) => d },\n  },\n  children: [\n    {\n      type: 'line',\n      encode: { x: 'performance', y: 'score', color: 'type' },\n      style: { lineWidth: 2 },\n    },\n    {\n      type: 'point',\n      encode: { x: 'performance', y: 'score', color: 'type' },\n      style: { r: 4 },\n    },\n  ],\n  tooltip: { shared: true },\n  legend: { color: { position: 'bottom' } },\n});\n\nchart.render();",
+      "duration": 47408,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-radar.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-line-basic.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-line-multi.md"
+            ]
+          },
+          "resultSummary": "返回 4 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-radar.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-line-basic.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-line-multi.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 1330,
+        "expectedLength": 1459,
+        "similarity": 0.901702565726956,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 500,\n  height: 500,\n});\n\nconst data = [\n  { performance: '易用性', type: '华为 Mate', score: 80 },\n  { performance: '功能', type: '华为 Mate', score: 90 },\n  { performance: '拍照', type: '华为 Mate', score: 80 },\n  { performance: '跑分', type: '华为 Mate', score: 70 },\n  { performance: '续航', type: '华为 Mate', score: 90 },\n  { performance: '易用性', type: '中兴 Grand Memo', score: 70 },\n  { performance: '功能', type: '中兴 Grand Memo', score: 82 },\n  { performance: '拍照', type: '中兴 Grand Memo', score: 81 },\n  { performance: '跑分', type: '中兴 Grand Memo', score: 82 },\n  { performance: '续航', type: '中兴 Grand Memo', score: 78 },\n];\n\nchart.options({\n  type: 'view',\n  data,\n  coordinate: { type: 'polar' },\n  scale: {\n    x: { padding: 0.5, align: 0 },\n    y: { domain: [0, 100] },\n  },\n  axis: {\n    x: { grid: true, title: false },\n    y: { grid: true, title: false, labelFormatter: (d) => d },\n  },\n  children: [\n    {\n      type: 'line',\n      encode: { x: 'performance', y: 'score', color: 'type' },\n      style: { lineWidth: 2 },\n    },\n    {\n      type: 'point',\n      encode: { x: 'performance', y: 'score', color: 'type' },\n      style: { r: 4 },\n    },\n  ],\n  tooltip: { shared: true },\n  legend: { color: { position: 'bottom' } },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "performance",
+            "type",
+            "score",
+            "type",
+            "coordinate",
+            "type",
+            "scale",
+            "x",
+            "padding",
+            "align",
+            "y",
+            "domain",
+            "axis",
+            "x",
+            "grid",
+            "title",
+            "y",
+            "grid",
+            "title",
+            "labelFormatter",
+            "children",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "color",
+            "style",
+            "lineWidth",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "color",
+            "style",
+            "r",
+            "tooltip",
+            "shared",
+            "legend",
+            "color",
+            "position"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "coordinate",
+            "scale",
+            "view.children",
+            "type.view",
+            "type.line",
+            "type.point"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-74",
+      "query": "根据描述绘制图表，使用 G2 渲染一个堆叠柱状图，对比 London 和 Berlin 两个城市各个月份的月均降雨量，数据按城市分组并进行 Y 轴堆叠，坐标系被转置（横向条形图形式）。参考数据：\n[{\"name\":\"London\",\"月份\":\"Jan.\",\"月均降雨量\":18.9},{\"name\":\"London\",\"月份\":\"Feb.\",\"月均降雨量\":28.8},{\"name\":\"London\",\"月份\":\"Mar.\",\"月均降雨量\":39.3},{\"name\":\"London\",\"月份\":\"Apr.\",\"月均降雨量\":81.4},{\"name\":\"London\",\"月份\":\"May\",\"月均降雨量\":47},{\"name\":\"London\",\"月份\":\"Jun.\",\"月均降雨量\":20.3},{\"name\":\"London\",\"月份\":\"Jul.\",\"月均降雨量\":24},{\"name\":\"London\",\"月份\":\"Aug.\",\"月均降雨量\":35.6},{\"name\":\"Berlin\",\"月份\":\"Jan.\",\"月均降雨量\":12.4},{\"name\":\"Berlin\",\"月份\":\"Feb.\",\"月均降雨量\":23.2}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({ container: 'container' });\n\nchart.options({\n  \"autoFit\": true,\n  \"type\": \"view\",\n  \"children\": [\n    {\n      \"data\": [\n        {\n          \"name\": \"London\",\n          \"月份\": \"Jan.\",\n          \"月均降雨量\": 18.9\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Feb.\",\n          \"月均降雨量\": 28.8\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Mar.\",\n          \"月均降雨量\": 39.3\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Apr.\",\n          \"月均降雨量\": 81.4\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"May\",\n          \"月均降雨量\": 47\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Jun.\",\n          \"月均降雨量\": 20.3\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Jul.\",\n          \"月均降雨量\": 24\n        },\n        {\n          \"name\": \"London\",\n          \"月份\": \"Aug.\",\n          \"月均降雨量\": 35.6\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Jan.\",\n          \"月均降雨量\": 12.4\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Feb.\",\n          \"月均降雨量\": 23.2\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Mar.\",\n          \"月均降雨量\": 34.5\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Apr.\",\n          \"月均降雨量\": 99.7\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"May\",\n          \"月均降雨量\": 52.6\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Jun.\",\n          \"月均降雨量\": 35.5\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Jul.\",\n          \"月均降雨量\": 37.4\n        },\n        {\n          \"name\": \"Berlin\",\n          \"月份\": \"Aug.\",\n          \"月均降雨量\": 42.4\n        }\n      ],\n      \"encode\": {\n        \"x\": \"月份\",\n        \"y\": \"月均降雨量\",\n        \"color\": \"name\",\n        \"key\": (d) => d['name'] + d['月份']\n      },\n      \"interaction\": {\n        \"legendFilter\": false,\n        \"elementPointMove\": {\n          \"precision\": 3\n        }\n      },\n      \"transform\": [\n        {\n          \"type\": \"stackY\"\n        }\n      ],\n      \"coordinate\": {\n        \"transform\": [\n          {\n            \"type\": \"transpose\"\n          }\n        ]\n      },\n      \"type\": \"interval\"\n    }\n  ]\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  { name: 'London', 月份: 'Jan.', 月均降雨量: 18.9 },\n  { name: 'London', 月份: 'Feb.', 月均降雨量: 28.8 },\n  { name: 'London', 月份: 'Mar.', 月均降雨量: 39.3 },\n  { name: 'London', 月份: 'Apr.', 月均降雨量: 81.4 },\n  { name: 'London', 月份: 'May', 月均降雨量: 47 },\n  { name: 'London', 月份: 'Jun.', 月均降雨量: 20.3 },\n  { name: 'London', 月份: 'Jul.', 月均降雨量: 24 },\n  { name: 'London', 月份: 'Aug.', 月均降雨量: 35.6 },\n  { name: 'Berlin', 月份: 'Jan.', 月均降雨量: 12.4 },\n  { name: 'Berlin', 月份: 'Feb.', 月均降雨量: 23.2 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: '月份',\n    y: '月均降雨量',\n    color: 'name',\n  },\n  transform: [{ type: 'stackY' }],\n  coordinate: { transform: [{ type: 'transpose' }] },\n});\n\nchart.render();",
+      "duration": 34187,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-interval-stacked.md",
+              "skills/antv-g2-chart/references/coordinates/g2-coord-transpose.md",
+              "skills/antv-g2-chart/references/transforms/g2-transform-stacky.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-interval-stacked.md",
+        "skills/antv-g2-chart/references/coordinates/g2-coord-transpose.md",
+        "skills/antv-g2-chart/references/transforms/g2-transform-stacky.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 823,
+        "expectedLength": 2249,
+        "similarity": 0.7943722943722944,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  { name: 'London', 月份: 'Jan.', 月均降雨量: 18.9 },\n  { name: 'London', 月份: 'Feb.', 月均降雨量: 28.8 },\n  { name: 'London', 月份: 'Mar.', 月均降雨量: 39.3 },\n  { name: 'London', 月份: 'Apr.', 月均降雨量: 81.4 },\n  { name: 'London', 月份: 'May', 月均降雨量: 47 },\n  { name: 'London', 月份: 'Jun.', 月均降雨量: 20.3 },\n  { name: 'London', 月份: 'Jul.', 月均降雨量: 24 },\n  { name: 'London', 月份: 'Aug.', 月均降雨量: 35.6 },\n  { name: 'Berlin', 月份: 'Jan.', 月均降雨量: 12.4 },\n  { name: 'Berlin', 月份: 'Feb.', 月均降雨量: 23.2 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: '月份',\n    y: '月均降雨量',\n    color: 'name',\n  },\n  transform: [{ type: 'stackY' }],\n  coordinate: { transform: [{ type: 'transpose' }] },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "name",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "color",
+            "transform",
+            "type",
+            "coordinate",
+            "transform",
+            "type"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "transform",
+            "coordinate",
+            "type.interval"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-59",
+      "query": "根据描述绘制图表，使用 G2 创建一个密度分布与箱线图组合图表，展示实验组与光速测量值之间的分布情况，数据按实验组分组，通过核密度估计生成密度曲线并叠加小提琴图样式的箱线图。\n参考数据：\n[{\"Expt\":1,\"Run\":1,\"Speed\":850},{\"Expt\":1,\"Run\":2,\"Speed\":740},{\"Expt\":1,\"Run\":3,\"Speed\":900},{\"Expt\":1,\"Run\":4,\"Speed\":1070},{\"Expt\":1,\"Run\":5,\"Speed\":930},{\"Expt\":1,\"Run\":6,\"Speed\":850},{\"Expt\":1,\"Run\":7,\"Speed\":950},{\"Expt\":1,\"Run\":8,\"Speed\":980},{\"Expt\":1,\"Run\":9,\"Speed\":980},{\"Expt\":1,\"Run\":10,\"Speed\":880}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  theme: 'classic',\n});\n\nchart.options({\n  type: 'view',\n  data: {\n    type: 'inline',\n    value: [\n   {\n     \"Expt\": 1,\n     \"Run\": 1,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 2,\n     \"Speed\": 740\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 3,\n     \"Speed\": 900\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 4,\n     \"Speed\": 1070\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 5,\n     \"Speed\": 930\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 6,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 7,\n     \"Speed\": 950\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 8,\n     \"Speed\": 980\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 9,\n     \"Speed\": 980\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 10,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 11,\n     \"Speed\": 1000\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 12,\n     \"Speed\": 980\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 13,\n     \"Speed\": 930\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 14,\n     \"Speed\": 650\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 15,\n     \"Speed\": 760\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 16,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 17,\n     \"Speed\": 1000\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 18,\n     \"Speed\": 1000\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 19,\n     \"Speed\": 960\n   },\n   {\n     \"Expt\": 1,\n     \"Run\": 20,\n     \"Speed\": 960\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 1,\n     \"Speed\": 960\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 2,\n     \"Speed\": 940\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 3,\n     \"Speed\": 960\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 4,\n     \"Speed\": 940\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 5,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 6,\n     \"Speed\": 800\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 7,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 8,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 9,\n     \"Speed\": 900\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 10,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 11,\n     \"Speed\": 830\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 12,\n     \"Speed\": 790\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 13,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 14,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 15,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 16,\n     \"Speed\": 830\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 17,\n     \"Speed\": 800\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 18,\n     \"Speed\": 790\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 19,\n     \"Speed\": 760\n   },\n   {\n     \"Expt\": 2,\n     \"Run\": 20,\n     \"Speed\": 800\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 1,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 2,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 3,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 4,\n     \"Speed\": 860\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 5,\n     \"Speed\": 720\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 6,\n     \"Speed\": 720\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 7,\n     \"Speed\": 620\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 8,\n     \"Speed\": 860\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 9,\n     \"Speed\": 970\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 10,\n     \"Speed\": 950\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 11,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 12,\n     \"Speed\": 910\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 13,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 14,\n     \"Speed\": 870\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 15,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 16,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 17,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 18,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 19,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 3,\n     \"Run\": 20,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 1,\n     \"Speed\": 890\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 2,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 3,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 4,\n     \"Speed\": 820\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 5,\n     \"Speed\": 800\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 6,\n     \"Speed\": 770\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 7,\n     \"Speed\": 760\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 8,\n     \"Speed\": 740\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 9,\n     \"Speed\": 750\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 10,\n     \"Speed\": 760\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 11,\n     \"Speed\": 910\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 12,\n     \"Speed\": 920\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 13,\n     \"Speed\": 890\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 14,\n     \"Speed\": 860\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 15,\n     \"Speed\": 880\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 16,\n     \"Speed\": 720\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 17,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 18,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 19,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 4,\n     \"Run\": 20,\n     \"Speed\": 780\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 1,\n     \"Speed\": 890\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 2,\n     \"Speed\": 840\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 3,\n     \"Speed\": 780\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 4,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 5,\n     \"Speed\": 760\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 6,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 7,\n     \"Speed\": 790\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 8,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 9,\n     \"Speed\": 820\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 10,\n     \"Speed\": 850\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 11,\n     \"Speed\": 870\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 12,\n     \"Speed\": 870\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 13,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 14,\n     \"Speed\": 740\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 15,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 16,\n     \"Speed\": 940\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 17,\n     \"Speed\": 950\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 18,\n     \"Speed\": 800\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 19,\n     \"Speed\": 810\n   },\n   {\n     \"Expt\": 5,\n     \"Run\": 20,\n     \"Speed\": 870\n   }\n ],\n  },\n  children: [\n    {\n      type: 'density',\n      data: {\n        transform: [\n          {\n            type: 'kde',\n            field: 'Speed',\n            groupBy: ['Expt'],\n          },\n        ],\n      },\n      encode: {\n        x: 'Expt',\n        y: 'Speed',\n        size: 'size',\n        color: 'Expt',\n      },\n      style: {\n        fillOpacity: 0.4,\n      },\n      tooltip: false,\n    },\n    {\n      type: 'boxplot',\n      encode: {\n        x: 'Expt',\n        y: 'Speed',\n        color: 'Expt',\n        shape: 'violin',\n      },\n      style: {\n        opacity: 0.8,\n        point: false,\n      },\n    },\n  ],\n  axis: {\n    x: { title: '实验组' },\n    y: { title: '光速测量值' },\n  },\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  {\"Expt\":1,\"Run\":1,\"Speed\":850},\n  {\"Expt\":1,\"Run\":2,\"Speed\":740},\n  {\"Expt\":1,\"Run\":3,\"Speed\":900},\n  {\"Expt\":1,\"Run\":4,\"Speed\":1070},\n  {\"Expt\":1,\"Run\":5,\"Speed\":930},\n  {\"Expt\":1,\"Run\":6,\"Speed\":850},\n  {\"Expt\":1,\"Run\":7,\"Speed\":950},\n  {\"Expt\":1,\"Run\":8,\"Speed\":980},\n  {\"Expt\":1,\"Run\":9,\"Speed\":980},\n  {\"Expt\":1,\"Run\":10,\"Speed\":880}\n];\n\nchart.options({\n  type: 'view',\n  data,\n  children: [\n    {\n      type: 'density',\n      data: {\n        type: 'inline',\n        value: data,\n        transform: [\n          {\n            type: 'kde',\n            field: 'Speed',\n            groupBy: ['Expt'],\n          },\n        ],\n      },\n      encode: {\n        x: 'Expt',\n        y: 'y',\n        series: 'Expt',\n        color: 'Expt',\n        size: 'size',\n      },\n      style: {\n        fillOpacity: 0.6,\n      },\n      tooltip: false,\n    },\n    {\n      type: 'boxplot',\n      encode: {\n        x: 'Expt',\n        y: 'Speed',\n        series: 'Expt',\n        color: 'Expt',\n        shape: 'violin',\n      },\n      style: {\n        opacity: 0.7,\n        strokeOpacity: 0.5,\n        point: false,\n      },\n    },\n  ],\n});\n\nchart.render();",
+      "duration": 54174,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-violin.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-density.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-boxplot.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-violin.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-density.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-boxplot.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 1274,
+        "expectedLength": 6957,
+        "similarity": 0.9122377622377622,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  {\"Expt\":1,\"Run\":1,\"Speed\":850},\n  {\"Expt\":1,\"Run\":2,\"Speed\":740},\n  {\"Expt\":1,\"Run\":3,\"Speed\":900},\n  {\"Expt\":1,\"Run\":4,\"Speed\":1070},\n  {\"Expt\":1,\"Run\":5,\"Speed\":930},\n  {\"Expt\":1,\"Run\":6,\"Speed\":850},\n  {\"Expt\":1,\"Run\":7,\"Speed\":950},\n  {\"Expt\":1,\"Run\":8,\"Speed\":980},\n  {\"Expt\":1,\"Run\":9,\"Speed\":980},\n  {\"Expt\":1,\"Run\":10,\"Speed\":880}\n];\n\nchart.options({\n  type: 'view',\n  data,\n  children: [\n    {\n      type: 'density',\n      data: {\n        type: 'inline',\n        value: data,\n        transform: [\n          {\n            type: 'kde',\n            field: 'Speed',\n            groupBy: ['Expt'],\n          },\n        ],\n      },\n      encode: {\n        x: 'Expt',\n        y: 'y',\n        series: 'Expt',\n        color: 'Expt',\n        size: 'size',\n      },\n      style: {\n        fillOpacity: 0.6,\n      },\n      tooltip: false,\n    },\n    {\n      type: 'boxplot',\n      encode: {\n        x: 'Expt',\n        y: 'Speed',\n        series: 'Expt',\n        color: 'Expt',\n        shape: 'violin',\n      },\n      style: {\n        opacity: 0.7,\n        strokeOpacity: 0.5,\n        point: false,\n      },\n    },\n  ],\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "type",
+            "children",
+            "type",
+            "data",
+            "type",
+            "value",
+            "transform",
+            "type",
+            "field",
+            "groupBy",
+            "encode",
+            "x",
+            "y",
+            "series",
+            "color",
+            "size",
+            "style",
+            "fillOpacity",
+            "tooltip",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "series",
+            "color",
+            "shape",
+            "style",
+            "opacity",
+            "strokeOpacity",
+            "point"
+          ],
+          "stringLiterals": [
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed",
+            "Expt",
+            "Run",
+            "Speed"
+          ],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "transform",
+            "view.children",
+            "type.view"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-39",
+      "query": "根据描述绘制图表，使用 G2 创建一个螺旋坐标系下的柱状图，展示 300 个时间点上的正弦波动数据，并带有渐入动画和颜色映射。参考数据：\n[{\"time\":\"T+0\",\"value\":30.879652747252365},{\"time\":\"T+1\",\"value\":30.34871766717829},{\"time\":\"T+2\",\"value\":36.66728714115757},{\"time\":\"T+3\",\"value\":42.38781548269647},{\"time\":\"T+4\",\"value\":46.99296253615131},{\"time\":\"T+5\",\"value\":50.05379447021332},{\"time\":\"T+6\",\"value\":51.2931900823945},{\"time\":\"T+7\",\"value\":50.5964733388878},{\"time\":\"T+8\",\"value\":47.99805391245507},{\"time\":\"T+9\",\"value\":43.66183649379279}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from \"@antv/g2\";\n\nconst data = Array.from({ length: 300 }, (_, i) => ({\n  time: `T+${i}`,\n  value: 30 + 25 * Math.sin(i / 30) + Math.random() * 15\n}));\n\nconst chart = new Chart({ container: \"container\" });\n\nchart.options({\n  type: \"interval\",\n  data,\n  encode: { x: \"time\", y: \"value\", color: \"value\" },\n  scale: { color: { type: \"linear\", range: [\"#fef5e7\", \"#f47d24\"] } },\n  coordinate: { type: \"helix\", startAngle: Math.PI / 2, endAngle: 10 * Math.PI },\n  animate: { enter: { type: \"fadeIn\", duration: 2000 } },\n  style: {\n    strokeWidth: 8\n  },\n  title: \"正弦波动数据的螺旋轨迹\"\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\n// 基于参考数据生成300个时间点的正弦波动数据\nconst baseData = [\n  { time: 'T+0', value: 30.879652747252365 },\n  { time: 'T+1', value: 30.34871766717829 },\n  { time: 'T+2', value: 36.66728714115757 },\n  { time: 'T+3', value: 42.38781548269647 },\n  { time: 'T+4', value: 46.99296253615131 },\n  { time: 'T+5', value: 50.05379447021332 },\n  { time: 'T+6', value: 51.2931900823945 },\n  { time: 'T+7', value: 50.5964733388878 },\n  { time: 'T+8', value: 47.99805391245507 },\n  { time: 'T+9', value: 43.66183649379279 },\n];\n\n// 生成300个数据点，基于正弦波动\nconst data = Array.from({ length: 300 }, (_, i) => {\n  const t = i / 300; // 0 到 1 的进度\n  const sineValue = Math.sin(t * Math.PI * 4) * 15; // 2个完整周期的正弦波，振幅15\n  const baseOffset = 40; // 基础偏移量\n  const randomNoise = (Math.random() - 0.5) * 5; // 随机噪声\n  return {\n    time: `T+${i}`,\n    value: baseOffset + sineValue + randomNoise,\n  };\n});\n\nconst chart = new Chart({\n  container: 'container',\n  width: 600,\n  height: 600,\n});\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: 'time',\n    y: 'value',\n    color: 'value',\n  },\n  scale: {\n    color: { type: 'sequential', palette: 'ylOrRd' },\n  },\n  coordinate: {\n    type: 'helix',\n    startAngle: 0,\n    endAngle: Math.PI * 6, // 3圈螺旋\n    innerRadius: 0.1,\n    outerRadius: 0.9,\n  },\n  style: {\n    lineWidth: 0,\n  },\n  animate: {\n    enter: {\n      type: 'fadeIn',\n      duration: 2000,\n    },\n  },\n  legend: false,\n});\n\nchart.render();",
+      "duration": 41778,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/coordinates/g2-coord-helix.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md",
+              "skills/antv-g2-chart/references/animations/g2-animation-types.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/coordinates/g2-coord-helix.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md",
+        "skills/antv-g2-chart/references/animations/g2-animation-types.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 1451,
+        "expectedLength": 610,
+        "similarity": 0.9432311621966796,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\n// 基于参考数据生成300个时间点的正弦波动数据\nconst baseData = [\n  { time: 'T+0', value: 30.879652747252365 },\n  { time: 'T+1', value: 30.34871766717829 },\n  { time: 'T+2', value: 36.66728714115757 },\n  { time: 'T+3', value: 42.38781548269647 },\n  { time: 'T+4', value: 46.99296253615131 },\n  { time: 'T+5', value: 50.05379447021332 },\n  { time: 'T+6', value: 51.2931900823945 },\n  { time: 'T+7', value: 50.5964733388878 },\n  { time: 'T+8', value: 47.99805391245507 },\n  { time: 'T+9', value: 43.66183649379279 },\n];\n\n// 生成300个数据点，基于正弦波动\nconst data = Array.from({ length: 300 }, (_, i) => {\n  const t = i / 300; // 0 到 1 的进度\n  const sineValue = Math.sin(t * Math.PI * 4) * 15; // 2个完整周期的正弦波，振幅15\n  const baseOffset = 40; // 基础偏移量\n  const randomNoise = (Math.random() - 0.5) * 5; // 随机噪声\n  return {\n    time: `T+${i}`,\n    value: baseOffset + sineValue + randomNoise,\n  };\n});\n\nconst chart = new Chart({\n  container: 'container',\n  width: 600,\n  height: 600,\n});\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: 'time',\n    y: 'value',\n    color: 'value',\n  },\n  scale: {\n    color: { type: 'sequential', palette: 'ylOrRd' },\n  },\n  coordinate: {\n    type: 'helix',\n    startAngle: 0,\n    endAngle: Math.PI * 6, // 3圈螺旋\n    innerRadius: 0.1,\n    outerRadius: 0.9,\n  },\n  style: {\n    lineWidth: 0,\n  },\n  animate: {\n    enter: {\n      type: 'fadeIn',\n      duration: 2000,\n    },\n  },\n  legend: false,\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "from",
+            "sin",
+            "random",
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "time",
+            "value",
+            "length",
+            "time",
+            "value",
+            "container",
+            "width",
+            "height",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "color",
+            "scale",
+            "color",
+            "type",
+            "palette",
+            "coordinate",
+            "type",
+            "startAngle",
+            "endAngle",
+            "innerRadius",
+            "outerRadius",
+            "style",
+            "lineWidth",
+            "animate",
+            "enter",
+            "type",
+            "duration",
+            "legend"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "coordinate",
+            "scale",
+            "type.interval",
+            "animate"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-75",
+      "query": "根据描述绘制图表，使用G2渲染一个堆叠柱状图，展示美国各州不同年龄组（<10, 10-19, 20-29, 30-39, 40-49, 50-59, 60-69, 70-79, ≥80）的人口分布，数据按州分组、各年龄组堆叠，并应用排序和选择交互功能。参考数据：\n[{\"state\":\"AL\",\"age\":\"<10\",\"population\":598478},{\"state\":\"AK\",\"age\":\"<10\",\"population\":106741},{\"state\":\"AZ\",\"age\":\"<10\",\"population\":892083},{\"state\":\"AR\",\"age\":\"<10\",\"population\":392177},{\"state\":\"CA\",\"age\":\"<10\",\"population\":5038433},{\"state\":\"CO\",\"age\":\"<10\",\"population\":690830},{\"state\":\"CT\",\"age\":\"<10\",\"population\":399369},{\"state\":\"DE\",\"age\":\"<10\",\"population\":112177},{\"state\":\"DC\",\"age\":\"<10\",\"population\":74377},{\"state\":\"FL\",\"age\":\"<10\",\"population\":2211012}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n});\nchart.options({\n  type: 'interval',\n  autoFit: true,\n  data: {\n    type: 'inline',\n    value: [\n   {\n     \"state\": \"AL\",\n     \"age\": \"<10\",\n     \"population\": 598478\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"<10\",\n     \"population\": 106741\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"<10\",\n     \"population\": 892083\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"<10\",\n     \"population\": 392177\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"<10\",\n     \"population\": 5038433\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"<10\",\n     \"population\": 690830\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"<10\",\n     \"population\": 399369\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"<10\",\n     \"population\": 112177\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"<10\",\n     \"population\": 74377\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"<10\",\n     \"population\": 2211012\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"<10\",\n     \"population\": 1363631\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"<10\",\n     \"population\": 176484\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"<10\",\n     \"population\": 236658\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"<10\",\n     \"population\": 1619682\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"<10\",\n     \"population\": 863029\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"<10\",\n     \"population\": 401712\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"<10\",\n     \"population\": 401751\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"<10\",\n     \"population\": 555615\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"<10\",\n     \"population\": 622061\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"<10\",\n     \"population\": 137954\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"<10\",\n     \"population\": 741952\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"<10\",\n     \"population\": 737748\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"<10\",\n     \"population\": 1181424\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"<10\",\n     \"population\": 711604\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"<10\",\n     \"population\": 400288\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"<10\",\n     \"population\": 763948\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"<10\",\n     \"population\": 126020\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"<10\",\n     \"population\": 263518\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"<10\",\n     \"population\": 369362\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"<10\",\n     \"population\": 138762\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"<10\",\n     \"population\": 1079136\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"<10\",\n     \"population\": 276468\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"<10\",\n     \"population\": 2319945\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"<10\",\n     \"population\": 1250298\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"<10\",\n     \"population\": 99477\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"<10\",\n     \"population\": 1422838\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"<10\",\n     \"population\": 534481\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"<10\",\n     \"population\": 474456\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"<10\",\n     \"population\": 1458931\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"<10\",\n     \"population\": 111377\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"<10\",\n     \"population\": 599591\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"<10\",\n     \"population\": 120366\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"<10\",\n     \"population\": 818404\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"<10\",\n     \"population\": 3983091\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"<10\",\n     \"population\": 513515\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"<10\",\n     \"population\": 63768\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"<10\",\n     \"population\": 1033629\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"<10\",\n     \"population\": 895790\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"<10\",\n     \"population\": 207017\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"<10\",\n     \"population\": 705648\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"<10\",\n     \"population\": 78217\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"<10\",\n     \"population\": 389428\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"10-19\",\n     \"population\": 638789\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"10-19\",\n     \"population\": 99926\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"10-19\",\n     \"population\": 912735\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"10-19\",\n     \"population\": 397185\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"10-19\",\n     \"population\": 5170341\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"10-19\",\n     \"population\": 697447\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"10-19\",\n     \"population\": 481065\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"10-19\",\n     \"population\": 117854\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"10-19\",\n     \"population\": 62783\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"10-19\",\n     \"population\": 2331102\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"10-19\",\n     \"population\": 1421557\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"10-19\",\n     \"population\": 163559\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"10-19\",\n     \"population\": 239509\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"10-19\",\n     \"population\": 1715984\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"10-19\",\n     \"population\": 905594\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"10-19\",\n     \"population\": 418667\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"10-19\",\n     \"population\": 402092\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"10-19\",\n     \"population\": 575866\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"10-19\",\n     \"population\": 613633\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"10-19\",\n     \"population\": 155774\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"10-19\",\n     \"population\": 764730\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"10-19\",\n     \"population\": 862371\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"10-19\",\n     \"population\": 1324071\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"10-19\",\n     \"population\": 714399\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"10-19\",\n     \"population\": 421329\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"10-19\",\n     \"population\": 792935\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"10-19\",\n     \"population\": 126294\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"10-19\",\n     \"population\": 257610\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"10-19\",\n     \"population\": 360263\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"10-19\",\n     \"population\": 167495\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"10-19\",\n     \"population\": 1153625\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"10-19\",\n     \"population\": 282662\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"10-19\",\n     \"population\": 2445591\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"10-19\",\n     \"population\": 1310398\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"10-19\",\n     \"population\": 91069\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"10-19\",\n     \"population\": 1530264\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"10-19\",\n     \"population\": 522282\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"10-19\",\n     \"population\": 485345\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"10-19\",\n     \"population\": 1608018\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"10-19\",\n     \"population\": 136885\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"10-19\",\n     \"population\": 619144\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"10-19\",\n     \"population\": 113383\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"10-19\",\n     \"population\": 842873\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"10-19\",\n     \"population\": 3910528\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"10-19\",\n     \"population\": 479126\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"10-19\",\n     \"population\": 79351\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"10-19\",\n     \"population\": 1065461\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"10-19\",\n     \"population\": 882812\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"10-19\",\n     \"population\": 218547\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"10-19\",\n     \"population\": 755224\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"10-19\",\n     \"population\": 75535\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"10-19\",\n     \"population\": 479749\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"20-29\",\n     \"population\": 661666\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"20-29\",\n     \"population\": 120674\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"20-29\",\n     \"population\": 939804\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"20-29\",\n     \"population\": 399698\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"20-29\",\n     \"population\": 5809455\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"20-29\",\n     \"population\": 780508\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"20-29\",\n     \"population\": 462323\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"20-29\",\n     \"population\": 127554\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"20-29\",\n     \"population\": 136976\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"20-29\",\n     \"population\": 2597830\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"20-29\",\n     \"population\": 1418696\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"20-29\",\n     \"population\": 204336\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"20-29\",\n     \"population\": 218684\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"20-29\",\n     \"population\": 1789739\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"20-29\",\n     \"population\": 905590\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"20-29\",\n     \"population\": 419456\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"20-29\",\n     \"population\": 406956\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"20-29\",\n     \"population\": 593819\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"20-29\",\n     \"population\": 683606\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"20-29\",\n     \"population\": 156359\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"20-29\",\n     \"population\": 815346\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"20-29\",\n     \"population\": 971340\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"20-29\",\n     \"population\": 1338179\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"20-29\",\n     \"population\": 728222\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"20-29\",\n     \"population\": 414195\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"20-29\",\n     \"population\": 831725\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"20-29\",\n     \"population\": 136346\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"20-29\",\n     \"population\": 260646\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"20-29\",\n     \"population\": 392834\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"20-29\",\n     \"population\": 167554\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"20-29\",\n     \"population\": 1139927\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"20-29\",\n     \"population\": 289801\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"20-29\",\n     \"population\": 2894266\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"20-29\",\n     \"population\": 1350242\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"20-29\",\n     \"population\": 124509\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"20-29\",\n     \"population\": 1535538\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"20-29\",\n     \"population\": 552528\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"20-29\",\n     \"population\": 538596\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"20-29\",\n     \"population\": 1712448\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"20-29\",\n     \"population\": 153674\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"20-29\",\n     \"population\": 667523\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"20-29\",\n     \"population\": 116748\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"20-29\",\n     \"population\": 895337\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"20-29\",\n     \"population\": 3946447\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"20-29\",\n     \"population\": 465219\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"20-29\",\n     \"population\": 81765\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"20-29\",\n     \"population\": 1170634\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"20-29\",\n     \"population\": 1004428\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"20-29\",\n     \"population\": 232027\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"20-29\",\n     \"population\": 760961\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"20-29\",\n     \"population\": 82898\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"20-29\",\n     \"population\": 480184\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"30-39\",\n     \"population\": 603013\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"30-39\",\n     \"population\": 102008\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"30-39\",\n     \"population\": 857054\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"30-39\",\n     \"population\": 372998\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"30-39\",\n     \"population\": 5354112\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"30-39\",\n     \"population\": 766382\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"30-39\",\n     \"population\": 424890\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"30-39\",\n     \"population\": 114063\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"30-39\",\n     \"population\": 121520\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"30-39\",\n     \"population\": 2416176\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"30-39\",\n     \"population\": 1357210\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"30-39\",\n     \"population\": 187590\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"30-39\",\n     \"population\": 209500\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"30-39\",\n     \"population\": 1721954\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"30-39\",\n     \"population\": 827086\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"30-39\",\n     \"population\": 383638\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"30-39\",\n     \"population\": 368732\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"30-39\",\n     \"population\": 558201\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"30-39\",\n     \"population\": 615411\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"30-39\",\n     \"population\": 147695\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"30-39\",\n     \"population\": 784097\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"30-39\",\n     \"population\": 847306\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"30-39\",\n     \"population\": 1162186\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"30-39\",\n     \"population\": 715583\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"30-39\",\n     \"population\": 374724\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"30-39\",\n     \"population\": 763002\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"30-39\",\n     \"population\": 125004\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"30-39\",\n     \"population\": 244236\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"30-39\",\n     \"population\": 390261\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"30-39\",\n     \"population\": 151409\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"30-39\",\n     \"population\": 1143452\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"30-39\",\n     \"population\": 260579\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"30-39\",\n     \"population\": 2605355\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"30-39\",\n     \"population\": 1268976\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"30-39\",\n     \"population\": 94713\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"30-39\",\n     \"population\": 1398724\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"30-39\",\n     \"population\": 501392\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"30-39\",\n     \"population\": 537767\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"30-39\",\n     \"population\": 1520409\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"30-39\",\n     \"population\": 126503\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"30-39\",\n     \"population\": 596491\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"30-39\",\n     \"population\": 105499\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"30-39\",\n     \"population\": 837313\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"30-39\",\n     \"population\": 3770534\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"30-39\",\n     \"population\": 436010\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"30-39\",\n     \"population\": 70092\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"30-39\",\n     \"population\": 1112111\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"30-39\",\n     \"population\": 970613\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"30-39\",\n     \"population\": 220494\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"30-39\",\n     \"population\": 714479\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"30-39\",\n     \"population\": 76912\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"30-39\",\n     \"population\": 441842\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"40-49\",\n     \"population\": 625599\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"40-49\",\n     \"population\": 91539\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"40-49\",\n     \"population\": 833290\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"40-49\",\n     \"population\": 370157\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"40-49\",\n     \"population\": 5179258\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"40-49\",\n     \"population\": 705450\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"40-49\",\n     \"population\": 496265\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"40-49\",\n     \"population\": 117588\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"40-49\",\n     \"population\": 80570\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"40-49\",\n     \"population\": 2575576\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"40-49\",\n     \"population\": 1404698\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"40-49\",\n     \"population\": 176904\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"40-49\",\n     \"population\": 194678\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"40-49\",\n     \"population\": 1697069\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"40-49\",\n     \"population\": 844059\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"40-49\",\n     \"population\": 370719\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"40-49\",\n     \"population\": 344427\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"40-49\",\n     \"population\": 580553\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"40-49\",\n     \"population\": 571991\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"40-49\",\n     \"population\": 176908\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"40-49\",\n     \"population\": 815875\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"40-49\",\n     \"population\": 916106\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"40-49\",\n     \"population\": 1283122\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"40-49\",\n     \"population\": 692201\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"40-49\",\n     \"population\": 377165\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"40-49\",\n     \"population\": 750989\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"40-49\",\n     \"population\": 116502\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"40-49\",\n     \"population\": 222479\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"40-49\",\n     \"population\": 387272\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"40-49\",\n     \"population\": 182703\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"40-49\",\n     \"population\": 1254602\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"40-49\",\n     \"population\": 244346\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"40-49\",\n     \"population\": 2617327\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"40-49\",\n     \"population\": 1357746\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"40-49\",\n     \"population\": 80327\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"40-49\",\n     \"population\": 1490959\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"40-49\",\n     \"population\": 469410\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"40-49\",\n     \"population\": 507826\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"40-49\",\n     \"population\": 1645291\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"40-49\",\n     \"population\": 137892\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"40-49\",\n     \"population\": 619792\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"40-49\",\n     \"population\": 96288\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"40-49\",\n     \"population\": 866343\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"40-49\",\n     \"population\": 3545746\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"40-49\",\n     \"population\": 328569\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"40-49\",\n     \"population\": 79982\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"40-49\",\n     \"population\": 1134928\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"40-49\",\n     \"population\": 921205\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"40-49\",\n     \"population\": 238218\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"40-49\",\n     \"population\": 732280\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"40-49\",\n     \"population\": 68464\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"40-49\",\n     \"population\": 456009\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"50-59\",\n     \"population\": 673864\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"50-59\",\n     \"population\": 104569\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"50-59\",\n     \"population\": 834858\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"50-59\",\n     \"population\": 395070\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"50-59\",\n     \"population\": 5042094\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"50-59\",\n     \"population\": 725661\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"50-59\",\n     \"population\": 546361\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"50-59\",\n     \"population\": 133331\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"50-59\",\n     \"population\": 74779\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"50-59\",\n     \"population\": 2762983\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"50-59\",\n     \"population\": 1337985\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"50-59\",\n     \"population\": 188438\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"50-59\",\n     \"population\": 205170\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"50-59\",\n     \"population\": 1773366\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"50-59\",\n     \"population\": 911778\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"50-59\",\n     \"population\": 427554\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"50-59\",\n     \"population\": 389834\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"50-59\",\n     \"population\": 623164\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"50-59\",\n     \"population\": 631936\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"50-59\",\n     \"population\": 215787\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"50-59\",\n     \"population\": 862778\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"50-59\",\n     \"population\": 979128\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"50-59\",\n     \"population\": 1454462\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"50-59\",\n     \"population\": 782655\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"50-59\",\n     \"population\": 400164\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"50-59\",\n     \"population\": 857534\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"50-59\",\n     \"population\": 149800\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"50-59\",\n     \"population\": 250911\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"50-59\",\n     \"population\": 373757\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"50-59\",\n     \"population\": 217950\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"50-59\",\n     \"population\": 1307263\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"50-59\",\n     \"population\": 280363\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"50-59\",\n     \"population\": 2755620\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"50-59\",\n     \"population\": 1356117\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"50-59\",\n     \"population\": 98688\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"50-59\",\n     \"population\": 1677794\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"50-59\",\n     \"population\": 512850\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"50-59\",\n     \"population\": 534421\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"50-59\",\n     \"population\": 1881378\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"50-59\",\n     \"population\": 156127\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"50-59\",\n     \"population\": 663408\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"50-59\",\n     \"population\": 117012\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"50-59\",\n     \"population\": 904272\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"50-59\",\n     \"population\": 3344930\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"50-59\",\n     \"population\": 301596\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"50-59\",\n     \"population\": 99521\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"50-59\",\n     \"population\": 1162028\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"50-59\",\n     \"population\": 970407\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"50-59\",\n     \"population\": 269346\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"50-59\",\n     \"population\": 848672\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"50-59\",\n     \"population\": 81018\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"50-59\",\n     \"population\": 452503\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"60-69\",\n     \"population\": 548376\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"60-69\",\n     \"population\": 70473\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"60-69\",\n     \"population\": 737884\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"60-69\",\n     \"population\": 329734\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"60-69\",\n     \"population\": 3737461\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"60-69\",\n     \"population\": 563376\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"60-69\",\n     \"population\": 400995\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"60-69\",\n     \"population\": 110822\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"60-69\",\n     \"population\": 56984\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"60-69\",\n     \"population\": 2404659\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"60-69\",\n     \"population\": 998253\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"60-69\",\n     \"population\": 164957\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"60-69\",\n     \"population\": 179429\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"60-69\",\n     \"population\": 1326121\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"60-69\",\n     \"population\": 704523\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"60-69\",\n     \"population\": 344037\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"60-69\",\n     \"population\": 300759\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"60-69\",\n     \"population\": 495736\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"60-69\",\n     \"population\": 488846\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"60-69\",\n     \"population\": 179540\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"60-69\",\n     \"population\": 636309\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"60-69\",\n     \"population\": 737805\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"60-69\",\n     \"population\": 1148131\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"60-69\",\n     \"population\": 577313\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"60-69\",\n     \"population\": 319443\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"60-69\",\n     \"population\": 668878\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"60-69\",\n     \"population\": 130977\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"60-69\",\n     \"population\": 195705\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"60-69\",\n     \"population\": 309651\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"60-69\",\n     \"population\": 164287\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"60-69\",\n     \"population\": 946399\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"60-69\",\n     \"population\": 239044\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"60-69\",\n     \"population\": 2095207\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"60-69\",\n     \"population\": 1095320\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"60-69\",\n     \"population\": 73825\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"60-69\",\n     \"population\": 1320776\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"60-69\",\n     \"population\": 404704\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"60-69\",\n     \"population\": 490894\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"60-69\",\n     \"population\": 1491536\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"60-69\",\n     \"population\": 117653\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"60-69\",\n     \"population\": 579856\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"60-69\",\n     \"population\": 92824\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"60-69\",\n     \"population\": 741045\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"60-69\",\n     \"population\": 2431494\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"60-69\",\n     \"population\": 230007\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"60-69\",\n     \"population\": 82136\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"60-69\",\n     \"population\": 881763\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"60-69\",\n     \"population\": 784208\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"60-69\",\n     \"population\": 243108\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"60-69\",\n     \"population\": 645015\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"60-69\",\n     \"population\": 67484\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"60-69\",\n     \"population\": 411924\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"70-79\",\n     \"population\": 316598\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"70-79\",\n     \"population\": 28422\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"70-79\",\n     \"population\": 466153\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"70-79\",\n     \"population\": 197985\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"70-79\",\n     \"population\": 2011678\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"70-79\",\n     \"population\": 274466\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"70-79\",\n     \"population\": 217827\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"70-79\",\n     \"population\": 65369\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"70-79\",\n     \"population\": 31362\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"70-79\",\n     \"population\": 1615547\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"70-79\",\n     \"population\": 528108\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"70-79\",\n     \"population\": 85345\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"70-79\",\n     \"population\": 97621\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"70-79\",\n     \"population\": 728821\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"70-79\",\n     \"population\": 384788\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"70-79\",\n     \"population\": 197223\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"70-79\",\n     \"population\": 166104\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"70-79\",\n     \"population\": 273961\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"70-79\",\n     \"population\": 266123\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"70-79\",\n     \"population\": 97899\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"70-79\",\n     \"population\": 330736\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"70-79\",\n     \"population\": 401931\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"70-79\",\n     \"population\": 619722\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"70-79\",\n     \"population\": 312906\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"70-79\",\n     \"population\": 181195\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"70-79\",\n     \"population\": 388086\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"70-79\",\n     \"population\": 70528\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"70-79\",\n     \"population\": 107650\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"70-79\",\n     \"population\": 173499\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"70-79\",\n     \"population\": 84791\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"70-79\",\n     \"population\": 523620\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"70-79\",\n     \"population\": 135013\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"70-79\",\n     \"population\": 1160055\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"70-79\",\n     \"population\": 609234\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"70-79\",\n     \"population\": 41348\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"70-79\",\n     \"population\": 728158\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"70-79\",\n     \"population\": 239887\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"70-79\",\n     \"population\": 255809\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"70-79\",\n     \"population\": 850897\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"70-79\",\n     \"population\": 63359\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"70-79\",\n     \"population\": 322073\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"70-79\",\n     \"population\": 50398\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"70-79\",\n     \"population\": 414939\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"70-79\",\n     \"population\": 1291486\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"70-79\",\n     \"population\": 123674\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"70-79\",\n     \"population\": 42978\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"70-79\",\n     \"population\": 475141\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"70-79\",\n     \"population\": 401094\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"70-79\",\n     \"population\": 138134\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"70-79\",\n     \"population\": 350772\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"70-79\",\n     \"population\": 32819\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"70-79\",\n     \"population\": 268783\n   },\n   {\n     \"state\": \"AL\",\n     \"age\": \"≥80\",\n     \"population\": 174781\n   },\n   {\n     \"state\": \"AK\",\n     \"age\": \"≥80\",\n     \"population\": 12503\n   },\n   {\n     \"state\": \"AZ\",\n     \"age\": \"≥80\",\n     \"population\": 254716\n   },\n   {\n     \"state\": \"AR\",\n     \"age\": \"≥80\",\n     \"population\": 113468\n   },\n   {\n     \"state\": \"CA\",\n     \"age\": \"≥80\",\n     \"population\": 1311374\n   },\n   {\n     \"state\": \"CO\",\n     \"age\": \"≥80\",\n     \"population\": 155175\n   },\n   {\n     \"state\": \"CT\",\n     \"age\": \"≥80\",\n     \"population\": 159475\n   },\n   {\n     \"state\": \"DE\",\n     \"age\": \"≥80\",\n     \"population\": 35937\n   },\n   {\n     \"state\": \"DC\",\n     \"age\": \"≥80\",\n     \"population\": 19658\n   },\n   {\n     \"state\": \"FL\",\n     \"age\": \"≥80\",\n     \"population\": 1019566\n   },\n   {\n     \"state\": \"GA\",\n     \"age\": \"≥80\",\n     \"population\": 269182\n   },\n   {\n     \"state\": \"HI\",\n     \"age\": \"≥80\",\n     \"population\": 66060\n   },\n   {\n     \"state\": \"ID\",\n     \"age\": \"≥80\",\n     \"population\": 54234\n   },\n   {\n     \"state\": \"IL\",\n     \"age\": \"≥80\",\n     \"population\": 478948\n   },\n   {\n     \"state\": \"IN\",\n     \"age\": \"≥80\",\n     \"population\": 243131\n   },\n   {\n     \"state\": \"IA\",\n     \"age\": \"≥80\",\n     \"population\": 143583\n   },\n   {\n     \"state\": \"KS\",\n     \"age\": \"≥80\",\n     \"population\": 117637\n   },\n   {\n     \"state\": \"KY\",\n     \"age\": \"≥80\",\n     \"population\": 155074\n   },\n   {\n     \"state\": \"LA\",\n     \"age\": \"≥80\",\n     \"population\": 152063\n   },\n   {\n     \"state\": \"ME\",\n     \"age\": \"≥80\",\n     \"population\": 62007\n   },\n   {\n     \"state\": \"MD\",\n     \"age\": \"≥80\",\n     \"population\": 208079\n   },\n   {\n     \"state\": \"MA\",\n     \"age\": \"≥80\",\n     \"population\": 288408\n   },\n   {\n     \"state\": \"MI\",\n     \"age\": \"≥80\",\n     \"population\": 398303\n   },\n   {\n     \"state\": \"MN\",\n     \"age\": \"≥80\",\n     \"population\": 215985\n   },\n   {\n     \"state\": \"MS\",\n     \"age\": \"≥80\",\n     \"population\": 100689\n   },\n   {\n     \"state\": \"MO\",\n     \"age\": \"≥80\",\n     \"population\": 242554\n   },\n   {\n     \"state\": \"MT\",\n     \"age\": \"≥80\",\n     \"population\": 41920\n   },\n   {\n     \"state\": \"NE\",\n     \"age\": \"≥80\",\n     \"population\": 78504\n   },\n   {\n     \"state\": \"NV\",\n     \"age\": \"≥80\",\n     \"population\": 82273\n   },\n   {\n     \"state\": \"NH\",\n     \"age\": \"≥80\",\n     \"population\": 52552\n   },\n   {\n     \"state\": \"NJ\",\n     \"age\": \"≥80\",\n     \"population\": 367432\n   },\n   {\n     \"state\": \"NM\",\n     \"age\": \"≥80\",\n     \"population\": 74393\n   },\n   {\n     \"state\": \"NY\",\n     \"age\": \"≥80\",\n     \"population\": 804091\n   },\n   {\n     \"state\": \"NC\",\n     \"age\": \"≥80\",\n     \"population\": 342497\n   },\n   {\n     \"state\": \"ND\",\n     \"age\": \"≥80\",\n     \"population\": 32206\n   },\n   {\n     \"state\": \"OH\",\n     \"age\": \"≥80\",\n     \"population\": 481890\n   },\n   {\n     \"state\": \"OK\",\n     \"age\": \"≥80\",\n     \"population\": 138055\n   },\n   {\n     \"state\": \"OR\",\n     \"age\": \"≥80\",\n     \"population\": 157153\n   },\n   {\n     \"state\": \"PA\",\n     \"age\": \"≥80\",\n     \"population\": 615069\n   },\n   {\n     \"state\": \"RI\",\n     \"age\": \"≥80\",\n     \"population\": 51021\n   },\n   {\n     \"state\": \"SC\",\n     \"age\": \"≥80\",\n     \"population\": 166727\n   },\n   {\n     \"state\": \"SD\",\n     \"age\": \"≥80\",\n     \"population\": 38540\n   },\n   {\n     \"state\": \"TN\",\n     \"age\": \"≥80\",\n     \"population\": 227483\n   },\n   {\n     \"state\": \"TX\",\n     \"age\": \"≥80\",\n     \"population\": 732179\n   },\n   {\n     \"state\": \"UT\",\n     \"age\": \"≥80\",\n     \"population\": 70711\n   },\n   {\n     \"state\": \"VT\",\n     \"age\": \"≥80\",\n     \"population\": 26656\n   },\n   {\n     \"state\": \"VA\",\n     \"age\": \"≥80\",\n     \"population\": 274606\n   },\n   {\n     \"state\": \"WA\",\n     \"age\": \"≥80\",\n     \"population\": 242589\n   },\n   {\n     \"state\": \"WV\",\n     \"age\": \"≥80\",\n     \"population\": 79201\n   },\n   {\n     \"state\": \"WI\",\n     \"age\": \"≥80\",\n     \"population\": 241747\n   },\n   {\n     \"state\": \"WY\",\n     \"age\": \"≥80\",\n     \"population\": 19682\n   },\n   {\n     \"state\": \"PR\",\n     \"age\": \"≥80\",\n     \"population\": 148963\n   }\n ]\n  },\n  transform: [\n    { type: 'stackY' },\n    { type: 'sortX', by: 'y', reverse: true, slice: 5 },\n  ],\n  encode: {\n    x: 'state',\n    y: 'population',\n    color: 'age',\n  },\n  axis: { y: { labelFormatter: '~s' } },\n  interaction: {\n    elementSelectByColor: {\n      single: true, // 设置为单选模式\n      background: true,\n      link: true,\n    },\n  },\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 800,\n  height: 480,\n});\n\nconst data = [\n  { state: 'AL', age: '<10', population: 598478 },\n  { state: 'AK', age: '<10', population: 106741 },\n  { state: 'AZ', age: '<10', population: 892083 },\n  { state: 'AR', age: '<10', population: 392177 },\n  { state: 'CA', age: '<10', population: 5038433 },\n  { state: 'CO', age: '<10', population: 690830 },\n  { state: 'CT', age: '<10', population: 399369 },\n  { state: 'DE', age: '<10', population: 112177 },\n  { state: 'DC', age: '<10', population: 74377 },\n  { state: 'FL', age: '<10', population: 2211012 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: 'state',\n    y: 'population',\n    color: 'age',\n  },\n  transform: [\n    { type: 'stackY' },\n    { type: 'sortX', by: 'y', reducer: 'sum', reverse: true },\n  ],\n  interaction: [\n    { type: 'elementSelectByX' },\n  ],\n  state: {\n    selected: { fillOpacity: 1, stroke: '#000', strokeWidth: 1 },\n    unselected: { fillOpacity: 0.5 },\n  },\n  axis: {\n    y: { labelFormatter: (d) => `${(d / 1000000).toFixed(1)}M` },\n  },\n  legend: {\n    color: { title: 'Age Group' },\n  },\n});\n\nchart.render();",
+      "duration": 35863,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-interval-stacked.md",
+              "skills/antv-g2-chart/references/transforms/g2-transform-sortx.md",
+              "skills/antv-g2-chart/references/interactions/g2-interaction-element-select.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-interval-stacked.md",
+        "skills/antv-g2-chart/references/transforms/g2-transform-sortx.md",
+        "skills/antv-g2-chart/references/interactions/g2-interaction-element-select.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 1203,
+        "expectedLength": 36881,
+        "similarity": 0.671798170383076,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 800,\n  height: 480,\n});\n\nconst data = [\n  { state: 'AL', age: '<10', population: 598478 },\n  { state: 'AK', age: '<10', population: 106741 },\n  { state: 'AZ', age: '<10', population: 892083 },\n  { state: 'AR', age: '<10', population: 392177 },\n  { state: 'CA', age: '<10', population: 5038433 },\n  { state: 'CO', age: '<10', population: 690830 },\n  { state: 'CT', age: '<10', population: 399369 },\n  { state: 'DE', age: '<10', population: 112177 },\n  { state: 'DC', age: '<10', population: 74377 },\n  { state: 'FL', age: '<10', population: 2211012 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: {\n    x: 'state',\n    y: 'population',\n    color: 'age',\n  },\n  transform: [\n    { type: 'stackY' },\n    { type: 'sortX', by: 'y', reducer: 'sum', reverse: true },\n  ],\n  interaction: [\n    { type: 'elementSelectByX' },\n  ],\n  state: {\n    selected: { fillOpacity: 1, stroke: '#000', strokeWidth: 1 },\n    unselected: { fillOpacity: 0.5 },\n  },\n  axis: {\n    y: { labelFormatter: (d) => `${(d / 1000000).toFixed(1)}M` },\n  },\n  legend: {\n    color: { title: 'Age Group' },\n  },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "toFixed",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "state",
+            "age",
+            "population",
+            "type",
+            "encode",
+            "x",
+            "y",
+            "color",
+            "transform",
+            "type",
+            "type",
+            "by",
+            "reducer",
+            "reverse",
+            "interaction",
+            "type",
+            "state",
+            "selected",
+            "fillOpacity",
+            "stroke",
+            "strokeWidth",
+            "unselected",
+            "fillOpacity",
+            "axis",
+            "y",
+            "labelFormatter",
+            "legend",
+            "color",
+            "title"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "transform",
+            "type.interval",
+            "interaction"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-16",
+      "query": "根据描述绘制图表，使用 KDE 密度估计和箱线图结合的方式，对三组实验数据的分布情况进行可视化分析，每组包含大量随机生成的数值点。参考数据：[{\"group\":\"A\",\"value\":12.34},{\"group\":\"A\",\"value\":18.56},{\"group\":\"A\",\"value\":9.78},{\"group\":\"A\",\"value\":15.21},{\"group\":\"A\",\"value\":13.45},{\"group\":\"B\",\"value\":32.67},{\"group\":\"B\",\"value\":37.89},{\"group\":\"B\",\"value\":30.12},{\"group\":\"B\",\"value\":34.34},{\"group\":\"B\",\"value\":31.56}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst data = [\n  { group: 'A', value: Math.random() * 30 },\n  { group: 'A', value: Math.random() * 30 + 10 },\n  { group: 'B', value: Math.random() * 20 + 20 },\n  { group: 'B', value: Math.random() * 20 + 30 },\n  { group: 'C', value: Math.random() * 15 + 40 },\n  { group: 'C', value: Math.random() * 15 + 35 }\n].flatMap((d, i) => Array.from({ length: 50 }, (_, j) => ({ ...d, value: d.value + (Math.random() - 0.5) * 10 })));\n\nconst chart = new Chart({ container: 'container', theme: 'classic' });\nchart.options({\n  type: 'view',\n  data: data,\n  children: [\n    {\n      type: 'density',\n      data: { transform: [{ type: 'kde', field: 'value', groupBy: ['group'], bandwidth: 2 }] },\n      encode: { x: 'group', y: 'value', color: 'group', size: 'size' },\n      style: { fillOpacity: 0.35, stroke: '#333' },\n      tooltip: false\n    },\n    {\n      type: 'boxplot',\n      encode: { x: 'group', y: 'value', color: 'group', shape: 'violin' },\n      style: { opacity: 0.7, point: false }\n    }\n  ],\n  axis: { y: { title: '观测值' }, x: { title: '实验组' } },\n});\nchart.render();",
+      "generatedCode": "",
+      "duration": 15180,
+      "toolCallsCount": 6,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/marks/g2-mark-boxplot.md",
+              "references/marks/g2-mark-density.md",
+              "references/marks/g2-mark-violin.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        },
+        {
+          "round": 2,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/data/g2-data-kde.md",
+              "references/marks/g2-mark-box-boxplot.md",
+              "references/transforms/g2-transform-group.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        },
+        {
+          "round": 3,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/marks/g2-mark-box.md",
+              "references/marks/g2-mark-polygon.md",
+              "references/data/g2-data-ema.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        },
+        {
+          "round": 4,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/marks/g2-mark-area.md",
+              "references/marks/g2-mark-line.md",
+              "references/marks/g2-mark-interval.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        },
+        {
+          "round": 5,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/marks/g2-mark-area-basic.md",
+              "references/marks/g2-mark-line-basic.md",
+              "references/marks/g2-mark-interval-basic.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        },
+        {
+          "round": 6,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "references/core/g2-core-view-composition.md",
+              "references/core/g2-core-encode-channel.md"
+            ]
+          },
+          "resultSummary": "返回 2 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "references/marks/g2-mark-boxplot.md",
+        "references/marks/g2-mark-density.md",
+        "references/marks/g2-mark-violin.md",
+        "references/data/g2-data-kde.md",
+        "references/marks/g2-mark-box-boxplot.md",
+        "references/transforms/g2-transform-group.md",
+        "references/marks/g2-mark-box.md",
+        "references/marks/g2-mark-polygon.md",
+        "references/data/g2-data-ema.md",
+        "references/marks/g2-mark-area.md",
+        "references/marks/g2-mark-line.md",
+        "references/marks/g2-mark-interval.md",
+        "references/marks/g2-mark-area-basic.md",
+        "references/marks/g2-mark-line-basic.md",
+        "references/marks/g2-mark-interval-basic.md",
+        "references/core/g2-core-view-composition.md",
+        "references/core/g2-core-encode-channel.md"
+      ],
+      "evaluation": {
+        "hasIssues": true,
+        "issues": [
+          "缺少 import/require 语句",
+          "缺少 Chart/Graph 实例化",
+          "缺少 render() 调用"
+        ],
+        "warnings": [],
+        "codeLength": 0,
+        "expectedLength": 1101,
+        "similarity": 0,
+        "extractedCode": "",
+        "structuralFeatures": {
+          "imports": [],
+          "functionCalls": [],
+          "objectKeys": [],
+          "stringLiterals": [],
+          "apiPatterns": []
+        }
+      }
+    },
+    {
+      "id": "case-83",
+      "query": "根据描述绘制图表，使用 G2 创建一个词云图，可视化关键词的提及频次和主题分类关系，通过文本大小和颜色展示数据差异。\n参考数据：\n[{\"text\":\"创新\",\"value\":320,\"category\":\"科技\"},{\"text\":\"可持续发展\",\"value\":280,\"category\":\"环境\"},{\"text\":\"用户增长\",\"value\":260,\"category\":\"商业\"},{\"text\":\"AI\",\"value\":245,\"category\":\"技术\"},{\"text\":\"隐私保护\",\"value\":210,\"category\":\"合规\"},{\"text\":\"区块链\",\"value\":190,\"category\":\"金融\"},{\"text\":\"元宇宙\",\"value\":170,\"category\":\"趋势\"},{\"text\":\"远程办公\",\"value\":155,\"category\":\"工作模式\"}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({ container: 'container', width: 600, height: 400 });\n\nchart.options({\n  type: 'wordCloud',\n  data: [\n    { text: '创新', value: 320, category: '科技' },\n    { text: '可持续发展', value: 280, category: '环境' },\n    { text: '用户增长', value: 260, category: '商业' },\n    { text: 'AI', value: 245, category: '技术' },\n    { text: '隐私保护', value: 210, category: '合规' },\n    { text: '区块链', value: 190, category: '金融' },\n    { text: '元宇宙', value: 170, category: '趋势' },\n    { text: '远程办公', value: 155, category: '工作模式' }\n  ],\n  layout: { fontSize: [16, 60], spiral: 'archimedean' },\n  encode: { text: 'text', color: 'text' },\n  scale: {\n    color: {\n      palette: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']\n    }\n  },\n  style:{\n    fontFamily:(d)=>d.category==='科技'?'STSong':'KaiTi'\n  },\n  legend: { position: 'right' },\n  tooltip: { items: [{ field: 'text', name: '关键词' }, { field: 'value', name: '提及频次' }, { field: 'category', name: '主题分类' }] }\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst data = [\n  { text: '创新', value: 320, category: '科技' },\n  { text: '可持续发展', value: 280, category: '环境' },\n  { text: '用户增长', value: 260, category: '商业' },\n  { text: 'AI', value: 245, category: '技术' },\n  { text: '隐私保护', value: 210, category: '合规' },\n  { text: '区块链', value: 190, category: '金融' },\n  { text: '元宇宙', value: 170, category: '趋势' },\n  { text: '远程办公', value: 155, category: '工作模式' },\n];\n\nconst chart = new Chart({ container: 'container', width: 640, height: 480 });\n\nchart.options({\n  type: 'wordCloud',\n  data,\n  encode: {\n    text: 'text',\n    color: 'category',\n    fontSize: {\n      field: 'value',\n      range: [16, 56],\n    },\n  },\n  layout: {\n    spiral: 'archimedean',\n    padding: 4,\n  },\n  style: {\n    fontFamily: 'Microsoft YaHei, sans-serif',\n    fontWeight: 'bold',\n  },\n  legend: {\n    color: {\n      title: '主题分类',\n      position: 'top',\n    },\n  },\n});\n\nchart.render();",
+      "duration": 25069,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-wordcloud.md"
+            ]
+          },
+          "resultSummary": "返回 1 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-wordcloud.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 933,
+        "expectedLength": 1028,
+        "similarity": 0.9448148148148148,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst data = [\n  { text: '创新', value: 320, category: '科技' },\n  { text: '可持续发展', value: 280, category: '环境' },\n  { text: '用户增长', value: 260, category: '商业' },\n  { text: 'AI', value: 245, category: '技术' },\n  { text: '隐私保护', value: 210, category: '合规' },\n  { text: '区块链', value: 190, category: '金融' },\n  { text: '元宇宙', value: 170, category: '趋势' },\n  { text: '远程办公', value: 155, category: '工作模式' },\n];\n\nconst chart = new Chart({ container: 'container', width: 640, height: 480 });\n\nchart.options({\n  type: 'wordCloud',\n  data,\n  encode: {\n    text: 'text',\n    color: 'category',\n    fontSize: {\n      field: 'value',\n      range: [16, 56],\n    },\n  },\n  layout: {\n    spiral: 'archimedean',\n    padding: 4,\n  },\n  style: {\n    fontFamily: 'Microsoft YaHei, sans-serif',\n    fontWeight: 'bold',\n  },\n  legend: {\n    color: {\n      title: '主题分类',\n      position: 'top',\n    },\n  },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "text",
+            "value",
+            "category",
+            "container",
+            "width",
+            "height",
+            "type",
+            "encode",
+            "text",
+            "color",
+            "fontSize",
+            "field",
+            "range",
+            "layout",
+            "spiral",
+            "padding",
+            "style",
+            "fontFamily",
+            "fontWeight",
+            "legend",
+            "color",
+            "title",
+            "position"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-45",
+      "query": "根据描述绘制图表，使用随机生成的数据绘制一个极坐标系下的柱状图，通过对数据进行分箱统计来展示数值分布情况，并设置了特定的样式与坐标轴位置。参考数据：[{\"value\":22.457308477710008},{\"value\":64.78175833871008},{\"value\":18.505077813759744},{\"value\":51.08172740315273},{\"value\":76.69254924170673},{\"value\":1.923108147457242},{\"value\":43.72816565912217},{\"value\":37.989355279132724},{\"value\":12.370073441881686},{\"value\":70.62726963311434}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst data = Array.from({ length: 100 }, (_, i) => ({\n  value: Math.random() * 80 + (i % 3) * 10\n}));\n\nconst chart = new Chart({ container: 'container', autoFit: true });\nchart.options({\n  type: 'rect',\n  data: data,\n  encode: { x: 'value' },\n  transform: [{ type: 'binX', y: 'count', thresholds: 12 }],\n  coordinate: { type: 'polar'  },\n  axis: {\n    y: { position: 'right',zIndex:1, labelStroke:'#fff', title:false }\n  },\n  style: { fill: '#FF9C3A', fillOpacity: 0.8, radius: 4,inset:1 },\n});\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  { value: 22.457308477710008 },\n  { value: 64.78175833871008 },\n  { value: 18.505077813759744 },\n  { value: 51.08172740315273 },\n  { value: 76.69254924170673 },\n  { value: 1.923108147457242 },\n  { value: 43.72816565912217 },\n  { value: 37.989355279132724 },\n  { value: 12.370073441881686 },\n  { value: 70.62726963311434 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: { x: 'value' },\n  transform: [\n    {\n      type: 'binX',\n      y: 'count',\n      thresholds: 5,\n    },\n  ],\n  coordinate: { type: 'polar' },\n  style: {\n    fillOpacity: 0.8,\n    stroke: '#fff',\n    lineWidth: 1,\n  },\n  axis: {\n    y: { position: 'right' },\n    x: { title: '数值范围' },\n  },\n  scale: {\n    y: { nice: true },\n  },\n});\n\nchart.render();",
+      "duration": 29824,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md",
+              "skills/antv-g2-chart/references/transforms/g2-transform-binx.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md",
+        "skills/antv-g2-chart/references/transforms/g2-transform-binx.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 865,
+        "expectedLength": 545,
+        "similarity": 0.8072772277227722,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nconst data = [\n  { value: 22.457308477710008 },\n  { value: 64.78175833871008 },\n  { value: 18.505077813759744 },\n  { value: 51.08172740315273 },\n  { value: 76.69254924170673 },\n  { value: 1.923108147457242 },\n  { value: 43.72816565912217 },\n  { value: 37.989355279132724 },\n  { value: 12.370073441881686 },\n  { value: 70.62726963311434 },\n];\n\nchart.options({\n  type: 'interval',\n  data,\n  encode: { x: 'value' },\n  transform: [\n    {\n      type: 'binX',\n      y: 'count',\n      thresholds: 5,\n    },\n  ],\n  coordinate: { type: 'polar' },\n  style: {\n    fillOpacity: 0.8,\n    stroke: '#fff',\n    lineWidth: 1,\n  },\n  axis: {\n    y: { position: 'right' },\n    x: { title: '数值范围' },\n  },\n  scale: {\n    y: { nice: true },\n  },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "value",
+            "type",
+            "encode",
+            "x",
+            "transform",
+            "type",
+            "y",
+            "thresholds",
+            "coordinate",
+            "type",
+            "style",
+            "fillOpacity",
+            "stroke",
+            "lineWidth",
+            "axis",
+            "y",
+            "position",
+            "x",
+            "title",
+            "scale",
+            "y",
+            "nice"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "transform",
+            "coordinate",
+            "scale",
+            "type.interval"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-77",
+      "query": "根据描述绘制图表，使用 G2 绘制一个韦恩图，展示不同用户群体之间的交集关系。数据包含多个集合及其交集的大小，通过路径形状、颜色编码和标签显示各部分的用户数量。支持交互高亮和提示信息。参考数据：[{\"sets\":[\"营销活动\"],\"size\":8000,\"label\":\"营销\"},{\"sets\":[\"付费转化\"],\"size\":3000,\"label\":\"付费\"},{\"sets\":[\"高留存\"],\"size\":4500,\"label\":\"留存\"},{\"sets\":[\"营销活动\",\"付费转化\"],\"size\":1800,\"label\":\"转化用户\"},{\"sets\":[\"营销活动\",\"高留存\"],\"size\":2200,\"label\":\"活跃用户\"},{\"sets\":[\"付费转化\",\"高留存\"],\"size\":900,\"label\":\"高价值用户\"},{\"sets\":[\"营销活动\",\"付费转化\",\"高留存\"],\"size\":600,\"label\":\"忠诚用户\"}]",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  autoFit: true,\n});\n\nchart.options({\n  type: 'path',\n  data: {\n    type: 'inline',\n    value: [\n      { sets: ['营销活动'], size: 8000, label: '营销' },\n      { sets: ['付费转化'], size: 3000, label: '付费' },\n      { sets: ['高留存'], size: 4500, label: '留存' },\n      { sets: ['营销活动', '付费转化'], size: 1800, label: '转化用户' },\n      { sets: ['营销活动', '高留存'], size: 2200, label: '活跃用户' },\n      { sets: ['付费转化', '高留存'], size: 900, label: '高价值用户' },\n      { sets: ['营销活动', '付费转化', '高留存'], size: 600, label: '忠诚用户' },\n    ],\n    transform: [\n      {\n        type: 'venn',\n        padding: 20,\n      },\n    ],\n  },\n  encode: {\n    d: 'path',\n    color: (d) => `level-${d.sets.length}` ,\n  },\n  labels: [\n    {\n      position: 'inside',\n      text: (d) => `${d.label}\\n${d.size}人`,\n      style: {\n        fontSize: 12,\n        fontWeight: '600',\n        textBaseline: 'middle',\n      },\n      transform: [{ type: 'overlapDodgeY' }],\n    },\n  ],\n  style: {\n    fillOpacity: (d) => 0.8 - d.sets.length * 0.15,\n    stroke: '#fff',\n    lineWidth: 2,\n  },\n  interaction: { elementHighlight: true },\n  state: { inactive: { opacity: 0.2 }, active: { opacity: 0.8 } },\n  legend: {\n    color: {\n      position: 'right',\n      title: false,\n      itemLabelFontSize: 12 \n    }\n  },\n  tooltip: {\n    items: [\n      { name: '用户群体', field: 'label' },\n      { name: '数量', field: 'size' },\n      { name: '集合', field: 'key' },\n    ],\n  },\n  axis: false,\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nchart.options({\n  type: 'path',\n  data: {\n    type: 'inline',\n    value: [\n      { sets: ['营销活动'], size: 8000, label: '营销\\n8000' },\n      { sets: ['付费转化'], size: 3000, label: '付费\\n3000' },\n      { sets: ['高留存'], size: 4500, label: '留存\\n4500' },\n      { sets: ['营销活动', '付费转化'], size: 1800, label: '转化用户\\n1800' },\n      { sets: ['营销活动', '高留存'], size: 2200, label: '活跃用户\\n2200' },\n      { sets: ['付费转化', '高留存'], size: 900, label: '高价值用户\\n900' },\n      { sets: ['营销活动', '付费转化', '高留存'], size: 600, label: '忠诚用户\\n600' },\n    ],\n    transform: [{ type: 'venn' }],\n  },\n  encode: {\n    d: 'path',\n    color: 'key',\n  },\n  labels: [\n    {\n      position: 'inside',\n      text: (d) => d.label || '',\n      style: {\n        fontSize: 12,\n        fill: '#333',\n        textAlign: 'center',\n        textBaseline: 'middle',\n      },\n    },\n  ],\n  style: {\n    opacity: (d) => (d.sets.length > 1 ? 0.4 : 0.7),\n    stroke: '#fff',\n    lineWidth: 2,\n  },\n  tooltip: {\n    items: [\n      {\n        name: '集合',\n        value: (d) => d.sets.join(' ∩ '),\n      },\n      {\n        name: '用户数',\n        value: (d) => d.size,\n      },\n    ],\n  },\n  interaction: {\n    elementHighlight: true,\n  },\n  legend: {\n    color: {\n      title: '用户群体',\n    },\n  },\n});\n\nchart.render();",
+      "duration": 11557,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-venn.md",
+              "skills/antv-g2-chart/references/marks/g2-mark-path.md",
+              "skills/antv-g2-chart/references/interactions/g2-interaction-element-highlight.md"
+            ]
+          },
+          "resultSummary": "返回 3 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-venn.md",
+        "skills/antv-g2-chart/references/marks/g2-mark-path.md",
+        "skills/antv-g2-chart/references/interactions/g2-interaction-element-highlight.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 1372,
+        "expectedLength": 1521,
+        "similarity": 0.9282212885154062,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\nchart.options({\n  type: 'path',\n  data: {\n    type: 'inline',\n    value: [\n      { sets: ['营销活动'], size: 8000, label: '营销\\n8000' },\n      { sets: ['付费转化'], size: 3000, label: '付费\\n3000' },\n      { sets: ['高留存'], size: 4500, label: '留存\\n4500' },\n      { sets: ['营销活动', '付费转化'], size: 1800, label: '转化用户\\n1800' },\n      { sets: ['营销活动', '高留存'], size: 2200, label: '活跃用户\\n2200' },\n      { sets: ['付费转化', '高留存'], size: 900, label: '高价值用户\\n900' },\n      { sets: ['营销活动', '付费转化', '高留存'], size: 600, label: '忠诚用户\\n600' },\n    ],\n    transform: [{ type: 'venn' }],\n  },\n  encode: {\n    d: 'path',\n    color: 'key',\n  },\n  labels: [\n    {\n      position: 'inside',\n      text: (d) => d.label || '',\n      style: {\n        fontSize: 12,\n        fill: '#333',\n        textAlign: 'center',\n        textBaseline: 'middle',\n      },\n    },\n  ],\n  style: {\n    opacity: (d) => (d.sets.length > 1 ? 0.4 : 0.7),\n    stroke: '#fff',\n    lineWidth: 2,\n  },\n  tooltip: {\n    items: [\n      {\n        name: '集合',\n        value: (d) => d.sets.join(' ∩ '),\n      },\n      {\n        name: '用户数',\n        value: (d) => d.size,\n      },\n    ],\n  },\n  interaction: {\n    elementHighlight: true,\n  },\n  legend: {\n    color: {\n      title: '用户群体',\n    },\n  },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "options",
+            "join",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "type",
+            "data",
+            "type",
+            "value",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "sets",
+            "size",
+            "label",
+            "transform",
+            "type",
+            "encode",
+            "d",
+            "color",
+            "labels",
+            "position",
+            "text",
+            "style",
+            "fontSize",
+            "fill",
+            "textAlign",
+            "textBaseline",
+            "style",
+            "opacity",
+            "4",
+            "stroke",
+            "lineWidth",
+            "tooltip",
+            "items",
+            "name",
+            "value",
+            "name",
+            "value",
+            "interaction",
+            "elementHighlight",
+            "legend",
+            "color",
+            "title"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode",
+            "transform",
+            "interaction"
+          ]
+        }
+      }
+    },
+    {
+      "id": "case-73",
+      "query": "根据描述绘制图表，渲染一个极坐标下的弦图（chord diagram），用于展示离子之间的共现关系及结合强度，数据结构包含源节点、目标节点和对应的数值权重。参考数据：{\"value\":{\"links\":[{\"source\":\"Cl\",\"target\":\"Na\",\"value\":0.7},{\"source\":\"Cl\",\"target\":\"K\",\"value\":1.2},{\"source\":\"Na\",\"target\":\"Mg\",\"value\":0.4},{\"source\":\"K\",\"target\":\"Ca\",\"value\":0.9},{\"source\":\"Mg\",\"target\":\"Cl\",\"value\":0.6},{\"source\":\"Ca\",\"target\":\"Na\",\"value\":0.3}]}}",
+      "library": "g2",
+      "algorithm": "tool-call",
+      "expectedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  theme: 'classic',\n});\n\nchart.options({\n  type: 'chord',\n  autoFit: true,\n  data: {\n    value: {\n      links: [\n        { source: 'Cl', target: 'Na', value: 0.7 },\n        { source: 'Cl', target: 'K', value: 1.2 },\n        { source: 'Na', target: 'Mg', value: 0.4 },\n        { source: 'K', target: 'Ca', value: 0.9 },\n        { source: 'Mg', target: 'Cl', value: 0.6 },\n        { source: 'Ca', target: 'Na', value: 0.3 },\n      ],\n    },\n  },\n  layout: { nodeWidthRatio: 0.07 },\n  scale: {\n    value: { type: 'linear', nice: true, min: 0, max: 1.5 },\n    color: { range: ['#2a9d8f', '#264653', '#e9c46a', '#f4a261', '#e76f51'] },\n  },\n  style: {\n    labelFontSize: 12,\n    labelFill: '#111',\n    linkFillOpacity: 0.75,\n  },\n  coordinate: { type: 'polar' },\n  tooltip: {\n    items: [\n      { field: 'source', name: '阳离子' },\n      { field: 'target', name: '阴离子' },\n      { field: 'value', name: '共现指数', formatter: '.2f' },\n    ],\n  },\n  axis: { value: { title: '离子结合强度' } },\n});\n\nchart.render();",
+      "generatedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\n// 离子共现关系数据\nconst links = [\n  { source: 'Cl', target: 'Na', value: 0.7 },\n  { source: 'Cl', target: 'K', value: 1.2 },\n  { source: 'Na', target: 'Mg', value: 0.4 },\n  { source: 'K', target: 'Ca', value: 0.9 },\n  { source: 'Mg', target: 'Cl', value: 0.6 },\n  { source: 'Ca', target: 'Na', value: 0.3 },\n];\n\n// 提取所有唯一节点\nconst nodeKeys = [...new Set([...links.map(d => d.source), ...links.map(d => d.target)])];\nconst nodes = nodeKeys.map(key => ({ key }));\n\nchart.options({\n  type: 'chord',\n  data: {\n    value: {\n      nodes,\n      links,\n    },\n  },\n  encode: {\n    source: 'source',\n    target: 'target',\n    value: 'value',\n  },\n  style: {\n    labelFontSize: 12,\n    labelFontWeight: 'bold',\n  },\n});\n\nchart.render();",
+      "duration": 4370,
+      "toolCallsCount": 1,
+      "toolCallsLog": [
+        {
+          "round": 1,
+          "tool": "read_skills",
+          "input": {
+            "paths": [
+              "skills/antv-g2-chart/references/marks/g2-mark-chord.md",
+              "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md"
+            ]
+          },
+          "resultSummary": "返回 2 条结果"
+        }
+      ],
+      "loadedSkillPaths": [
+        "skills/antv-g2-chart/references/marks/g2-mark-chord.md",
+        "skills/antv-g2-chart/references/coordinates/g2-coord-polar.md"
+      ],
+      "evaluation": {
+        "hasIssues": false,
+        "issues": [],
+        "warnings": [],
+        "codeLength": 840,
+        "expectedLength": 1081,
+        "similarity": 0.7466568914956011,
+        "extractedCode": "import { Chart } from '@antv/g2';\n\nconst chart = new Chart({\n  container: 'container',\n  width: 640,\n  height: 480,\n});\n\n// 离子共现关系数据\nconst links = [\n  { source: 'Cl', target: 'Na', value: 0.7 },\n  { source: 'Cl', target: 'K', value: 1.2 },\n  { source: 'Na', target: 'Mg', value: 0.4 },\n  { source: 'K', target: 'Ca', value: 0.9 },\n  { source: 'Mg', target: 'Cl', value: 0.6 },\n  { source: 'Ca', target: 'Na', value: 0.3 },\n];\n\n// 提取所有唯一节点\nconst nodeKeys = [...new Set([...links.map(d => d.source), ...links.map(d => d.target)])];\nconst nodes = nodeKeys.map(key => ({ key }));\n\nchart.options({\n  type: 'chord',\n  data: {\n    value: {\n      nodes,\n      links,\n    },\n  },\n  encode: {\n    source: 'source',\n    target: 'target',\n    value: 'value',\n  },\n  style: {\n    labelFontSize: 12,\n    labelFontWeight: 'bold',\n  },\n});\n\nchart.render();",
+        "structuralFeatures": {
+          "imports": [
+            {
+              "names": [
+                "Chart"
+              ],
+              "source": "@antv/g2"
+            }
+          ],
+          "functionCalls": [
+            "Chart",
+            "Set",
+            "map",
+            "map",
+            "map",
+            "options",
+            "render"
+          ],
+          "objectKeys": [
+            "container",
+            "width",
+            "height",
+            "source",
+            "target",
+            "value",
+            "source",
+            "target",
+            "value",
+            "source",
+            "target",
+            "value",
+            "source",
+            "target",
+            "value",
+            "source",
+            "target",
+            "value",
+            "source",
+            "target",
+            "value",
+            "type",
+            "data",
+            "value",
+            "encode",
+            "source",
+            "target",
+            "value",
+            "style",
+            "labelFontSize",
+            "labelFontWeight"
+          ],
+          "stringLiterals": [],
+          "apiPatterns": [
+            "chart.options",
+            "new Chart",
+            "chart.render",
+            "encode"
+          ]
+        }
+      }
+    }
+  ]
+}

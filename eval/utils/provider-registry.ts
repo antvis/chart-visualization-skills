@@ -2,20 +2,46 @@
  * Provider Registry
  *
  * Single source of truth for all provider metadata and env var names.
- * ai-sdk.js derives runtime config from here via getRuntimeConfig().
+ * ai-sdk.ts derives runtime config from here via getRuntimeConfig().
  */
 
-const PROVIDERS = {
+export interface ModelDef {
+  id: string;
+  name: string;
+  isDefault?: boolean;
+}
+
+export interface ProviderDef {
+  id: string;
+  name: string;
+  type: 'openai-compatible';
+  models: ModelDef[];
+  apiKeyEnv: string;
+  fallbackApiKeyEnv?: string;
+  endpointEnv?: string;
+  fallbackEndpointEnv?: string;
+  pathEnv?: string;
+  modelEnv?: string;
+  defaultEndpoint?: string;
+  defaultPath: string;
+  extraHeaderEnvs?: Record<string, string>;
+}
+
+export interface RuntimeConfig {
+  apiKey: string | null;
+  endpoint: string | undefined;
+  path: string;
+  defaultModel: string;
+  extraHeaders?: Record<string, string | undefined>;
+}
+
+export const PROVIDERS: Record<string, ProviderDef> = {
   qwen: {
     id: 'qwen',
     name: 'Qwen',
     type: 'openai-compatible',
     models: [
-      {
-        id: 'qwen3-coder-480b-a35b-instruct',
-        name: 'Qwen Coder Plus',
-        isDefault: true
-      },
+      { id: 'qwen3-coder-480b-a35b-instruct', name: 'Qwen Coder Plus', isDefault: true },
       { id: 'qwen-turbo', name: 'Qwen Turbo' },
       { id: 'qwen-plus', name: 'Qwen Plus' },
       { id: 'qwen-max', name: 'Qwen Max' }
@@ -38,10 +64,7 @@ const PROVIDERS = {
     modelEnv: 'DEEPSEEK_MODEL',
     defaultEndpoint: 'https://api.deepseek.com',
     defaultPath: '/v1/chat/completions',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
+    extraHeaderEnvs: { 'SOFA-TraceId': 'SOFA_TRACE_ID', 'SOFA-RpcId': 'SOFA_RPC_ID' }
   },
   kimi: {
     id: 'kimi',
@@ -53,10 +76,7 @@ const PROVIDERS = {
     pathEnv: 'KIMI_API_PATH',
     modelEnv: 'KIMI_MODEL',
     defaultPath: '/v1/chat/completions',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
+    extraHeaderEnvs: { 'SOFA-TraceId': 'SOFA_TRACE_ID', 'SOFA-RpcId': 'SOFA_RPC_ID' }
   },
   glm: {
     id: 'glm',
@@ -68,10 +88,7 @@ const PROVIDERS = {
     pathEnv: 'GLM_API_PATH',
     modelEnv: 'GLM_MODEL',
     defaultPath: '/v1/chat/completions',
-    extraHeaderEnvs: {
-      'SOFA-TraceId': 'SOFA_TRACE_ID',
-      'SOFA-RpcId': 'SOFA_RPC_ID'
-    }
+    extraHeaderEnvs: { 'SOFA-TraceId': 'SOFA_TRACE_ID', 'SOFA-RpcId': 'SOFA_RPC_ID' }
   },
   openai: {
     id: 'openai',
@@ -94,9 +111,7 @@ const PROVIDERS = {
     id: 'claude',
     name: 'Claude',
     type: 'openai-compatible',
-    models: [
-      { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4-6', isDefault: true }
-    ],
+    models: [{ id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4-6', isDefault: true }],
     apiKeyEnv: 'CLAUDE_API_KEY',
     endpointEnv: 'CLAUDE_API_ENDPOINT',
     pathEnv: 'CLAUDE_API_PATH',
@@ -106,13 +121,7 @@ const PROVIDERS = {
   }
 };
 
-/**
- * Build runtime config by resolving env vars against PROVIDERS metadata.
- * Used by ai-sdk.js instead of its own duplicate PROVIDER_CONFIG.
- * @param {string} providerId
- * @returns {Object|null} { apiKey, endpoint, path, defaultModel, extraHeaders? }
- */
-function getRuntimeConfig(providerId) {
+export function getRuntimeConfig(providerId: string): RuntimeConfig | null {
   const p = PROVIDERS[providerId];
   if (!p) return null;
 
@@ -129,26 +138,21 @@ function getRuntimeConfig(providerId) {
 
   const path = (p.pathEnv && process.env[p.pathEnv]) || p.defaultPath;
 
-  const defaultModelId =
-    p.models.find((m) => m.isDefault)?.id || p.models[0]?.id;
-  const defaultModel =
-    (p.modelEnv && process.env[p.modelEnv]) || defaultModelId;
+  const defaultModelId = p.models.find((m) => m.isDefault)?.id ?? p.models[0]?.id;
+  const defaultModel = (p.modelEnv && process.env[p.modelEnv]) || defaultModelId;
 
-  const config = { apiKey, endpoint, path, defaultModel };
+  const config: RuntimeConfig = { apiKey, endpoint, path, defaultModel };
 
   if (p.extraHeaderEnvs) {
     config.extraHeaders = Object.fromEntries(
-      Object.entries(p.extraHeaderEnvs).map(([header, envVar]) => [
-        header,
-        process.env[envVar]
-      ])
+      Object.entries(p.extraHeaderEnvs).map(([header, envVar]) => [header, process.env[envVar]])
     );
   }
 
   return config;
 }
 
-function listProviders() {
+export function listProviders() {
   return Object.values(PROVIDERS).map((p) => ({
     id: p.id,
     name: p.name,
@@ -158,19 +162,19 @@ function listProviders() {
   }));
 }
 
-function getProvider(providerId) {
-  return PROVIDERS[providerId] || null;
+export function getProvider(providerId: string): ProviderDef | null {
+  return PROVIDERS[providerId] ?? null;
 }
 
-function hasProvider(providerId) {
+export function hasProvider(providerId: string): boolean {
   return providerId in PROVIDERS;
 }
 
-function getApiKeyEnv(providerId) {
-  return PROVIDERS[providerId]?.apiKeyEnv || null;
+export function getApiKeyEnv(providerId: string): string | null {
+  return PROVIDERS[providerId]?.apiKeyEnv ?? null;
 }
 
-function hasApiKey(providerId) {
+export function hasApiKey(providerId: string): boolean {
   const p = PROVIDERS[providerId];
   if (!p) return false;
   return !!(
@@ -180,7 +184,7 @@ function hasApiKey(providerId) {
   );
 }
 
-function getApiKey(providerId) {
+export function getApiKey(providerId: string): string | null {
   const p = PROVIDERS[providerId];
   if (!p) return null;
   return (
@@ -191,40 +195,18 @@ function getApiKey(providerId) {
   );
 }
 
-function getDefaultModel(providerId) {
+export function getDefaultModel(providerId: string): string | null {
   const p = PROVIDERS[providerId];
   if (!p) return null;
-  return p.models.find((m) => m.isDefault)?.id || p.models[0]?.id;
+  return p.models.find((m) => m.isDefault)?.id ?? p.models[0]?.id ?? null;
 }
 
-function getEndpoint(providerId) {
-  const p = PROVIDERS[providerId];
-  if (!p) return null;
-  return { endpoint: p.defaultEndpoint, path: p.defaultPath, type: p.type };
-}
-
-function validateProvider(providerId) {
-  const errors = [];
+export function validateProvider(providerId: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
   if (!hasProvider(providerId)) {
     errors.push(`Unknown provider: ${providerId}`);
   } else if (!hasApiKey(providerId)) {
-    errors.push(
-      `Missing API key. Set ${getApiKeyEnv(providerId)} environment variable.`
-    );
+    errors.push(`Missing API key. Set ${getApiKeyEnv(providerId)} environment variable.`);
   }
   return { valid: errors.length === 0, errors };
 }
-
-module.exports = {
-  PROVIDERS,
-  getRuntimeConfig,
-  listProviders,
-  getProvider,
-  hasProvider,
-  getApiKeyEnv,
-  hasApiKey,
-  getApiKey,
-  getDefaultModel,
-  getEndpoint,
-  validateProvider
-};

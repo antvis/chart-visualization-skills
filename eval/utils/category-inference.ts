@@ -1,23 +1,11 @@
 'use strict';
-
 /**
- * Category Inference
- *
- * Single source of truth for inferring skill category from a description string.
- * Used by both _tune-bm25.js and eval-recall.js.
+ * Category Inference — infer skill category from description string.
  */
 
-/**
- * Infer skill category from description text using regex patterns.
- * Chart types (marks) are matched first to avoid false positives from axis/legend keywords.
- *
- * @param {string} description
- * @returns {string} category name, or 'unknown'
- */
-function inferCategory(description) {
+export function inferCategory(description: string): string {
   const d = description.toLowerCase();
 
-  // ── Chart types (marks) — must come before secondary features ────────────────
   if (/柱状图|条形图/.test(d) && !/坐标轴|axis/.test(d)) return 'marks';
   if (/折线图|线图|line chart/.test(d)) return 'marks';
   if (/饼图|环形图|pie|donut/.test(d)) return 'marks';
@@ -45,23 +33,20 @@ function inferCategory(description) {
   if (/bar chart|bar\b/.test(d)) return 'marks';
   if (/interval/.test(d)) return 'marks';
 
-  // ── Transforms ───────────────────────────────────────────────────────────────
   if (/直方图|histogram|bin/.test(d)) return 'transforms';
   if (/堆叠|stack/.test(d)) return 'transforms';
   if (/分组|dodge|grouped/.test(d)) return 'transforms';
   if (/排序|sort/.test(d)) return 'transforms';
   if (/归一化|normalize/.test(d)) return 'transforms';
 
-  // ── Components ───────────────────────────────────────────────────────────────
   if (/坐标轴|axis|刻度/.test(d)) return 'components';
   if (/图例|legend/.test(d)) return 'components';
   if (/tooltip|提示框/.test(d)) return 'components';
   if (/标签配置|label config/.test(d)) return 'components';
   if (/滚动条|scrollbar/.test(d)) return 'components';
 
-  // ── Other G2 categories ──────────────────────────────────────────────────────
   if (/比例尺|scale|对数|log/.test(d)) return 'scales';
-  if (/螺旋/.test(d)) return 'coordinates'; // helix
+  if (/螺旋/.test(d)) return 'coordinates';
   if (/坐标系|coordinate|极坐标|polar|theta/.test(d)) return 'coordinates';
   if (/交互|brush|select|框选|高亮/.test(d)) return 'interactions';
   if (/动画|animation|animate/.test(d)) return 'animations';
@@ -69,10 +54,8 @@ function inferCategory(description) {
   if (/过滤|filter|数据处理|fetch|remote/.test(d)) return 'data';
   if (/多视图|facet|分面|子图/.test(d)) return 'compositions';
 
-  // ── G6 categories ────────────────────────────────────────────────────────────
   if (/力导|force/.test(d)) return 'layouts';
-  if (/树布局|tree layout|compactbox|dendrogram|思维导图|mindmap/.test(d))
-    return 'layouts';
+  if (/树布局|tree layout|compactbox|dendrogram|思维导图|mindmap/.test(d)) return 'layouts';
   if (/dagre|层次布局|有向无环/.test(d)) return 'layouts';
   if (/节点/.test(d) && /样式|颜色|大小|自定义/.test(d)) return 'elements';
   if (/边/.test(d) && /样式|颜色|曲线/.test(d)) return 'elements';
@@ -82,5 +65,3 @@ function inferCategory(description) {
 
   return 'unknown';
 }
-
-module.exports = { inferCategory };
