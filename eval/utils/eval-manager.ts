@@ -100,7 +100,7 @@ export interface EvalStartResult {
 // ── BM25 retriever loader ─────────────────────────────────────────────────────
 
 function loadRetriever() {
-  return import('../../dist/core/retriever.js' as string) as Promise<{
+  return import('../../src/core/retriever.js') as Promise<{
     retrieve: (query: string, opts: { library: string; topK: number; indexDir: string }) => Array<{ id: string; title: string; path?: string }>;
   }>;
 }

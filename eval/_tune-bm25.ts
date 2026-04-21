@@ -13,8 +13,7 @@ import { inferCategory } from './utils/category-inference.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Dynamic import for the compiled BM25 module
-const { BM25Index } = await import('../dist/core/bm25.js' as string) as {
+const { BM25Index } = await import('../src/core/bm25.js') as {
   BM25Index: new (opts: { k1: number; b: number; fieldWeights: Record<string, number> }) => {
     build: (skills: unknown[]) => void;
     search: (query: string, topK: number) => Array<{ skill: { category?: string } }>;

@@ -6,7 +6,14 @@
  */
 
 import { createOpenAI } from '@ai-sdk/openai';
-import { generateText, tool, stepCountIs, type LanguageModel, type ModelMessage, type ToolSet } from 'ai';
+import {
+  generateText,
+  tool,
+  stepCountIs,
+  type LanguageModel,
+  type ModelMessage,
+  type ToolSet
+} from 'ai';
 import { z } from 'zod';
 import { getRuntimeConfig, PROVIDERS } from './provider-registry.js';
 
@@ -27,7 +34,10 @@ export function detectProviderFromModel(model: string | undefined): string {
 
 // ── 模型工厂 ───────────────────────────────────────────────────────────────────
 
-export function createModel(providerId: string, modelId?: string): LanguageModel {
+export function createModel(
+  providerId: string,
+  modelId?: string
+): LanguageModel {
   const config = getRuntimeConfig(providerId);
   if (!config) throw new Error(`Unknown provider: ${providerId}`);
   if (!config.apiKey) {
@@ -41,10 +51,11 @@ export function createModel(providerId: string, modelId?: string): LanguageModel
   const basePath = config.path.replace(/\/chat\/completions$/, '') || '/v1';
   const baseURL = new URL(basePath, config.endpoint).toString();
 
-  const extraHeaders =
-    config.extraHeaders
-      ? Object.fromEntries(Object.entries(config.extraHeaders).filter(([, v]) => v != null)) as Record<string, string>
-      : undefined;
+  const extraHeaders = config.extraHeaders
+    ? (Object.fromEntries(
+        Object.entries(config.extraHeaders).filter(([, v]) => v != null)
+      ) as Record<string, string>)
+    : undefined;
 
   const client = createOpenAI({
     apiKey: config.apiKey,
@@ -71,7 +82,13 @@ export interface CallAIResult {
 }
 
 export async function callAI(options: CallAIOptions): Promise<CallAIResult> {
-  const { provider = 'qwen', model, messages, temperature = 0.3, maxTokens = 10000 } = options;
+  const {
+    provider = 'qwen',
+    model,
+    messages,
+    temperature = 0.3,
+    maxTokens = 10000
+  } = options;
 
   const llm = createModel(provider, model);
   const { text, usage } = await generateText({
@@ -99,7 +116,10 @@ export interface AgentLoopOptions {
   model?: string;
   maxRounds?: number;
   tools?: ToolSet;
-  toolHandlers?: Record<string, (args: Record<string, unknown>) => Promise<unknown>>;
+  toolHandlers?: Record<
+    string,
+    (args: Record<string, unknown>) => Promise<unknown>
+  >;
 }
 
 export interface AgentLoopResult {
@@ -122,7 +142,10 @@ export class AgentLoop {
 
   private _buildTools(
     toolDefs?: ToolSet,
-    handlers?: Record<string, (args: Record<string, unknown>) => Promise<unknown>>
+    handlers?: Record<
+      string,
+      (args: Record<string, unknown>) => Promise<unknown>
+    >
   ): ToolSet {
     // If caller already provides ai-sdk tool objects, use them directly
     if (toolDefs && Object.keys(toolDefs).length > 0) return toolDefs;
@@ -134,14 +157,17 @@ export class AgentLoop {
         name,
         tool({
           description: `Tool: ${name}`,
-          inputSchema: z.object({ paths: z.array(z.string()).optional() }).passthrough(),
+          inputSchema: z.object({ paths: z.array(z.string()) }).passthrough(),
           execute: async (args) => handler(args as Record<string, unknown>)
         })
       ])
     );
   }
 
-  async run(systemPrompt: string, userMessage: string): Promise<AgentLoopResult> {
+  async run(
+    systemPrompt: string,
+    userMessage: string
+  ): Promise<AgentLoopResult> {
     const llm = createModel(this.provider, this.model);
     const toolCallsLog: ToolCallLog[] = [];
 
@@ -160,13 +186,17 @@ export class AgentLoop {
     let round = 0;
     for (const step of steps) {
       for (const tc of step.toolCalls ?? []) {
-        const result = step.toolResults?.find((r) => r.toolCallId === tc.toolCallId);
+        const result = step.toolResults?.find(
+          (r) => r.toolCallId === tc.toolCallId
+        );
         toolCallsLog.push({
           round: ++round,
           tool: tc.toolName,
           input: (tc as { input?: Record<string, unknown> }).input ?? {},
-          resultSummary: Array.isArray((result as { output?: unknown } | undefined)?.output)
-            ? `返回 ${((result as { output: unknown[] }).output).length} 条结果`
+          resultSummary: Array.isArray(
+            (result as { output?: unknown } | undefined)?.output
+          )
+            ? `返回 ${(result as { output: unknown[] }).output.length} 条结果`
             : '执行完成'
         });
       }

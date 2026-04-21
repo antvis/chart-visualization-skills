@@ -7,11 +7,8 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "declaration": true,
-    "sourceMap": true
+    "noEmit": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "studio"]
+  "include": ["**/*.ts", "../src/core/**/*.ts"],
+  "exclude": ["node_modules", "studio"]
 }
