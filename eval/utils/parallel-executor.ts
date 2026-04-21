@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Parallel Executor — p-limit wrapper preserving parallelMap() interface.
  */

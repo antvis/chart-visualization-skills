@@ -105,13 +105,18 @@ async function runEvaluation(opts: {
 
   const model = !modelArg || modelArg === provider ? getDefaultModel(provider)! : modelArg;
 
+  const ids = opts.ids?.split(',').map((s) => s.trim()).filter(Boolean);
+  const full = opts.full ?? false;
+  // Default to 5 samples when neither --full nor --ids is specified
+  const sample = ids ? undefined : (opts.sample ?? (full ? undefined : 5));
+
   const options = {
     model,
     library,
     dataset,
-    sample: opts.sample,
-    full: opts.full ?? false,
-    ids: opts.ids?.split(',').map((s) => s.trim()).filter(Boolean),
+    sample,
+    full,
+    ids,
     concurrency: opts.concurrency ?? 1,
     verbose: opts.verbose ?? false,
     retrieval: (opts.retrieval ?? 'tool-call') as 'tool-call' | 'bm25' | 'context7',
@@ -126,7 +131,7 @@ async function runEvaluation(opts: {
   console.log(`  Model:       ${model}`);
   console.log(`  Library:     ${library}`);
   console.log(`  Dataset:     ${dataset}`);
-  console.log(`  Sample:      ${options.ids ? `targeted (${options.ids.length} IDs)` : options.sample ?? (options.full ? 'all' : '5')}`);
+  console.log(`  Sample:      ${ids ? `targeted (${ids.length} IDs)` : full ? 'all' : sample}`);
   console.log(`  Concurrency: ${options.concurrency}`);
   console.log(`  Retrieval:   ${options.retrieval}`);
   console.log('='.repeat(60));
@@ -151,24 +156,20 @@ async function runEvaluation(opts: {
   }, 2000);
 
   try {
-    const { evalId: id, outputPath } = await evalManager.startEvaluation({ id: evalId, ...options });
+    const { evalId: id, outputPath, summary } = await evalManager.startEvaluation({ id: evalId, ...options });
 
-    const evalRun = evalManager.runningEvals.get(id);
-    if (evalRun?._promise) await evalRun._promise;
-
-    const finalStatus = evalManager.getStatus(id);
     console.log('');
     console.log('='.repeat(60));
     console.log('  Evaluation Complete');
     console.log('='.repeat(60));
-    console.log(`  Status:       ${finalStatus?.status}`);
-    console.log(`  Total Tests:  ${finalStatus?.summary?.totalTests}`);
-    console.log(`  Avg Similarity: ${((finalStatus?.summary?.avgSimilarity ?? 0) * 100).toFixed(1)}%`);
-    console.log(`  Success Rate: ${finalStatus?.summary?.successCount}/${finalStatus?.summary?.totalTests}`);
-    console.log(`  Issues Count: ${finalStatus?.summary?.issuesCount}`);
+    console.log(`  Status:       completed`);
+    console.log(`  Total Tests:  ${summary.totalTests}`);
+    console.log(`  Avg Similarity: ${(summary.avgSimilarity * 100).toFixed(1)}%`);
+    console.log(`  Success Rate: ${summary.successCount}/${summary.totalTests}`);
+    console.log(`  Issues Count: ${summary.issuesCount}`);
     console.log('='.repeat(60));
 
-    process.stderr.write(`EVAL_RESULT_PATH=${outputPath}\n`);
+    console.log(`EVAL_RESULT_PATH=${outputPath}`);
   } catch (error) {
     console.error('Evaluation failed:', (error as Error).message);
     process.exit(1);

@@ -116,7 +116,7 @@ export const PROVIDERS: Record<string, ProviderDef> = {
     endpointEnv: 'CLAUDE_API_ENDPOINT',
     pathEnv: 'CLAUDE_API_PATH',
     modelEnv: 'CLAUDE_MODEL',
-    defaultEndpoint: 'https://api.clauude.ai',
+    defaultEndpoint: 'https://api.claude.ai',
     defaultPath: '/v1/chat/completions'
   }
 };

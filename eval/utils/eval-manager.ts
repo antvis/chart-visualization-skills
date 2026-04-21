@@ -13,7 +13,6 @@ import {
   createReadSkillsTool,
   loadSkillFile,
   extractKeySections,
-  toolReadSkills,
   buildSystemPrompt
 } from './skill-tools.js';
 import { parallelMap } from './parallel-executor.js';
@@ -83,14 +82,6 @@ interface EvalRun {
   summary?: EvalSummary;
   error?: string;
   abortController: AbortController;
-  totalSimilarity: number;
-  totalToolCalls: number;
-  totalDuration: number;
-  highSimilarityCount: number;
-  issuesCount: number;
-  skillHitCount: number;
-  successCount: number;
-  _promise?: Promise<void>;
 }
 
 export interface WsHandler {
@@ -98,6 +89,12 @@ export interface WsHandler {
   onEvalProgress(evalId: string, current: number, total: number, result: EvalResult): void;
   onEvalComplete(evalId: string, summary: EvalSummary, outputPath: string): void;
   onEvalError(evalId: string, error: Error): void;
+}
+
+export interface EvalStartResult {
+  evalId: string;
+  outputPath: string;
+  summary: EvalSummary;
 }
 
 // ── BM25 retriever loader ─────────────────────────────────────────────────────
@@ -112,7 +109,7 @@ function loadRetriever() {
 
 function buildRagSystemPrompt(library: string, skillContext: string): string {
   const promptFile = path.join(ROOT_DIR, 'prompts', `${library}-system-prompt.md`);
-  let systemPrompt = fs.existsSync(promptFile)
+  const systemPrompt = fs.existsSync(promptFile)
     ? fs.readFileSync(promptFile, 'utf-8')
     : `你是 AntV ${library.toUpperCase()} v5 专家。`;
   return systemPrompt.replace('{RETRIEVED_SKILLS_CONTENT}', skillContext || '（暂无相关内容）');
@@ -122,12 +119,43 @@ function buildRagUserMessage(library: string, query: string): string {
   return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import 语句开头，从 @antv/${library} 引入所需模块，禁止使用 CDN URL\n3. container 直接使用变量，不要写成字符串 'container'\n4. 提供的数据不满足需求时，自动补充所需数据\n5. 包含完整的 render() 调用`;
 }
 
+// ── Summary helpers ───────────────────────────────────────────────────────────
+
+function buildSummary(results: EvalResult[]): EvalSummary {
+  const successResults = results.filter((r) => !r.error);
+  const totalSimilarity = successResults.reduce((s, r) => s + (r.evaluation?.similarity ?? 0), 0);
+  const totalToolCalls = results.reduce((s, r) => s + (r.toolCallsCount ?? 0), 0);
+  return {
+    totalTests: results.length,
+    successCount: successResults.length,
+    avgDuration: results.reduce((s, r) => s + (r.duration ?? 0), 0) / (results.length || 1),
+    avgSimilarity: successResults.length > 0 ? totalSimilarity / successResults.length : 0,
+    highSimilarityCount: results.filter((r) => (r.evaluation?.similarity ?? 0) >= 0.5).length,
+    issuesCount: results.filter((r) => r.evaluation?.hasIssues).length,
+    avgToolCalls: successResults.length > 0 ? totalToolCalls / successResults.length : 0,
+    skillHitRate: results.filter((r) => (r.loadedSkillPaths?.length ?? 0) > 0).length / (results.length || 1)
+  };
+}
+
+function emptyEvaluationResult(errorMsg: string): EvaluationResult {
+  return {
+    similarity: 0,
+    hasIssues: true,
+    issues: [errorMsg],
+    warnings: [],
+    codeLength: 0,
+    expectedLength: 0,
+    extractedCode: '',
+    structuralFeatures: { imports: [], functionCalls: [], objectKeys: [], stringLiterals: [], apiPatterns: [] }
+  };
+}
+
 // ── EvaluationManager ─────────────────────────────────────────────────────────
 
 export default class EvaluationManager {
-  runningEvals = new Map<string, EvalRun>();
+  private runningEvals = new Map<string, EvalRun>();
 
-  async startEvaluation(options: EvalOptions, wsHandler: WsHandler | null = null) {
+  async startEvaluation(options: EvalOptions, wsHandler: WsHandler | null = null): Promise<EvalStartResult> {
     const {
       id: evalId,
       provider,
@@ -168,14 +196,7 @@ export default class EvaluationManager {
       startTime: new Date().toISOString(),
       progress: { current: 0, total: testData.length },
       results: [],
-      abortController: new AbortController(),
-      totalSimilarity: 0,
-      totalToolCalls: 0,
-      totalDuration: 0,
-      highSimilarityCount: 0,
-      issuesCount: 0,
-      skillHitCount: 0,
-      successCount: 0
+      abortController: new AbortController()
     };
 
     this.runningEvals.set(evalId, evalRun);
@@ -191,20 +212,22 @@ export default class EvaluationManager {
 
     wsHandler?.onEvalStart(evalId, options);
 
-    const evalPromise = this._runEvaluation(evalRun, testData, {
-      outputPath,
-      similarityAlgorithm,
-      concurrency,
-      wsHandler
-    }).catch((error) => {
+    try {
+      await this._runEvaluation(evalRun, testData, {
+        outputPath,
+        similarityAlgorithm,
+        concurrency,
+        wsHandler
+      });
+    } catch (error) {
       logger.error({ evalId, err: (error as Error).message }, 'Evaluation error');
       evalRun.status = 'error';
       evalRun.error = (error as Error).message;
-      if (wsHandler) wsHandler.onEvalError(evalId, error as Error);
-    });
+      wsHandler?.onEvalError(evalId, error as Error);
+      throw error;
+    }
 
-    evalRun._promise = evalPromise;
-    return { evalId, outputPath };
+    return { evalId, outputPath, summary: evalRun.summary! };
   }
 
   private async _runEvaluation(
@@ -224,19 +247,20 @@ export default class EvaluationManager {
       const orderedResults = await parallelMap(testData, processCase, {
         concurrency,
         onProgress: ({ done, result }) => {
-          if (result) this._updateIncrementalCounters(evalRun, result);
+          // Accumulate results as they complete for progress snapshots
+          if (result) evalRun.results.push(result);
           evalRun.progress = { current: done, total: testData.length };
           this._saveProgress(evalRun, outputPath);
           wsHandler?.onEvalProgress(evalRun.id, done, testData.length, result!);
         }
       });
+      // Replace with ordered results for the final output
       evalRun.results = orderedResults.filter(Boolean) as EvalResult[];
     } else {
       for (let i = 0; i < testData.length; i++) {
         if (signal.aborted) throw new Error('Evaluation cancelled');
         const result = await processCase(testData[i], i);
         evalRun.results.push(result);
-        this._updateIncrementalCounters(evalRun, result);
         evalRun.progress = { current: i + 1, total: testData.length };
         this._saveProgress(evalRun, outputPath);
         wsHandler?.onEvalProgress(evalRun.id, i + 1, testData.length, result);
@@ -245,7 +269,7 @@ export default class EvaluationManager {
 
     evalRun.status = 'completed';
     evalRun.endTime = new Date().toISOString();
-    evalRun.summary = this._computeSummary(evalRun);
+    evalRun.summary = buildSummary(evalRun.results);
     this._saveFinalResults(evalRun, outputPath);
     wsHandler?.onEvalComplete(evalRun.id, evalRun.summary, outputPath);
   }
@@ -272,11 +296,9 @@ export default class EvaluationManager {
         ({ generatedCode, retrievalInfo } = await this._processContext7({ provider, model, query, library }));
       } else {
         ({ generatedCode, retrievalInfo } = await this._processToolCall({ provider, model, query, library }));
-        evalRun.totalToolCalls += (retrievalInfo.toolCallsCount as number) ?? 0;
       }
 
       const evaluation = evaluateCode(generatedCode, expectedCode, { similarityAlgorithm });
-      evalRun.totalSimilarity += evaluation.similarity;
 
       return {
         id: testCase.id ?? `test-${index}`,
@@ -298,7 +320,7 @@ export default class EvaluationManager {
         expectedCode,
         error: (error as Error).message,
         duration: Date.now() - startTime,
-        evaluation: { similarity: 0, hasIssues: true, issues: [(error as Error).message], warnings: [], codeLength: 0, expectedLength: 0, extractedCode: '', structuralFeatures: { imports: [], functionCalls: [], objectKeys: [], stringLiterals: [], apiPatterns: [] } }
+        evaluation: emptyEvaluationResult((error as Error).message)
       };
     }
   }
@@ -410,69 +432,28 @@ export default class EvaluationManager {
     return paths;
   }
 
-  private _updateIncrementalCounters(evalRun: EvalRun, result: EvalResult) {
-    evalRun.totalDuration += result.duration ?? 0;
-    if (!result.error && result.evaluation?.similarity >= 0.5) evalRun.highSimilarityCount++;
-    if (result.evaluation?.hasIssues) evalRun.issuesCount++;
-    if ((result.loadedSkillPaths?.length ?? 0) > 0) evalRun.skillHitCount++;
-    if (!result.error) evalRun.successCount++;
-  }
-
-  private _computeSummary(evalRun: EvalRun): EvalSummary {
-    const { results } = evalRun;
-    const successCount = results.filter((r) => !r.error).length;
+  private _buildOutputData(evalRun: EvalRun, extra?: Record<string, unknown>) {
     return {
-      totalTests: results.length,
-      successCount,
-      avgDuration: results.reduce((sum, r) => sum + (r.duration ?? 0), 0) / (results.length || 1),
-      avgSimilarity: successCount > 0 ? evalRun.totalSimilarity / successCount : 0,
-      highSimilarityCount: results.filter((r) => r.evaluation?.similarity >= 0.5).length,
-      issuesCount: results.filter((r) => r.evaluation?.hasIssues).length,
-      avgToolCalls: successCount > 0 ? evalRun.totalToolCalls / successCount : 0,
-      skillHitRate: results.filter((r) => (r.loadedSkillPaths?.length ?? 0) > 0).length / (results.length || 1)
+      id: evalRun.id,
+      provider: evalRun.provider,
+      model: evalRun.model,
+      dataset: evalRun.dataset,
+      algorithm: evalRun.retrieval,
+      timestamp: evalRun.startTime,
+      status: evalRun.status,
+      ...extra,
+      summary: buildSummary(evalRun.results),
+      results: evalRun.results
     };
   }
 
   private _saveProgress(evalRun: EvalRun, outputPath: string) {
-    const n = evalRun.progress?.current ?? evalRun.results.length;
-    const { successCount } = evalRun;
-    const data = {
-      id: evalRun.id,
-      provider: evalRun.provider,
-      model: evalRun.model,
-      dataset: evalRun.dataset,
-      algorithm: evalRun.retrieval,
-      timestamp: evalRun.startTime,
-      status: evalRun.status,
-      progress: evalRun.progress,
-      summary: {
-        totalTests: n,
-        successCount,
-        avgDuration: n > 0 ? evalRun.totalDuration / n : 0,
-        avgSimilarity: successCount > 0 ? evalRun.totalSimilarity / successCount : 0,
-        highSimilarityCount: evalRun.highSimilarityCount,
-        issuesCount: evalRun.issuesCount,
-        avgToolCalls: successCount > 0 ? evalRun.totalToolCalls / successCount : 0,
-        skillHitRate: n > 0 ? evalRun.skillHitCount / n : 0
-      },
-      results: evalRun.results
-    };
+    const data = this._buildOutputData(evalRun, { progress: evalRun.progress });
     fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
   }
 
   private _saveFinalResults(evalRun: EvalRun, outputPath: string) {
-    const data = {
-      id: evalRun.id,
-      provider: evalRun.provider,
-      model: evalRun.model,
-      dataset: evalRun.dataset,
-      algorithm: evalRun.retrieval,
-      timestamp: evalRun.startTime,
-      endTime: evalRun.endTime,
-      status: evalRun.status,
-      summary: evalRun.summary,
-      results: evalRun.results
-    };
+    const data = this._buildOutputData(evalRun, { endTime: evalRun.endTime });
     fs.writeFileSync(outputPath, JSON.stringify(data, null, 2));
   }
 

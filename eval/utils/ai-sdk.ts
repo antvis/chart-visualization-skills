@@ -37,10 +37,9 @@ export function createModel(providerId: string, modelId?: string): LanguageModel
   }
 
   const resolvedModel = modelId || config.defaultModel;
-  const baseURL = new URL(
-    config.path.replace('/chat/completions', '') || '/v1',
-    config.endpoint
-  ).toString();
+  // Strip /chat/completions suffix — @ai-sdk/openai appends it automatically
+  const basePath = config.path.replace(/\/chat\/completions$/, '') || '/v1';
+  const baseURL = new URL(basePath, config.endpoint).toString();
 
   const extraHeaders =
     config.extraHeaders

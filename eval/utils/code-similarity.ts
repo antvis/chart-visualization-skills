@@ -55,7 +55,8 @@ function generateCodeFingerprint(code: string): CodeFingerprint {
     return hash;
   });
 
-  return { normalized, ngrams, hashSignature: hashes.slice(0, 20) };
+  // Use up to 200 hashes for a meaningful sample without blowing up comparison cost
+  return { normalized, ngrams, hashSignature: hashes.slice(0, 200) };
 }
 
 function calculateFingerprintSimilarity(fp1: CodeFingerprint, fp2: CodeFingerprint): number {
@@ -90,8 +91,17 @@ export function extractStructuralFeatures(code: string): StructuralFeatures {
     features.imports.push({ names: match[1].split(',').map((s) => s.trim()), source: match[2] });
   }
 
+  const JS_KEYWORDS = new Set([
+    'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
+    'return', 'throw', 'try', 'catch', 'finally', 'new', 'delete', 'typeof',
+    'instanceof', 'in', 'of', 'void', 'yield', 'await', 'async', 'function',
+    'class', 'extends', 'super', 'this', 'let', 'const', 'var', 'import', 'export',
+    'from', 'default', 'static', 'get', 'set'
+  ]);
   const callRegex = /(\w+)\s*\(/g;
-  while ((match = callRegex.exec(code)) !== null) features.functionCalls.push(match[1]);
+  while ((match = callRegex.exec(code)) !== null) {
+    if (!JS_KEYWORDS.has(match[1])) features.functionCalls.push(match[1]);
+  }
 
   const keyRegex = /(\w+)\s*:/g;
   while ((match = keyRegex.exec(code)) !== null) features.objectKeys.push(match[1]);

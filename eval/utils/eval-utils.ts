@@ -2,7 +2,7 @@
  * 评测公共工具函数
  */
 
-import { calculateSimilarity, extractStructuralFeatures, clusterSimilarCodes, StructuralFeatures } from './code-similarity.js';
+import { calculateSimilarity, extractStructuralFeatures, StructuralFeatures } from './code-similarity.js';
 
 // ── 库检测 ──────────────────────────────────────────────────────────────────────
 

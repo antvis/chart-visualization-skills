@@ -1,10 +1,6 @@
-'use strict';
 /**
  * Context7 API Client
  */
-
-import https from 'https';
-import http from 'http';
 
 const API_BASE = 'https://context7.com/api/v2';
 
@@ -17,7 +13,7 @@ export function resolveLibraryId(library: string): string {
   return LIBRARY_ID_MAP[library] ?? `/antvis/${library}`;
 }
 
-export function fetchDocs(
+export async function fetchDocs(
   query: string,
   libraryId: string,
   apiKey: string | undefined,
@@ -31,41 +27,25 @@ export function fetchDocs(
   url.searchParams.set('type', 'json');
   url.searchParams.set('tokens', String(tokens));
 
-  return new Promise((resolve, reject) => {
-    const isHttps = url.protocol === 'https:';
-    const client = isHttps ? https : http;
-    const options = {
-      hostname: url.hostname,
-      port: url.port ? parseInt(url.port) : isHttps ? 443 : 80,
-      path: url.pathname + url.search,
-      method: 'GET',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-    };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-    const req = client.request(options, (res) => {
-      let body = '';
-      res.on('data', (chunk: Buffer) => (body += chunk));
-      res.on('end', () => {
-        if (res.statusCode !== 200) {
-          return reject(new Error(`Context7 API error: ${res.statusCode} ${body.slice(0, 200)}`));
-        }
-        try {
-          resolve(JSON.parse(body));
-        } catch (e: unknown) {
-          reject(new Error(`Failed to parse Context7 response: ${(e as Error).message}`));
-        }
-      });
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      signal: controller.signal
     });
-
-    req.setTimeout(30000, () => {
-      req.destroy();
-      reject(new Error('Context7 API timeout (30s)'));
-    });
-    req.on('error', (err: Error) =>
-      reject(new Error(`Context7 request failed: ${err.message}`))
-    );
-    req.end();
-  });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Context7 API error: ${res.status} ${body.slice(0, 200)}`);
+    }
+    return res.json() as Promise<Record<string, unknown>>;
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw new Error('Context7 API timeout (30s)');
+    throw new Error(`Context7 request failed: ${(err as Error).message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 interface CodeSnippet {
