@@ -4,24 +4,33 @@
  * Merges configuration from multiple sources with a well-defined priority order:
  *
  *   CLI args  >  ~/.harness/config.json  >  HARNESS_* env vars  >  built-in defaults
- *
- * This lets users persist common settings (model, concurrency, library) in a
- * config file instead of repeating CLI flags on every run.
- *
- * Config file location: ~/.harness/config.json  (or HARNESS_CONFIG env var)
- *
- * Inspired by hermes/hermes_cli/config.py
  */
 
-'use strict';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+export interface HarnessConfig {
+  library: string;
+  sample: number;
+  full: boolean;
+  retrieval: string;
+  passes: number;
+  maxIterations: number;
+  concurrency: number;
+  dryRun: boolean;
+  worktree: boolean;
+  skipScore: boolean;
+  scoreThreshold: number;
+  optimizeModel: string;
+  totalDuration: number;
+  highSimilarityCount: number;
+  issuesCount: number;
+  skillHitCount: number;
+  successCount: number;
+}
 
-// ── Defaults ──────────────────────────────────────────────────────────────────
-
-const DEFAULTS = {
+const DEFAULTS: HarnessConfig = {
   library: 'g2',
   sample: 10,
   full: false,
@@ -33,17 +42,15 @@ const DEFAULTS = {
   worktree: true,
   skipScore: true,
   scoreThreshold: 0.6,
-  optimizeModel: '',  // empty = fall back to AI_MODEL
+  optimizeModel: '',
   totalDuration: 0,
   highSimilarityCount: 0,
   issuesCount: 0,
   skillHitCount: 0,
-  successCount: 0
+  successCount: 0,
 };
 
-// ── Env var name mapping  (HARNESS_<UPPER_SNAKE> → camelCase key) ─────────────
-
-const ENV_MAP = {
+const ENV_MAP: Record<string, keyof HarnessConfig> = {
   HARNESS_LIBRARY: 'library',
   HARNESS_SAMPLE: 'sample',
   HARNESS_FULL: 'full',
@@ -52,23 +59,18 @@ const ENV_MAP = {
   HARNESS_MAX_ITERATIONS: 'maxIterations',
   HARNESS_CONCURRENCY: 'concurrency',
   HARNESS_DRY_RUN: 'dryRun',
-  HARNESS_NO_WORKTREE: 'worktree', // inverted: set to '1' → worktree: false
   HARNESS_SKIP_SCORE: 'skipScore',
   HARNESS_SCORE_THRESHOLD: 'scoreThreshold',
   HARNESS_OPTIMIZE_MODEL: 'optimizeModel',
-  // Legacy / existing env vars kept for backwards-compat
   LOOP_LIBRARY: 'library',
   LOOP_SAMPLE: 'sample',
   LOOP_RETRIEVAL: 'retrieval',
   LOOP_CONCURRENCY: 'concurrency',
-  LOOP_SCORE_THRESHOLD: 'scoreThreshold'
+  LOOP_SCORE_THRESHOLD: 'scoreThreshold',
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function coerce(key, raw) {
+function coerce(key: keyof HarnessConfig, raw: unknown): unknown {
   const def = DEFAULTS[key];
-  if (def === undefined) return raw;
   switch (typeof def) {
     case 'number':
       return Number(raw);
@@ -79,23 +81,26 @@ function coerce(key, raw) {
   }
 }
 
-function readConfigFile(filePath) {
+function readConfigFile(filePath: string): Partial<HarnessConfig> {
   try {
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, 'utf-8').trim();
-      return JSON.parse(raw);
+      return JSON.parse(raw) as Partial<HarnessConfig>;
     }
   } catch (e) {
-    console.warn(
-      `[config] Could not parse config file ${filePath}: ${e.message}`
-    );
+    console.warn(`[config] Could not parse config file ${filePath}: ${(e as Error).message}`);
   }
   return {};
 }
 
-// ── Validation schema ─────────────────────────────────────────────────────────
+interface SchemaRule {
+  type: 'string' | 'number';
+  enum?: string[];
+  min?: number;
+  max?: number;
+}
 
-const SCHEMA = {
+const SCHEMA: Partial<Record<keyof HarnessConfig, SchemaRule>> = {
   retrieval:      { type: 'string',  enum: ['tool-call', 'bm25', 'context7'] },
   sample:         { type: 'number',  min: 1 },
   passes:         { type: 'number',  min: 1 },
@@ -104,16 +109,10 @@ const SCHEMA = {
   scoreThreshold: { type: 'number',  min: 0, max: 1 },
 };
 
-/**
- * Validate a resolved config object against SCHEMA.
- * Throws a descriptive Error on the first violation found.
- *
- * @param {object} cfg - resolved config (output of load())
- */
-function validate(cfg) {
-  const errors = [];
+export function validate(cfg: HarnessConfig): void {
+  const errors: string[] = [];
 
-  for (const [key, rule] of Object.entries(SCHEMA)) {
+  for (const [key, rule] of Object.entries(SCHEMA) as [keyof HarnessConfig, SchemaRule][]) {
     const val = cfg[key];
     if (val === undefined || val === null) continue;
 
@@ -121,13 +120,13 @@ function validate(cfg) {
       errors.push(`"${key}" must be a ${rule.type}, got ${typeof val} (${JSON.stringify(val)})`);
       continue;
     }
-    if (rule.enum && !rule.enum.includes(val)) {
+    if (rule.enum && !rule.enum.includes(val as string)) {
       errors.push(`"${key}" must be one of [${rule.enum.join(', ')}], got "${val}"`);
     }
-    if (rule.min !== undefined && val < rule.min) {
+    if (rule.min !== undefined && (val as number) < rule.min) {
       errors.push(`"${key}" must be >= ${rule.min}, got ${val}`);
     }
-    if (rule.max !== undefined && val > rule.max) {
+    if (rule.max !== undefined && (val as number) > rule.max) {
       errors.push(`"${key}" must be <= ${rule.max}, got ${val}`);
     }
   }
@@ -137,43 +136,32 @@ function validate(cfg) {
   }
 }
 
-// ── Main function ─────────────────────────────────────────────────────────────
-
-/**
- * Build the final resolved config by merging all sources.
- *
- * @param {object} [cliOpts={}]  - parsed commander opts (highest priority)
- * @returns {object}             - merged config object (same keys as DEFAULTS)
- */
-function load(cliOpts = {}) {
-  // 1. Start from built-in defaults
+export function load(cliOpts: Record<string, unknown> = {}): HarnessConfig {
   const result = { ...DEFAULTS };
 
-  // 2. Config file  (~/.harness/config.json or HARNESS_CONFIG)
   const configFilePath =
     process.env.HARNESS_CONFIG ||
     path.join(os.homedir(), '.harness', 'config.json');
   const fileConfig = readConfigFile(configFilePath);
   for (const [k, v] of Object.entries(fileConfig)) {
-    if (k in result) result[k] = coerce(k, v);
+    const key = k as keyof HarnessConfig;
+    if (key in result) (result as Record<string, unknown>)[key] = coerce(key, v);
   }
 
-  // 3. HARNESS_* / LOOP_* env vars
   for (const [envKey, configKey] of Object.entries(ENV_MAP)) {
     const val = process.env[envKey];
     if (val === undefined || val === '') continue;
-    // HARNESS_NO_WORKTREE inverts the boolean
     if (envKey === 'HARNESS_NO_WORKTREE') {
       result.worktree = !(val === '1' || val === 'true');
     } else {
-      result[configKey] = coerce(configKey, val);
+      (result as Record<string, unknown>)[configKey] = coerce(configKey, val);
     }
   }
 
-  // 4. CLI args (only override when the value is not the commander default sentinel)
   for (const [k, v] of Object.entries(cliOpts)) {
-    if (v !== undefined && v !== null && k in result) {
-      result[k] = coerce(k, v);
+    const key = k as keyof HarnessConfig;
+    if (v !== undefined && v !== null && key in result) {
+      (result as Record<string, unknown>)[key] = coerce(key, v);
     }
   }
 
@@ -181,13 +169,7 @@ function load(cliOpts = {}) {
   return result;
 }
 
-/**
- * Write user preferences back to the config file.
- * Only keys present in DEFAULTS are persisted.
- *
- * @param {object} patch - key/value pairs to save
- */
-function save(patch) {
+export function save(patch: Partial<HarnessConfig>): void {
   const filePath =
     process.env.HARNESS_CONFIG ||
     path.join(os.homedir(), '.harness', 'config.json');
@@ -195,10 +177,11 @@ function save(patch) {
 
   const existing = readConfigFile(filePath);
   for (const [k, v] of Object.entries(patch)) {
-    if (k in DEFAULTS) existing[k] = v;
+    const key = k as keyof HarnessConfig;
+    if (key in DEFAULTS) (existing as Record<string, unknown>)[key] = v;
   }
   fs.writeFileSync(filePath, JSON.stringify(existing, null, 2));
   console.log(`[config] Saved to ${filePath}`);
 }
 
-module.exports = { load, save, validate, DEFAULTS, ENV_MAP, SCHEMA };
+export { DEFAULTS, ENV_MAP, SCHEMA };

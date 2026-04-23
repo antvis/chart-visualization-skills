@@ -2,33 +2,22 @@
  * Index Agent
  *
  * Responsibility: Rebuild the skill search index after skill files are modified.
- * The build command is resolved from the library registry config.
- *
- * Usage:
- *   const indexAgent = require('./harness/index-agent');
- *   await indexAgent.run({ libraryId: 'g2', rootDir: '/path/to/project' });
  */
 
-const { spawnSync } = require('child_process');
-const path = require('path');
+import { spawnSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
-// Absolute path to the build script in the main repo (not the worktree).
-// The script supports --root=<dir> so it can build indexes for a worktree.
 const MAIN_PKG_ROOT = path.resolve(__dirname, '..');
 const BUILD_SCRIPT = path.join(MAIN_PKG_ROOT, 'dist', 'scripts', 'build.js');
 
-/**
- * Rebuild the skill index.
- *
- * @param {object} opts
- * @param {string} opts.libraryId  - library id (e.g. 'g2')
- * @param {string} opts.rootDir    - project root directory
- */
-function run({ libraryId, rootDir }) {
-  // Always use the main repo's compiled build script (worktrees don't have dist/).
-  // Pass --root=<rootDir> so the script reads skills from and writes index to rootDir.
+export interface IndexAgentOptions {
+  libraryId: string;
+  rootDir: string;
+}
 
-  if (!require('fs').existsSync(BUILD_SCRIPT)) {
+export function run({ libraryId: _libraryId, rootDir }: IndexAgentOptions): void {
+  if (!fs.existsSync(BUILD_SCRIPT)) {
     console.log('\n[index] dist/scripts/build.js not found — running npm run build first...');
     const build = spawnSync('npm', ['run', 'build'], {
       cwd: MAIN_PKG_ROOT,
@@ -50,5 +39,3 @@ function run({ libraryId, rootDir }) {
     throw new Error(`Index build exited with code ${result.status}`);
   }
 }
-
-module.exports = { run };

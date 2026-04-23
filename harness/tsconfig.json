@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "node16",
+    "moduleResolution": "node16",
+    "lib": ["ES2020", "DOM"],
+    "types": ["node"],
+    "outDir": "dist",
+    "rootDir": "..",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "ai": ["../eval/node_modules/ai"],
+      "zod": ["../eval/node_modules/zod"]
+    }
+  },
+  "include": [
+    "*.ts",
+    "../eval/utils/ai-sdk.ts",
+    "../eval/utils/provider-registry.ts",
+    "../eval/utils/render-tester.ts",
+    "../eval/utils/visual-scorer.ts",
+    "../eval/utils/worktree.ts",
+    "../eval/utils/logger.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

@@ -5,42 +5,29 @@
  * Orchestrates the iterative skill optimization loop:
  *   eval → render test → analyze errors → optimize skills → rebuild index → repeat
  *
- * Stops after MAX_PASSES consecutive clean evaluations.
- *
  * Usage:
- *   node harness/controller.js
- *   node harness/controller.js --library=g2 --sample=10 --retrieval=bm25
- *   node harness/controller.js --passes=3 --max-iterations=20 --concurrency=10
- *   node harness/controller.js --full                        # run full dataset
- *   node harness/controller.js --dry-run                     # log errors only, skip optimization
- *   node harness/controller.js --dry-run --log=my.log        # custom log file path
- *   node harness/controller.js --skip-score                  # skip VL visual scoring
- *   node harness/controller.js --score-threshold=0.7         # treat visualScore < 0.7 as failure
- *   node harness/controller.js --no-memory                   # disable cross-iteration memory
- *
- * Agent responsibilities:
- *   eval-agent     — invoke CLI eval, return result file path
- *   render-agent   — headless-browser render test, return error cases
- *   analyze-agent  — attribute errors to skill files
- *   optimize-agent — LLM rewrites skill docs to fix errors
- *   index-agent    — rebuild BM25 skill index
+ *   node harness/dist/controller.js
+ *   node harness/dist/controller.js --library=g2 --sample=10 --retrieval=bm25
  */
 
-require('dotenv').config({ override: true });
+import 'dotenv/config';
 
-const fs   = require('fs');
-const path = require('path');
-const { Command } = require('commander');
-const { detectProviderFromModel } = require('../eval/utils/ai-sdk');
-const { getLibraryConfig } = require('./config');
-const registry    = require('./agent-registry');
-const configMgr   = require('./config-manager');
-const { classify, Reason } = require('./error-classifier');
-const { withRetry, sleep } = require('./retry-utils');
-const memory      = require('./memory');
-const { closeBrowser } = require('../eval/utils/render-tester');
-const worktreeManager  = require('../eval/utils/worktree');
-const logger = require('../eval/utils/logger');
+import fs from 'fs';
+import path from 'path';
+import { Command } from 'commander';
+import { detectProviderFromModel } from '../eval/utils/ai-sdk.js';
+import { getLibraryConfig } from './config.js';
+import registry from './agent-registry.js';
+import * as configMgr from './config-manager.js';
+import { classify, Reason } from './error-classifier.js';
+import { withRetry } from './retry-utils.js';
+import defaultMemory from './memory.js';
+import { closeBrowser } from '../eval/utils/render-tester.js';
+import * as worktreeManager from '../eval/utils/worktree.js';
+import logger from '../eval/utils/logger.js';
+import type { ErrorCase } from './memory.js';
+import type { WorktreeHandle } from '../eval/utils/worktree.js';
+import type { AnalyzeResult } from './analyze-agent.js';
 
 const ROOT_DIR   = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
@@ -63,13 +50,12 @@ program
   .option('--score',                 'Enable VL visual scoring (disabled by default)')
   .option('--skip-score',            'Skip VL visual scoring (default, kept for compatibility)')
   .option('--score-threshold <n>',   'Fail threshold for visual score', (v) => parseFloat(v))
-  .option('--optimize-model <id>',   'Model to use for OptimizeAgent (overrides AI_MODEL for optimization only)')
+  .option('--optimize-model <id>',   'Model to use for OptimizeAgent')
   .option('--log <file>',            'Custom dry-run log file path')
   .option('--no-memory',             'Disable cross-iteration memory')
   .parse(process.argv);
 
-// Merge: defaults < config file < env vars < CLI args
-const cfg = configMgr.load(program.opts());
+const cfg = configMgr.load(program.opts() as Record<string, unknown>);
 
 const LIBRARY_ID      = cfg.library;
 const FULL            = cfg.full;
@@ -84,25 +70,23 @@ const PROVIDER        = detectProviderFromModel(MODEL);
 const OPTIMIZE_PROVIDER = detectProviderFromModel(OPTIMIZE_MODEL);
 const DRY_RUN         = cfg.dryRun;
 const NO_WORKTREE     = !cfg.worktree;
-const SKIP_SCORE      = program.opts().score ? false : cfg.skipScore;
+const SKIP_SCORE      = program.opts()['score'] ? false : cfg.skipScore;
 const SCORE_THRESHOLD = cfg.scoreThreshold;
-const USE_MEMORY      = program.opts().memory !== false; // --no-memory sets opts.memory=false
+const USE_MEMORY      = program.opts()['memory'] !== false;
 
 const LOG_DIR  = path.join(__dirname, 'logs');
 const LOG_FILE = (() => {
-  const cliLog = program.opts().log;
+  const cliLog = program.opts()['log'] as string | undefined;
   if (cliLog) return path.isAbsolute(cliLog) ? cliLog : path.join(process.cwd(), cliLog);
   const dateStr = new Date().toISOString().slice(0, 10);
   return path.join(LOG_DIR, `validator-${dateStr}.log`);
 })();
 
-// ── Worktree state (module-level so .catch() can access it) ───────────────────
-
-let worktree = null;
+let worktree: WorktreeHandle | null = null;
 
 // ── Main loop ─────────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   const libConfig = getLibraryConfig(LIBRARY_ID);
 
   console.log('='.repeat(60));
@@ -125,7 +109,6 @@ async function main() {
   else             console.log(`  Score threshold:${SCORE_THRESHOLD}`);
   console.log('='.repeat(60));
 
-  // ── Worktree setup ─────────────────────────────────────────────────────────
   let activeRootDir   = ROOT_DIR;
   let activeSkillsDir = SKILLS_DIR;
 
@@ -136,23 +119,18 @@ async function main() {
 
     process.once('SIGINT', () => {
       console.log('\n[worktree] Interrupted — cleaning up...');
-      worktree.cleanup();
+      worktree!.cleanup();
       process.exit(130);
     });
   }
 
-  let consecutivePasses = 0;
-  let iteration         = 0;
-  let priorityCaseIds   = null;  // set after optimization to re-test failing cases first
-  // fixedCaseIds: the stable sample drawn in iteration 1 and reused every normal round.
-  // This prevents random re-sampling from generating false "clean pass" signals.
-  let fixedCaseIds      = null;
-  let skillsWereModified = false;  // set to true when any optimization commit lands
+  let consecutivePasses  = 0;
+  let iteration          = 0;
+  let priorityCaseIds: string[] | null   = null;
+  let fixedCaseIds: string[] | null      = null;
+  let skillsWereModified = false;
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  /** Run eval with automatic retry and error-classified back-off. */
-  async function runEval(ids) {
+  async function runEval(ids: string[] | null | undefined): Promise<string> {
     let currentSample = SAMPLE;
 
     return withRetry(
@@ -164,7 +142,7 @@ async function main() {
         concurrency: CONCURRENCY,
         ids,
         rootDir:     activeRootDir,
-      }),
+      }) as Promise<string>,
       {
         maxAttempts: 3,
         baseMs:      5_000,
@@ -179,44 +157,31 @@ async function main() {
         },
         onRetry(err, attempt, delayMs) {
           const { reason } = classify(err);
-          console.warn(`[eval] attempt ${attempt} failed (${reason}): ${err.message}. Retrying in ${(delayMs/1000).toFixed(1)}s...`);
+          console.warn(`[eval] attempt ${attempt} failed (${reason}): ${(err as Error).message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
         },
       }
     );
   }
 
-  /** Run index rebuild with retry. */
-  async function runIndex() {
+  async function runIndex(): Promise<void> {
     return withRetry(
-      () => registry.dispatch('index', { libraryId: LIBRARY_ID, rootDir: activeRootDir }),
+      () => registry.dispatch('index', { libraryId: LIBRARY_ID, rootDir: activeRootDir }) as Promise<void>,
       {
         maxAttempts: 2,
         baseMs:      3_000,
         onRetry(err, attempt, delayMs) {
-          console.warn(`[index] attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs/1000).toFixed(1)}s...`);
+          console.warn(`[index] attempt ${attempt} failed: ${(err as Error).message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
         },
       }
     );
   }
 
-  /**
-   * Run a baseline eval on the main branch (ROOT_DIR) using the same fixedCaseIds
-   * Run a full-dataset eval on both the worktree and the main branch, then
-   * compare pass rates to detect regressions or confirm net improvement.
-   * Always uses the complete dataset — fixedCaseIds (the optimization sample)
-   * cannot detect overfitting and is intentionally excluded here.
-   *
-   * @returns {boolean} true = net improvement or neutral; false = regression
-   */
-  async function runBaselineComparison() {
+  async function runBaselineComparison(): Promise<boolean> {
     console.log('\n' + '─'.repeat(60));
     console.log('[baseline] Comparing worktree skills against main branch (full dataset)...');
     console.log('─'.repeat(60));
 
-    // Always run the full dataset — fixedCaseIds is the sample the optimizer was
-    // trained on, so comparing against only that set cannot detect overfitting.
-    // ── Eval worktree on full dataset ─────────────────────────────────────────
-    let worktreeFullResultPath;
+    let worktreeFullResultPath: string;
     try {
       worktreeFullResultPath = await withRetry(
         () => registry.dispatch('eval', {
@@ -225,22 +190,21 @@ async function main() {
           dataset:     libConfig.defaultDataset,
           concurrency: CONCURRENCY,
           rootDir:     activeRootDir,
-        }),
+        }) as Promise<string>,
         {
           maxAttempts: 2,
           baseMs:      5_000,
           onRetry(err, attempt, delayMs) {
-            console.warn(`[baseline] worktree eval attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
+            console.warn(`[baseline] worktree eval attempt ${attempt} failed: ${(err as Error).message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
           },
         }
       );
     } catch (err) {
-      console.warn(`[baseline] Worktree full eval failed — skipping comparison: ${err.message}`);
+      console.warn(`[baseline] Worktree full eval failed — skipping comparison: ${(err as Error).message}`);
       return true;
     }
 
-    // ── Eval main branch on full dataset ──────────────────────────────────────
-    let baselineResultPath;
+    let baselineResultPath: string;
     try {
       baselineResultPath = await withRetry(
         () => registry.dispatch('eval', {
@@ -248,23 +212,22 @@ async function main() {
           retrieval:   RETRIEVAL,
           dataset:     libConfig.defaultDataset,
           concurrency: CONCURRENCY,
-          rootDir:     ROOT_DIR,   // main branch — not the worktree
-        }),
+          rootDir:     ROOT_DIR,
+        }) as Promise<string>,
         {
           maxAttempts: 2,
           baseMs:      5_000,
           onRetry(err, attempt, delayMs) {
-            console.warn(`[baseline] main eval attempt ${attempt} failed: ${err.message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
+            console.warn(`[baseline] main eval attempt ${attempt} failed: ${(err as Error).message}. Retrying in ${(delayMs / 1000).toFixed(1)}s...`);
           },
         }
       );
     } catch (err) {
-      console.warn(`[baseline] Main branch full eval failed — skipping comparison: ${err.message}`);
+      console.warn(`[baseline] Main branch full eval failed — skipping comparison: ${(err as Error).message}`);
       return true;
     }
 
-    // ── Render test both result files ─────────────────────────────────────────
-    let worktreeFullErrors, baselineErrors;
+    let worktreeFullErrors: ErrorCase[], baselineErrors: ErrorCase[];
     try {
       [worktreeFullErrors, baselineErrors] = await Promise.all([
         registry.dispatch('render', {
@@ -272,41 +235,38 @@ async function main() {
           concurrency:    CONCURRENCY,
           skipScore:      true,
           scoreThreshold: SCORE_THRESHOLD,
-        }),
+        }) as Promise<ErrorCase[]>,
         registry.dispatch('render', {
           resultPath:     baselineResultPath,
           concurrency:    CONCURRENCY,
           skipScore:      true,
           scoreThreshold: SCORE_THRESHOLD,
-        }),
+        }) as Promise<ErrorCase[]>,
       ]);
     } catch (err) {
-      console.warn(`[baseline] Render failed — skipping comparison: ${err.message}`);
+      console.warn(`[baseline] Render failed — skipping comparison: ${(err as Error).message}`);
       return true;
     }
 
-    // ── Compare ───────────────────────────────────────────────────────────────
-    const baselineData    = JSON.parse(fs.readFileSync(baselineResultPath, 'utf-8'));
-    const total           = (baselineData.results || []).length;
+    const baselineData = JSON.parse(fs.readFileSync(baselineResultPath, 'utf-8')) as { results?: unknown[] };
+    const total = (baselineData.results || []).length;
 
     const worktreeErrCount  = worktreeFullErrors.length;
     const baselineErrCount  = baselineErrors.length;
     const improved          = worktreeErrCount <= baselineErrCount;
 
-    const fmt = (errors, t) =>
+    const fmt = (errors: number, t: number) =>
       `${((t - errors) / t * 100).toFixed(1)}%  (${errors} failure${errors !== 1 ? 's' : ''} / ${t})`;
 
     console.log('\n[baseline] Full-dataset results:');
     console.log(`  Main branch  : ${fmt(baselineErrCount,  total)}`);
     console.log(`  Worktree     : ${fmt(worktreeErrCount,  total)}`);
     const deltaPp = ((baselineErrCount - worktreeErrCount) / total * 100).toFixed(1);
-    console.log(`  Delta        : ${deltaPp > 0 ? '+' : ''}${deltaPp}pp`);
+    console.log(`  Delta        : ${Number(deltaPp) > 0 ? '+' : ''}${deltaPp}pp`);
 
-    // Cases that pass on main but fail on worktree (new regressions)
     const baselineErrorSet = new Set(baselineErrors.map((c) => c.id));
     const worktreeErrorSet = new Set(worktreeFullErrors.map((c) => c.id));
     const newRegressions   = [...worktreeErrorSet].filter((id) => !baselineErrorSet.has(id));
-    // Cases fixed on worktree that were failing on main
     const newFixes         = [...baselineErrorSet].filter((id) => !worktreeErrorSet.has(id));
 
     if (newFixes.length > 0) {
@@ -340,61 +300,48 @@ async function main() {
     console.log(`Iteration ${iteration}  |  Consecutive passes: ${consecutivePasses}/${MAX_PASSES}`);
     console.log('─'.repeat(60));
 
-    // ── Step 1: Eval ──────────────────────────────────────────────────────────
-    // Determine which case IDs to run this iteration:
-    //   - priorityCaseIds: targeted re-test of previously failing cases (post-optimize)
-    //   - fixedCaseIds:    the stable sample fixed in iteration 1 (non-full runs)
-    //   - null / undefined: first iteration — sample will be drawn and then fixed
     const isTargetedRound = priorityCaseIds !== null;
     const idsForThisRound = priorityCaseIds ?? (FULL ? null : fixedCaseIds);
 
     if (isTargetedRound) {
-      console.log(`\n[targeted] Re-testing ${priorityCaseIds.length} previously-failing case(s)...`);
+      console.log(`\n[targeted] Re-testing ${priorityCaseIds!.length} previously-failing case(s)...`);
     } else if (fixedCaseIds && !FULL) {
       console.log(`\n[fixed-sample] Running ${fixedCaseIds.length} fixed case(s)...`);
     }
 
-    let resultPath;
+    let resultPath: string;
     try {
       resultPath = await runEval(idsForThisRound);
       priorityCaseIds = null;
     } catch (err) {
       const { reason, action } = classify(err);
-      logger.error({ err: err.message, reason }, 'Eval step failed');
+      logger.error({ err: (err as Error).message, reason }, 'Eval step failed');
       if (action.abort) { if (worktree) worktree.cleanup(); process.exit(1); }
-      // Non-abort eval failure: skip this iteration
       console.error(`Eval failed (${reason}), skipping iteration.`);
       continue;
     }
 
-    // ── Step 2: Fix sample on first normal (non-targeted) iteration ──────────
-    // After the first eval, lock in the case IDs so every subsequent non-targeted
-    // round tests exactly the same set. This makes consecutivePasses meaningful.
     if (!FULL && fixedCaseIds === null && !idsForThisRound) {
       try {
-        const data = JSON.parse(fs.readFileSync(resultPath, 'utf-8'));
-        const ids = (data.results || []).map((r) => r.id).filter(Boolean);
+        const data = JSON.parse(fs.readFileSync(resultPath, 'utf-8')) as { results?: { id?: string }[] };
+        const ids = (data.results || []).map((r) => r.id).filter((id): id is string => Boolean(id));
         if (ids.length > 0) {
           fixedCaseIds = ids;
           console.log(`[fixed-sample] Locked ${fixedCaseIds.length} case IDs for this run.`);
         }
       } catch {
-        // Non-critical: if we can't read the file here, we'll just re-sample next round.
+        // Non-critical
       }
     }
 
-    // ── Step 4 (was 2): Render test ──────────────────────────────────────────
     const errorCases = await registry.dispatch('render', {
       resultPath,
       concurrency:    CONCURRENCY,
       skipScore:      SKIP_SCORE,
       scoreThreshold: SCORE_THRESHOLD,
-    });
+    }) as ErrorCase[];
 
     if (errorCases.length === 0) {
-      // A targeted re-test only validates previously-failing cases.
-      // It is not representative of the full sample, so it must NOT increment
-      // consecutivePasses — only a clean full-sample round counts.
       if (isTargetedRound) {
         console.log(`[targeted] All re-tested cases pass — running full-sample round next to confirm.`);
       } else {
@@ -406,12 +353,11 @@ async function main() {
 
     consecutivePasses = 0;
 
-    // ── Step 3: Analyze errors ────────────────────────────────────────────────
     const { skillToErrors, orphanCases } = registry.dispatch('analyze', {
       errorCases,
       rootDir:    activeRootDir,
       skillsDir:  activeSkillsDir,
-    });
+    }) as AnalyzeResult;
 
     if (skillToErrors.size === 0 && orphanCases.length === 0) {
       console.log('\nNo skills to optimize. Counting as pass to avoid infinite loop.');
@@ -419,20 +365,17 @@ async function main() {
       continue;
     }
 
-    // ── Step 3b: Update memory ────────────────────────────────────────────────
     if (USE_MEMORY) {
       for (const [skillPath, cases] of skillToErrors) {
-        memory.recordErrors(skillPath, cases, iteration);
+        defaultMemory.recordErrors(skillPath, cases, iteration);
       }
     }
 
-    // ── Step 4: Optimize skills ───────────────────────────────────────────────
     const skillsRefDir = path.join(activeSkillsDir, libConfig.skillsPath);
 
-    // Build per-skill history context to inject into the optimize prompt
-    const historyContext = USE_MEMORY
+    const historyContext: Record<string, string | null> = USE_MEMORY
       ? Object.fromEntries(
-          [...skillToErrors.keys()].map((p) => [p, memory.getOptimizationContext(p)])
+          [...skillToErrors.keys()].map((p) => [p, defaultMemory.getOptimizationContext(p)])
         )
       : {};
 
@@ -452,7 +395,7 @@ async function main() {
           libraryId:      LIBRARY_ID,
           skillsRefDir,
           historyContext,
-        }),
+        }) as Promise<void>,
         {
           maxAttempts: 3,
           baseMs:      10_000,
@@ -463,7 +406,7 @@ async function main() {
           onRetry(err, attempt, delayMs) {
             const { reason } = classify(err);
             console.warn(
-              `[optimize] attempt ${attempt} failed (${reason}): ${err.message}. ` +
+              `[optimize] attempt ${attempt} failed (${reason}): ${(err as Error).message}. ` +
               `Retrying in ${(delayMs / 1000).toFixed(1)}s...`
             );
           },
@@ -473,14 +416,12 @@ async function main() {
     } catch (err) {
       const { reason, action } = classify(err);
       if (action.abort) {
-        logger.error({ err: err.message, reason }, 'Optimize step — unrecoverable error');
+        logger.error({ err: (err as Error).message, reason }, 'Optimize step — unrecoverable error');
         if (worktree) worktree.cleanup();
         process.exit(1);
       }
-      // Transient failure (connection / timeout) — log and continue to next iteration.
-      // The failing cases will be retested in the next eval round.
-      logger.warn({ err: err.message, reason }, 'Optimize step failed — skipping this iteration');
-      console.warn(`\n[optimize] Skipped (${reason}): ${err.message}`);
+      logger.warn({ err: (err as Error).message, reason }, 'Optimize step failed — skipping this iteration');
+      console.warn(`\n[optimize] Skipped (${reason}): ${(err as Error).message}`);
       consecutivePasses = 0;
     }
 
@@ -491,23 +432,19 @@ async function main() {
 
     if (!optimizeOk) continue;
 
-    // ── Step 4b: Record optimization in memory ────────────────────────────────
     if (USE_MEMORY) {
       for (const [skillPath, cases] of skillToErrors) {
-        memory.recordOptimization(skillPath, cases, iteration);
+        defaultMemory.recordOptimization(skillPath, cases, iteration);
       }
     }
 
-    // ── Step 4c: Commit worktree ──────────────────────────────────────────────
     if (worktree) {
       const committed = worktree.commit(`validator(${LIBRARY_ID}): iteration ${iteration} — optimize skills`);
       if (committed) skillsWereModified = true;
     }
 
-    // ── Step 5: Rebuild index ─────────────────────────────────────────────────
     await runIndex();
 
-    // Schedule targeted re-test of all failing cases in next iteration
     priorityCaseIds = errorCases.map((c) => c.id).filter(Boolean);
   }
 
@@ -516,7 +453,7 @@ async function main() {
   console.log('='.repeat(60));
 
   if (USE_MEMORY) {
-    const top = memory.getFrequentlyFailingSkills(3);
+    const top = defaultMemory.getFrequentlyFailingSkills(3);
     if (top.length > 0) {
       console.log('\n  Most-optimized skills this run:');
       top.forEach(({ skillPath, count }) =>
@@ -544,8 +481,8 @@ async function main() {
 
 main()
   .then(async () => { await closeBrowser(); })
-  .catch(async (err) => {
-    logger.error({ err: err.message }, 'Fatal error');
+  .catch(async (err: unknown) => {
+    logger.error({ err: (err as Error).message }, 'Fatal error');
     if (worktree) { logger.info('Cleaning up worktree due to fatal error'); worktree.cleanup(); }
     await closeBrowser();
     process.exit(1);

@@ -3,33 +3,28 @@
  *
  * Responsibility: Use an LLM to rewrite skill docs based on observed error cases.
  * In dry-run mode, writes a log file instead of modifying skill files.
- *
- * Usage:
- *   const optimizeAgent = require('./harness/optimize-agent');
- *   await optimizeAgent.run(skillToErrors, {
- *     provider, model, rootDir, dryRun, logFile, iteration
- *   });
  */
 
-const fs = require('fs');
-const path = require('path');
-const { AgentLoop } = require('../eval/utils/ai-sdk');
-const { getLibraryConfig } = require('./config');
-const { withRetry } = require('./retry-utils');
-const { classify } = require('./error-classifier');
+import fs from 'fs';
+import path from 'path';
+import { execFileSync } from 'child_process';
+import { tool, type ToolSet } from 'ai';
+import { z } from 'zod';
+import { AgentLoop } from '../eval/utils/ai-sdk.js';
+import { getLibraryConfig, type LibraryRefs } from './config.js';
+import { withRetry } from './retry-utils.js';
+import { classify } from './error-classifier.js';
+import type { ErrorCase } from './memory.js';
 
 // ── Dry-run log writer ────────────────────────────────────────────────────────
 
-/**
- * Append error details to the dry-run log file.
- *
- * @param {string} logFile        - path to the log file
- * @param {number} iteration      - current loop iteration number
- * @param {object[]} errorCases   - all failed cases this iteration
- * @param {Map<string,object[]>} skillToErrors - grouped skill errors
- * @param {string} rootDir        - project root (for relative path display)
- */
-function writeErrorLog(logFile, iteration, errorCases, skillToErrors, rootDir) {
+export function writeErrorLog(
+  logFile: string,
+  iteration: number,
+  errorCases: ErrorCase[],
+  skillToErrors: Map<string, ErrorCase[]>,
+  rootDir: string
+): void {
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
 
   const lines = [
@@ -45,7 +40,7 @@ function writeErrorLog(logFile, iteration, errorCases, skillToErrors, rootDir) {
       c.renderStatus === 'blank'
         ? '白屏'
         : `渲染报错: ${c.renderError || '未知'}`;
-    lines.push(`[${c.renderStatus.toUpperCase()}] ${c.id}  (${renderInfo})`);
+    lines.push(`[${(c.renderStatus ?? '').toUpperCase()}] ${c.id}  (${renderInfo})`);
     lines.push(`  Query: ${c.query}`);
     if (c.generatedCode) {
       lines.push(`  Generated Code:`);
@@ -70,22 +65,14 @@ function writeErrorLog(logFile, iteration, errorCases, skillToErrors, rootDir) {
 
 // ── Filesystem tools for agent loop ──────────────────────────────────────────
 
-/**
- * Build tool definitions and handlers scoped to the library's ref paths.
- * The model can call list_directory / read_file freely within srcDir and docsDir.
- *
- * @param {{ srcDir?: string, docsDir?: string }} refs
- * @returns {{ tools: object[], toolHandlers: object }}
- */
-function buildRefTools(refs) {
-  const allowedRoots = [refs.srcDir, refs.docsDir].filter(Boolean);
+function buildRefTools(refs: LibraryRefs): ToolSet {
+  const allowedRoots = [refs.srcDir, refs.docsDir].filter((r): r is string => r !== null);
 
-  function assertAllowed(filePath) {
-    let realPath;
+  function assertAllowed(filePath: string): void {
+    let realPath: string;
     try {
       realPath = fs.realpathSync(path.resolve(filePath));
     } catch {
-      // Path doesn't exist yet — resolve without realpathSync
       realPath = path.resolve(filePath);
     }
     const realRoots = allowedRoots.map((r) => {
@@ -96,153 +83,78 @@ function buildRefTools(refs) {
     }
   }
 
-  const tools = [
-    {
-      type: 'function',
-      function: {
-        name: 'list_directory',
-        description:
-          '列出指定目录下的文件和子目录，用于浏览文档或源码结构以确定要读取的文件。',
-        parameters: {
-          type: 'object',
-          properties: {
-            dir_path: {
-              type: 'string',
-              description: '要列出的目录绝对路径'
-            }
-          },
-          required: ['dir_path']
-        }
-      }
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'read_file',
-        description:
-          '读取指定文件的内容，用于查阅官方文档或源码以获取权威 API 信息。',
-        parameters: {
-          type: 'object',
-          properties: {
-            file_path: {
-              type: 'string',
-              description: '要读取的文件绝对路径'
-            }
-          },
-          required: ['file_path']
-        }
-      }
-    },
-    {
-      type: 'function',
-      function: {
-        name: 'grep_files',
-        description:
-          '在文档或源码目录中递归搜索包含指定关键词的文件及匹配行，用于快速定位相关 API 或配置说明，避免逐层浏览目录。',
-        parameters: {
-          type: 'object',
-          properties: {
-            pattern: {
-              type: 'string',
-              description: '要搜索的关键词或正则表达式（传给 grep -E）'
-            },
-            search_dir: {
-              type: 'string',
-              description: '搜索的根目录绝对路径，必须在允许的 refs 目录内'
-            },
-            file_glob: {
-              type: 'string',
-              description: '文件名 glob 过滤，例如 "*.md" 或 "*.ts"，默认不过滤'
-            }
-          },
-          required: ['pattern', 'search_dir']
-        }
-      }
-    }
-  ];
-
-  const toolHandlers = {
-    list_directory({ dir_path }) {
-      try {
-        assertAllowed(dir_path);
-        if (!fs.existsSync(dir_path))
-          return { error: `Path not found: ${dir_path}` };
-        const entries = fs
-          .readdirSync(dir_path, { withFileTypes: true })
-          .map((e) => ({
-            name: e.name,
-            type: e.isDirectory() ? 'directory' : 'file'
-          }));
-        return { dir_path, entries };
-      } catch (e) {
-        return { error: e.message };
-      }
-    },
-    read_file({ file_path }) {
-      try {
-        assertAllowed(file_path);
-        if (!fs.existsSync(file_path))
-          return { error: `File not found: ${file_path}` };
-        const content = fs.readFileSync(file_path, 'utf-8');
-        // Cap single file reads to 12 KB to avoid context explosion
-        return { file_path, content: content.slice(0, 12000) };
-      } catch (e) {
-        return { error: e.message };
-      }
-    },
-    grep_files({ pattern, search_dir, file_glob }) {
-      try {
-        assertAllowed(search_dir);
-        if (!fs.existsSync(search_dir))
-          return { error: `Path not found: ${search_dir}` };
-
-        const { execFileSync } = require('child_process');
-        const args = [
-          '-rn',
-          '-E',
-          '--include',
-          file_glob || '*',
-          pattern,
-          search_dir
-        ];
-        let raw = '';
+  return {
+    list_directory: tool({
+      description: '列出指定目录下的文件和子目录，用于浏览文档或源码结构以确定要读取的文件。',
+      parameters: z.object({
+        dir_path: z.string().describe('要列出的目录绝对路径')
+      }),
+      execute: async (args) => {
+        const dir_path = args.dir_path;
         try {
-          raw = execFileSync('grep', args, {
-            encoding: 'utf-8',
-            maxBuffer: 1024 * 1024
-          });
+          assertAllowed(dir_path);
+          if (!fs.existsSync(dir_path)) return { error: `Path not found: ${dir_path}` };
+          const entries = fs
+            .readdirSync(dir_path, { withFileTypes: true })
+            .map((e) => ({ name: e.name, type: e.isDirectory() ? 'directory' : 'file' }));
+          return { dir_path, entries };
         } catch (e) {
-          // grep exits with code 1 when no matches are found; that's not an error
-          if (e.status === 1) return { pattern, search_dir, matches: [] };
-          return { error: e.message };
+          return { error: (e as Error).message };
         }
-
-        const lines = raw.split('\n').filter(Boolean);
-        // Cap at 100 lines to avoid flooding context
-        const capped = lines.slice(0, 100);
-        return {
-          pattern,
-          search_dir,
-          total: lines.length,
-          shown: capped.length,
-          matches: capped
-        };
-      } catch (e) {
-        return { error: e.message };
       }
-    }
-  };
+    }),
+    read_file: tool({
+      description: '读取指定文件的内容，用于查阅官方文档或源码以获取权威 API 信息。',
+      parameters: z.object({
+        file_path: z.string().describe('要读取的文件绝对路径')
+      }),
+      execute: async (args) => {
+        const file_path = args.file_path;
+        try {
+          assertAllowed(file_path);
+          if (!fs.existsSync(file_path)) return { error: `File not found: ${file_path}` };
+          const content = fs.readFileSync(file_path, 'utf-8');
+          return { file_path, content: content.slice(0, 12000) };
+        } catch (e) {
+          return { error: (e as Error).message };
+        }
+      }
+    }),
+    grep_files: tool({
+      description: '在文档或源码目录中递归搜索包含指定关键词的文件及匹配行。',
+      parameters: z.object({
+        pattern: z.string().describe('要搜索的关键词或正则表达式（传给 grep -E）'),
+        search_dir: z.string().describe('搜索的根目录绝对路径，必须在允许的 refs 目录内'),
+        file_glob: z.string().optional().describe('文件名 glob 过滤，例如 "*.md" 或 "*.ts"，默认不过滤')
+      }),
+      execute: async (args) => {
+        const { pattern, search_dir, file_glob } = args;
+        try {
+          assertAllowed(search_dir);
+          if (!fs.existsSync(search_dir)) return { error: `Path not found: ${search_dir}` };
 
-  return { tools, toolHandlers };
+          const grepArgs = ['-rn', '-E', '--include', file_glob || '*', pattern, search_dir];
+          let raw = '';
+          try {
+            raw = execFileSync('grep', grepArgs, { encoding: 'utf-8', maxBuffer: 1024 * 1024 });
+          } catch (e) {
+            const err = e as { status?: number; message?: string };
+            if (err.status === 1) return { pattern, search_dir, matches: [] };
+            return { error: err.message };
+          }
+
+          const lines = raw.split('\n').filter(Boolean);
+          const capped = lines.slice(0, 100);
+          return { pattern, search_dir, total: lines.length, shown: capped.length, matches: capped };
+        } catch (e) {
+          return { error: (e as Error).message };
+        }
+      }
+    })
+  };
 }
 
-/**
- * Resolve library refs config. Returns null when not configured.
- *
- * @param {string} [libraryId]
- * @returns {{ srcDir?: string, docsDir?: string } | null}
- */
-function getLibraryRefs(libraryId) {
+function getLibraryRefs(libraryId?: string): LibraryRefs | null {
   if (!libraryId) return null;
   try {
     const config = getLibraryConfig(libraryId);
@@ -254,31 +166,18 @@ function getLibraryRefs(libraryId) {
 
 // ── Single skill optimizer ────────────────────────────────────────────────────
 
-/**
- * Ask the LLM to rewrite a skill file based on observed error cases.
- * When library refs are configured, the model uses tool calls to read
- * relevant docs/source on demand rather than having content pre-injected.
- *
- * @param {string} skillPath    - absolute path to the skill markdown file
- * @param {object[]} errorCases - error cases associated with this skill
- * @param {string} provider     - AI provider id
- * @param {string} model        - model id
- * @param {string} [libraryId]  - library id for reference lookup
- */
 async function optimizeSkill(
-  skillPath,
-  errorCases,
-  provider,
-  model,
-  libraryId,
-  historyContext = null   // optional cross-iteration history string from memory.js
-) {
+  skillPath: string,
+  errorCases: ErrorCase[],
+  provider: string,
+  model: string,
+  libraryId?: string,
+  historyContext: string | null = null
+): Promise<void> {
   const skillContent = fs.readFileSync(skillPath, 'utf-8');
   const skillName = path.basename(skillPath, '.md');
 
-  console.log(
-    `\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`
-  );
+  console.log(`\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`);
 
   const errorContext = errorCases
     .map((c, i) => {
@@ -301,7 +200,6 @@ async function optimizeSkill(
 
   const refs = getLibraryRefs(libraryId);
 
-  // Build ref path hints so the model knows where to look
   const refHint = refs
     ? [
         refs.docsDir ? `- 官方文档目录：${refs.docsDir}` : '',
@@ -311,9 +209,7 @@ async function optimizeSkill(
         .join('\n')
     : '';
 
-  const historySection = historyContext
-    ? `\n${historyContext}\n`
-    : '';
+  const historySection = historyContext ? `\n${historyContext}\n` : '';
 
   const systemPrompt = `你是 AntV 技术专家，负责维护 LLM 代码生成的技能文档（skill）。
 ${refHint ? `\n你可以通过工具查阅以下本地参考资料，按需读取，无需全量阅读：\n${refHint}\n` : '\n注意：当前没有可用的外部查阅工具，请直接基于 skill 内容和错误案例进行分析，不要尝试调用任何工具。\n'}${historySection}
@@ -337,14 +233,11 @@ ${errorContext}
 4. 在「常见错误与修正」章节补充上述问题的示例和修正说明
 5. 直接输出完整的优化后 skill 文档（以 --- 开头），不要输出任何解释文字`;
 
-  const { tools, toolHandlers } = refs
-    ? buildRefTools(refs)
-    : { tools: [], toolHandlers: {} };
+  const tools = refs ? buildRefTools(refs) : undefined;
 
   const result = await withRetry(
     () => {
-      // Recreate AgentLoop on each attempt — reusing a failed loop risks stale state.
-      const loop = new AgentLoop({ provider, model, maxRounds: 6, tools, toolHandlers });
+      const loop = new AgentLoop({ provider, model, maxRounds: 6, tools });
       return loop.run(systemPrompt, userMessage);
     },
     {
@@ -356,7 +249,7 @@ ${errorContext}
       },
       onRetry(err, attempt, delayMs) {
         console.warn(
-          `    [retry] ${skillName}: ${err.message} — attempt ${attempt} in ${(delayMs / 1000).toFixed(1)}s...`
+          `    [retry] ${skillName}: ${(err as Error).message} — attempt ${attempt} in ${(delayMs / 1000).toFixed(1)}s...`
         );
       },
     }
@@ -364,7 +257,7 @@ ${errorContext}
 
   if (result.toolCallsLog.length > 0) {
     console.log(
-      `    Ref lookups: ${result.toolCallsLog.map((t) => `${t.tool}(${JSON.stringify(t.args).slice(0, 60)})`).join(', ')}`
+      `    Ref lookups: ${result.toolCallsLog.map((t) => `${t.tool}(${JSON.stringify(t.input).slice(0, 60)})`).join(', ')}`
     );
   }
 
@@ -382,8 +275,6 @@ ${errorContext}
     return;
   }
 
-  // Validate that the new content is meaningfully different and not a regression:
-  // it must be non-empty and at least half the length of the original.
   const originalContent = fs.readFileSync(skillPath, 'utf-8');
   if (newContent.length < originalContent.length * 0.5) {
     console.warn(
@@ -392,23 +283,19 @@ ${errorContext}
     return;
   }
 
-  // If LLM decided this skill is not the root cause and returned the original
-  // content unchanged, skip the write entirely.
   if (newContent === originalContent.trim()) {
     console.log(`    Unchanged (not root cause): ${skillName}`);
     return;
   }
 
-  // Back up original before overwriting so we can recover if needed.
   const backupPath = skillPath + '.bak';
   fs.copyFileSync(skillPath, backupPath);
 
   try {
     fs.writeFileSync(skillPath, newContent);
-    fs.unlinkSync(backupPath); // clean up backup on success
+    fs.unlinkSync(backupPath);
     console.log(`    Saved: ${skillPath}`);
   } catch (writeErr) {
-    // Restore from backup if the write fails mid-way.
     try { fs.copyFileSync(backupPath, skillPath); } catch { /* best-effort */ }
     try { fs.unlinkSync(backupPath); } catch { /* best-effort */ }
     throw writeErr;
@@ -417,30 +304,16 @@ ${errorContext}
 
 // ── New skill creator ─────────────────────────────────────────────────────────
 
-/**
- * Ask the LLM to create one or more new skill files for orphan error cases
- * (cases that had no matching skill to blame). The LLM may decide to create
- * one skill per distinct topic or merge related cases into fewer files.
- *
- * @param {object[]} orphanCases  - error cases with no resolvable skill
- * @param {string} provider       - AI provider id
- * @param {string} model          - model id
- * @param {string} skillsBaseDir  - absolute path to the skills/<library>/references dir
- * @param {string} [libraryId]    - library id for reference lookup
- * @returns {string[]} paths of newly created skill files
- */
-async function createNewSkills(
-  orphanCases,
-  provider,
-  model,
-  skillsBaseDir,
-  libraryId
-) {
+export async function createNewSkills(
+  orphanCases: ErrorCase[],
+  provider: string,
+  model: string,
+  skillsBaseDir: string,
+  libraryId?: string
+): Promise<string[]> {
   if (orphanCases.length === 0) return [];
 
-  console.log(
-    `\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`
-  );
+  console.log(`\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`);
 
   const errorContext = orphanCases
     .map((c, i) => {
@@ -492,31 +365,19 @@ ${errorContext}
 3. 必须包含「最小可运行示例」章节，代码可直接运行
 4. 必须包含「常见错误与修正」章节，收录上述 case 的错误模式`;
 
-  const { tools, toolHandlers } = refs
-    ? buildRefTools(refs)
-    : { tools: [], toolHandlers: {} };
+  const tools = refs ? buildRefTools(refs) : undefined;
 
-  const loop = new AgentLoop({
-    provider,
-    model,
-    maxRounds: 8,
-    tools,
-    toolHandlers
-  });
-
+  const loop = new AgentLoop({ provider, model, maxRounds: 8, tools });
   const result = await loop.run(systemPrompt, userMessage);
 
   if (!result?.content) {
-    console.warn(
-      `    LLM returned empty response for new skill creation, skipping.`
-    );
+    console.warn(`    LLM returned empty response for new skill creation, skipping.`);
     return [];
   }
 
-  // Parse skill blocks from response
-  const created = [];
+  const created: string[] = [];
   const blockRe = /<<<SKILL_START:([^>]+)>>>([\s\S]*?)<<<SKILL_END>>>/g;
-  let match;
+  let match: RegExpExecArray | null;
   while ((match = blockRe.exec(result.content)) !== null) {
     const filename = match[1].trim();
     let content = match[2].trim();
@@ -531,11 +392,8 @@ ${errorContext}
     const filePath = path.join(skillsBaseDir, `${filename}.md`);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
-    // Back up pre-existing file before overwriting (idempotent re-runs).
     const existingBackup = filePath + '.bak';
-    if (fs.existsSync(filePath)) {
-      fs.copyFileSync(filePath, existingBackup);
-    }
+    if (fs.existsSync(filePath)) fs.copyFileSync(filePath, existingBackup);
     try {
       fs.writeFileSync(filePath, content);
       if (fs.existsSync(existingBackup)) fs.unlinkSync(existingBackup);
@@ -559,26 +417,22 @@ ${errorContext}
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-/**
- * Run the optimize agent over all skills that had errors,
- * and optionally create new skills for orphan cases.
- *
- * @param {Map<string,object[]>} skillToErrors - map from skill path to error cases
- * @param {object} opts
- * @param {string} opts.provider       - AI provider id
- * @param {string} opts.model          - model id
- * @param {string} opts.rootDir        - project root (for log path display)
- * @param {boolean} [opts.dryRun]      - if true, write log only, do not modify files
- * @param {string} [opts.logFile]      - path to dry-run log file
- * @param {number} [opts.iteration]    - current iteration number (for log header)
- * @param {object[]} [opts.allErrorCases] - all error cases (for dry-run log)
- * @param {object[]} [opts.orphanCases]   - error cases with no skill refs (for new skill creation)
- * @param {string} [opts.libraryId]    - library id for reference doc injection (e.g. 'g2')
- * @param {string} [opts.skillsRefDir] - absolute path to skills/<library>/references dir
- * @returns {string[]} paths of newly created skill files (empty in dry-run)
- */
-async function run(
-  skillToErrors,
+export interface OptimizeAgentOptions {
+  provider: string;
+  model: string;
+  rootDir: string;
+  dryRun?: boolean;
+  logFile?: string;
+  iteration?: number;
+  allErrorCases?: ErrorCase[];
+  orphanCases?: ErrorCase[];
+  libraryId?: string;
+  skillsRefDir?: string;
+  historyContext?: Record<string, string | null>;
+}
+
+export async function run(
+  skillToErrors: Map<string, ErrorCase[]>,
   {
     provider,
     model,
@@ -590,47 +444,37 @@ async function run(
     orphanCases = [],
     libraryId,
     skillsRefDir,
-    historyContext = {}   // { [skillPath]: string | null } — from memory.js
-  }
-) {
+    historyContext = {},
+  }: OptimizeAgentOptions
+): Promise<string[]> {
   if (dryRun) {
-    writeErrorLog(logFile, iteration, allErrorCases, skillToErrors, rootDir);
+    writeErrorLog(logFile!, iteration, allErrorCases, skillToErrors, rootDir);
     console.log('\n[dry-run] Skipping skill optimization and index rebuild.');
     return [];
   }
 
-  const created = [];
+  const created: string[] = [];
 
   if (skillToErrors.size > 0) {
     console.log(`\nOptimizing ${skillToErrors.size} skill(s) in parallel...`);
     const results = await Promise.allSettled(
       [...skillToErrors.entries()].map(([skillPath, cases]) =>
-        optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath])
+        optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath] ?? null)
       )
     );
     for (const r of results) {
       if (r.status === 'rejected') {
-        console.error(`  Skill optimization failed: ${r.reason?.message ?? r.reason}`);
+        console.error(`  Skill optimization failed: ${(r.reason as Error)?.message ?? r.reason}`);
       }
     }
   }
 
   if (orphanCases.length > 0 && skillsRefDir) {
-    const newFiles = await createNewSkills(
-      orphanCases,
-      provider,
-      model,
-      skillsRefDir,
-      libraryId
-    );
+    const newFiles = await createNewSkills(orphanCases, provider, model, skillsRefDir, libraryId);
     created.push(...newFiles);
   } else if (orphanCases.length > 0) {
-    console.warn(
-      `  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`
-    );
+    console.warn(`  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`);
   }
 
   return created;
 }
-
-module.exports = { run, writeErrorLog, createNewSkills };

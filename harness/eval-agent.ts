@@ -3,33 +3,25 @@
  *
  * Responsibility: Run a single evaluation pass by invoking the eval CLI.
  * Returns the path to the newly created result file.
- *
- * Usage:
- *   const evalAgent = require('./harness/eval-agent');
- *   const resultPath = await evalAgent.run({ sample: 10, retrieval: 'tool-call' });
  */
 
-const { spawnSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { spawnSync } from 'child_process';
+import path from 'path';
+import fs from 'fs';
 
 const MAIN_ROOT_DIR = path.resolve(__dirname, '..');
 
-/**
- * Run an evaluation pass.
- *
- * @param {object} opts
- * @param {number} [opts.sample]      - number of cases to sample (ignored when full or ids is set)
- * @param {boolean} [opts.full]       - run full dataset (overrides sample)
- * @param {string} opts.retrieval     - retrieval strategy ('tool-call' | 'bm25' | 'context7')
- * @param {string} [opts.dataset]     - dataset filename (default: from library config)
- * @param {number} [opts.concurrency] - number of parallel eval workers
- * @param {string[]} [opts.ids]       - specific case IDs to test (post-optimization targeted re-test)
- * @param {string} [opts.rootDir]     - project root to use (worktree path when in worktree mode)
- * @returns {string} path to the result JSON file
- */
-function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
-  // Use provided rootDir (worktree) or fall back to the main repo root.
+export interface EvalAgentOptions {
+  sample?: number;
+  full?: boolean;
+  retrieval: string;
+  dataset?: string;
+  concurrency?: number;
+  ids?: string[];
+  rootDir?: string;
+}
+
+export function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }: EvalAgentOptions): string {
   const effectiveRoot = rootDir || MAIN_ROOT_DIR;
   const resultDir = path.join(effectiveRoot, 'eval', 'result');
 
@@ -38,7 +30,6 @@ function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
   }
 
   const argv = [
-    // Always resolve the CLI script from the main repo (eval-cli has no worktree copy).
     path.join(MAIN_ROOT_DIR, 'eval', 'eval-cli', 'index.js'),
     'eval',
     `--retrieval=${retrieval}`
@@ -58,11 +49,9 @@ function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
     cwd: effectiveRoot,
     stdio: ['inherit', 'inherit', 'pipe'],
     shell: false,
-    // Propagate the active root so eval-manager resolves skills from the worktree.
     env: { ...process.env, HARNESS_ROOT_DIR: effectiveRoot }
   });
 
-  // Forward stderr to the terminal (minus the marker line which is ours to consume).
   const stderrOutput = result.stderr?.toString() || '';
   const stderrLines = stderrOutput.split('\n');
   const markerLine = stderrLines.find((l) => l.startsWith('EVAL_RESULT_PATH='));
@@ -81,5 +70,3 @@ function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }) {
     'Eval process did not report EVAL_RESULT_PATH — eval-cli may have crashed before completion'
   );
 }
-
-module.exports = { run };
