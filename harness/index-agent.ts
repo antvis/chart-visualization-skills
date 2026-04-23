@@ -7,7 +7,9 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MAIN_PKG_ROOT = path.resolve(__dirname, '..');
 const BUILD_SCRIPT = path.join(MAIN_PKG_ROOT, 'dist', 'scripts', 'build.js');
 

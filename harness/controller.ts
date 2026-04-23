@@ -14,6 +14,7 @@ import 'dotenv/config';
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { Command } from 'commander';
 import { detectProviderFromModel } from '../eval/utils/ai-sdk.js';
 import { getLibraryConfig } from './config.js';
@@ -29,6 +30,7 @@ import type { ErrorCase } from './memory.js';
 import type { WorktreeHandle } from '../eval/utils/worktree.js';
 import type { AnalyzeResult } from './analyze-agent.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR   = path.resolve(__dirname, '..');
 const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 

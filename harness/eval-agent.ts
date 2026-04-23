@@ -8,7 +8,9 @@
 import { spawnSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MAIN_ROOT_DIR = path.resolve(__dirname, '..');
 
 export interface EvalAgentOptions {

@@ -6,6 +6,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import * as evalAgent from './eval-agent.js';
 import * as renderAgent from './render-agent.js';
 import * as analyzeAgent from './analyze-agent.js';
@@ -13,6 +14,8 @@ import * as optimizeAgent from './optimize-agent.js';
 import * as indexAgent from './index-agent.js';
 import type { ErrorCase } from './memory.js';
 import type { AnalyzeResult } from './analyze-agent.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AgentResult = any;
