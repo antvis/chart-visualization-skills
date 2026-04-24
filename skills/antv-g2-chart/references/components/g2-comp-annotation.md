@@ -116,13 +116,36 @@ chart.options({
 });
 ```
 
-## 参考区间（rangeX / rangeY）
+## 参考区间（rangeX）
+
+```javascript
+// 高亮某个 x 值范围（如正常区间）
+{
+  type: 'rangeX',
+  data: [{ x: '6月', x1: '7月' }],
+  encode: { x: 'x', x1: 'x1' },
+  style: {
+    fill: '#52c41a',
+    fillOpacity: 0.08,
+  },
+  labels: [
+    {
+      text: '正常范围',
+      position: 'top-right',
+      style: { fill: '#52c41a', fontSize: 11 },
+    },
+  ],
+}
+```
+
+## 参考区间（rangeY）
 
 ```javascript
 // 高亮某个 y 值范围（如正常区间）
 {
   type: 'rangeY',
-  data: [{ y: [40, 80] }],
+  data: [{ y: 50, y1: 80 }],
+  encode: { y: 'y', y1: 'y1' },
   style: {
     fill: '#52c41a',
     fillOpacity: 0.08,
