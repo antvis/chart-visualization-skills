@@ -75,7 +75,7 @@ chart.render();
 ```javascript
 labels: [
   {
-    // 函数方式：可访问完整数据行
+    // 推荐：text 函数方式，可访问完整数据行 datum
     text: (d) => `${d.sold.toLocaleString()} 万`,
 
     // 或字符串字段名（自动取该字段的值）
@@ -84,19 +84,34 @@ labels: [
 ],
 ```
 
+## formatter 用法（仅格式化已取值的文本）
+
+`formatter` 接收的第一个参数是 `text` 已映射的值（非完整 datum），适合对数值进行简单格式化：
+
+```javascript
+labels: [
+  {
+    text: 'yield_rate',              // 先映射字段 yield_rate 的值
+    formatter: (val) => `${val}%`,   // val 是 yield_rate 的值，非 datum 对象
+  },
+],
+```
+
+完整签名：`formatter(text, datum, index, data) => string`
+
 ## 完整 label 配置项
 
 ```javascript
 labels: [
   {
-    text: (d) => d.value.toFixed(1),  // 标签文本
+    text: (d) => d.value.toFixed(1),  // 标签文本（推荐用函数直接访问 datum）
     position: 'outside',               // 位置
 
     // ── 样式 ─────────────────────────────────
     style: {
       fontSize: 12,
       fill: '#333',
-      fontWeight: 'normal',
+      fontWeight: 'bold',
       textAlign: 'center',
       dy: -4,                          // y 方向偏移（px）
       dx: 0,                           // x 方向偏移
@@ -171,4 +186,24 @@ chart.options({ labels: [{ text: 0 }] });
 // ✅ 正确：text 应为字段名字符串或函数
 chart.options({ labels: [{ text: 'value' }] });
 chart.options({ labels: [{ text: (d) => d.value.toFixed(1) }] });
+```
+
+### 错误：formatter 中把第一个参数当成 datum
+```javascript
+// ❌ 错误：formatter 的第一个参数是已映射的文本值，不是 datum
+labels: [{
+  text: 'yield_rate',
+  formatter: (d) => `${d.yield_rate}%`,  // d 是数值，d.yield_rate 为 undefined
+}]
+
+// ✅ 方案一：用 text 函数直接访问 datum（推荐）
+labels: [{
+  text: (d) => `${d.yield_rate}%`,
+}]
+
+// ✅ 方案二：formatter 正确用法（参数是已取值的文本）
+labels: [{
+  text: 'yield_rate',
+  formatter: (val) => `${val}%`,  // val 是 yield_rate 的值
+}]
 ```

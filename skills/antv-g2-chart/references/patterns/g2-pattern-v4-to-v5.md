@@ -148,8 +148,10 @@ chart.options({
   type: 'interval',
   labels: [
     {
-      text: 'value',
-      // 或：text: (d) => `${d.value}万`,
+      // 推荐：直接用 text 函数访问完整 datum
+      text: (d) => `${d.value}万`,
+      // 或：text: 'value'  配合 formatter 格式化
+      // formatter: (val) => `${val}万`,  // val 是 text 映射的值，不是 datum
     },
   ],
 });
