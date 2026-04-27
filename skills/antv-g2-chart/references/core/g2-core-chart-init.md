@@ -232,7 +232,7 @@ G2 v5 的视图空间分为四层，从外到内：
 
 ```
 View Area（width × height）
-  └─ margin（外边距，默认 16，为轴标签等留出空间）
+  └─ margin（外边距，默认 16，View Area 与 Plot Area 之间的固定留白）
       └─ Plot Area（绘制区域）
           └─ padding（内边距，默认 auto，自动为 axis/legend/title 等组件计算空间）
               └─ Main Area（主区域）
@@ -240,8 +240,8 @@ View Area（width × height）
                       └─ Content Area（数据标记绘制区域）
 ```
 
-- **`margin`**：外边距，`number`，默认 `16`，用于坐标轴标签等固定组件与容器边界的距离
-- **`padding`**：内边距，`number | 'auto'`，默认 `'auto'`（自适应计算），为 axis/legend/title 预留空间
+- **`margin`**：外边距，`number`，默认 `16`，View Area 与 Plot Area 之间的固定留白，不直接关联组件渲染
+- **`padding`**：内边距，`number | 'auto'`，默认 `'auto'`，由 G2 自动计算为 axis/legend/title 等组件预留空间；手动设置会关闭自适应
 - **`inset`**：呼吸范围，`number`，默认 `0`，散点图等防止点紧贴边缘时使用
 
 ```javascript
