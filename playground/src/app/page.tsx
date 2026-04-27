@@ -12,6 +12,7 @@ import {
   ControlsBar
 } from '@/components';
 import type { CodeEditorHandle } from '@/components/CodeEditor';
+import type { PreviewHandle } from '@/components/Preview';
 import Markdown from 'react-markdown';
 
 interface Skill {
@@ -119,6 +120,7 @@ function getUsage(message: UIMessage): TokenUsage | undefined {
 
 export default function Home() {
   const codeEditorRef = useRef<CodeEditorHandle>(null);
+  const previewRef = useRef<PreviewHandle>(null);
   const [library, setLibrary] = useState('g2');
   const [mode, setMode] = useState<'skill' | 'cli'>('skill');
   const [code, setCode] = useState('');
@@ -251,8 +253,7 @@ export default function Home() {
   }, [chatError, messages]);
 
   const handleRun = useCallback(() => {
-    setStatus('预览已更新');
-    setStatusColor('var(--green)');
+    previewRef.current?.run();
   }, []);
 
   const handleCopy = useCallback(() => {
@@ -334,7 +335,7 @@ export default function Home() {
             )}
           </div>
 
-          <Preview code={code} onStatusChange={handleStatusChange} />
+          <Preview ref={previewRef} code={code} onStatusChange={handleStatusChange} />
         </div>
       </main>
     </div>

@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
-// @ts-ignore - G2 is loaded via CDN in development
-// @ts-ignore - G6 is loaded via CDN in development
+import { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
+
+export interface PreviewHandle {
+  run: () => void;
+}
 
 interface PreviewProps {
   code: string;
   onStatusChange: (status: string, color: string) => void;
 }
 
-export default function Preview({ code, onStatusChange }: PreviewProps) {
+const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview({ code, onStatusChange }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartInstanceRef = useRef<unknown>(null);
   const graphInstanceRef = useRef<unknown>(null);
@@ -95,6 +97,8 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
     }
   }, [code, execCode, onStatusChange]);
 
+  useImperativeHandle(ref, () => ({ run: runCode }), [runCode]);
+
   // Auto-run code with debounce; poll until CDN library is ready
   useEffect(() => {
     if (!code.trim()) return;
@@ -155,4 +159,6 @@ export default function Preview({ code, onStatusChange }: PreviewProps) {
       </div>
     </div>
   );
-}
+});
+
+export default Preview;
