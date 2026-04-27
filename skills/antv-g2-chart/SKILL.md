@@ -29,7 +29,7 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 13. **用户未指定配色时，禁止使用白色或近白色作为图形填充色**：`style: { fill: '#fff' }`、`style: { fill: 'white' }`、`style: { fill: '#ffffff' }` 等在白色背景下会让图形完全不可见。未指定配色时应依赖 G2 的 `encode.color` 自动分配主题色，或使用有明确视觉区分度的颜色（如 `'#5B8FF9'`）。以下是合法例外：label 文字 `fill: '#fff'`（深色背景内标签）、分隔线 `stroke: '#fff'`（堆叠/pack/treemap 的分隔白线）
 14. **`padding` 只接受 `number | 'auto'`，禁止数组形式**：`padding: [40, 30, 40, 50]` 在 G2 v5 中无效（会被忽略或报错）。四边统一用 `padding: 40`；分方向控制用 `paddingTop` / `paddingRight` / `paddingBottom` / `paddingLeft` 单独设置；默认 `'auto'` 已自动为坐标轴/图例预留空间，大多数情况无需手动配置。**禁止设置 `padding: 0`**——会关闭自动计算，导致坐标轴/图例被截断；只需调整某一方向时单独设置对应方向即可
 15. **`autoFit: true` 时禁止同时设置 `width`**：`autoFit` 会完全忽略 `width`，同时出现时 `width` 无效。`autoFit: true` 时只设 `height`；需要固定宽高时去掉 `autoFit` 改用 `width` + `height`
-15. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
+16. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
 
 ### 1.1 Forbidden Patterns / 禁止使用的写法
 
@@ -379,7 +379,7 @@ chart.options({
 | 占比 | 饼图、环形图 | `interval` + `theta` |
 | 分布 | 直方图、箱线图 | `rect`、`boxplot` |
 | 相关 | 散点图、气泡图 | `point` |
-| 层级 | 矩形树图、旭日图、分区图 | `treemap`、`partition`、`sunburst`（需扩展包） |
+| 层级 | 矩形树图、分区图、旭日图 | `treemap`、`partition`、`sunburst`（需扩展包） |
 
 > **详细文档**: [图表类型选择指南](references/concepts/g2-concept-chart-selection.md)
 

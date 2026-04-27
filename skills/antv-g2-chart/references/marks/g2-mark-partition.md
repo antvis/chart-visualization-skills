@@ -360,7 +360,7 @@ partition 布局用 `node.value` 计算根节点宽度（`x1 = x0 + value`）。
 // ❌ 错误：根节点无 value，子节点起点均为 x=0，发生重叠
 chart.options({
   type: 'partition',
-   [
+  data: [
     {
       name: 'root',
       // value 缺失！
@@ -403,7 +403,7 @@ const Chart = extend(Runtime, { ...corelib(), ...plotlib() });
 
 chart.options({
   type: 'sunburst',
-   { value: treeRoot },  // sunburst 使用 { value: root } 对象
+  data: { value: treeRoot },  // sunburst 使用 { value: root } 对象
   encode: { value: 'sum' },
 });
 ```
@@ -419,7 +419,7 @@ chart.options({
 // ✅ 正确：partition 使用数组，且根节点需显式设置 value
 chart.options({
   type: 'partition',
-   [{ name: 'root', value: 1000, children: [...] }],
+  data: [{ name: 'root', value: 1000, children: [...] }],
 });
 ```
 

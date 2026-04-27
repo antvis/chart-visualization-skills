@@ -112,14 +112,14 @@ chart.options({
 // ✅ 正确：远程 fetch
 chart.options({
   type: 'sunburst',
-   { type: 'fetch', value: 'https://example.com/tree.json' },
+  data: { type: 'fetch', value: 'https://example.com/tree.json' },
   encode: { value: 'sum' },
 });
 
 // ❌ 错误：不能直接传数组（partition 的写法）
 chart.options({
   type: 'sunburst',
-   [{ name: 'root', children: [...] }],  // ❌ 不工作
+  data: [{ name: 'root', children: [...] }],  // ❌ 不工作
 });
 ```
 
