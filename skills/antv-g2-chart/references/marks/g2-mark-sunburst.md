@@ -1,9 +1,11 @@
 ---
 id: "g2-mark-sunburst"
-title: "G2 Sunburst Chart Mark"
+title: "G2 旭日图（sunburst）"
 description: |
-  旭日图 Mark。使用 sunburst 标记展示多层级层次化数据，通过同心圆形式展示层级关系。
-  适用于组织架构、文件系统、预算分配等场景。
+  sunburst mark 用同心圆环（极坐标）展示多层级层次数据，来自 @antv/g2-extension-plot 扩展库。
+  圆环的径向深度表示层级，弧长角度表示数值大小。
+  注意：sunburst 与 partition 是两个独立的 mark：
+  sunburst 为圆环布局（极坐标，需要扩展），partition 为矩形冰柱布局（直角坐标，@antv/g2 核心）。
 
 library: "g2"
 version: "5.x"
@@ -13,36 +15,45 @@ tags:
   - "sunburst"
   - "层次结构"
   - "多层级"
+  - "hierarchy"
+  - "polar"
+  - "g2-extension-plot"
 
 related:
+  - "g2-mark-partition"
   - "g2-mark-treemap"
   - "g2-mark-arc-pie"
 
 use_cases:
   - "组织架构展示"
   - "文件系统分析"
-  - "预算分配"
+  - "预算分配的层次占比"
 
 anti_patterns:
-  - "层级过深（>4层）应使用矩形树图"
-  - "类别过多不适合"
+  - "层级过深（>4层）应使用矩形树图或 partition"
+  - "不要用 type: 'partition' 加极坐标替代 sunburst，应直接使用 sunburst"
+  - "不要把 data 写成数组，sunburst 的 data 是 { value: treeRoot } 对象"
 
 difficulty: "intermediate"
 completeness: "full"
 created: "2025-03-26"
-updated: "2025-03-26"
+updated: "2025-04-27"
 author: "antv-team"
 source_url: "https://g2.antv.antgroup.com/manual/core/mark/sunburst"
 ---
 
-## 核心概念
+## partition vs sunburst 对比
 
-旭日图通过同心圆展示多层级数据：
-- 每个层级用一个环表示
-- 环的内外半径表示层级深度
-- 角度大小表示数值大小
+| 特性 | sunburst（旭日图）| partition（矩形分区）|
+|------|-------------------|----------------------|
+| 来源 | `@antv/g2-extension-plot`，需要 `extend` | `@antv/g2` 核心，无需扩展 |
+| 坐标系 | 极坐标（同心圆）| 笛卡尔坐标（直角）|
+| 视觉形态 | 同心圆环 | 矩形冰柱/icicle |
+| data 格式 | `{ value: treeRoot }` 或 fetch | 数组 `[treeRoot]` 或 fetch |
+| 回调中 path | `d.path` 是**字符串** `'A / B / C'` | `d.path` 是**数组** `['A', 'B', 'C']` |
 
-**需要引入扩展：**
+## 引入扩展（必须）
+
 ```javascript
 import { plotlib } from '@antv/g2-extension-plot';
 import { Runtime, corelib, extend } from '@antv/g2';
@@ -58,11 +69,7 @@ import { Runtime, corelib, extend } from '@antv/g2';
 
 const Chart = extend(Runtime, { ...corelib(), ...plotlib() });
 
-const chart = new Chart({
-  container: 'container',
-  theme: 'classic',
-  autoFit: true,
-});
+const chart = new Chart({ container: 'container', autoFit: true });
 
 chart.options({
   type: 'sunburst',
@@ -70,52 +77,6 @@ chart.options({
     type: 'fetch',
     value: 'https://gw.alipayobjects.com/os/antvdemo/assets/data/sunburst.json',
   },
-  encode: {
-    value: 'sum',
-  },
-});
-
-chart.render();
-```
-
-## 数据配置形式说明
-
-**为什么 sunburst 使用 ` { value: data }` 或 ` { type: 'fetch', value: 'url' }` 而不是 `data`？**
-
-层次数据是**对象**（包含 name/children），不是数组，必须使用完整形式：
-
-```javascript
-// ❌ 错误：层次数据不是数组，不能用简写
-chart.options({
-  type: 'sunburst',
-  data: hierarchyData,  // ❌ 不工作
-});
-
-// ✅ 正确：层次数据必须用完整形式
-chart.options({
-  type: 'sunburst',
-  data: { value: hierarchyData },  // ✅ 内联数据
-});
-
-// ✅ 正确：远程数据
-chart.options({
-  type: 'sunburst',
-  data: { type: 'fetch', value: 'https://example.com/data.json' },
-});
-```
-
-**简写形式仅适用于数组数据**（满足三个条件：内联、是数组、无 transform）。
-
----
-
-## 常用变体
-
-### 带标签
-
-```javascript
-chart.options({
-  type: 'sunburst',
-  data: { value: hierarchyData },
   encode: { value: 'sum' },
   labels: [
     {
@@ -124,204 +85,160 @@ chart.options({
     },
   ],
 });
+
+chart.render();
 ```
 
-### 自定义颜色
+## 数据格式说明
+
+`sunburst` 的 `data` 是 `{ value: treeRoot }` 对象（单棵树），不是数组：
 
 ```javascript
+// ✅ 正确：内联数据，单棵树根对象
 chart.options({
   type: 'sunburst',
-  data: { value: hierarchyData },
-  encode: {
-    value: 'sum',
+  data: {
+    value: {
+      name: 'root',
+      children: [
+        { name: '分组1', children: [{ name: '分组1-1', sum: 100 }] },
+        { name: '分组2', sum: 200 },
+      ],
+    },
   },
+  encode: { value: 'sum' },
+});
+
+// ✅ 正确：远程 fetch
+chart.options({
+  type: 'sunburst',
+   { type: 'fetch', value: 'https://example.com/tree.json' },
+  encode: { value: 'sum' },
+});
+
+// ❌ 错误：不能直接传数组（partition 的写法）
+chart.options({
+  type: 'sunburst',
+   [{ name: 'root', children: [...] }],  // ❌ 不工作
 });
 ```
 
-### 带下钻交互
+## 回调函数中的数据结构
+
+sunburst 展平后，回调中 `d` 的结构：
+
+```javascript
+{
+  name: '分组1-1',             // 节点名称
+  value: 100,                  // 节点数值（子树汇总）
+  depth: 2,                    // 层级深度（根节点为 1）
+  path: '分组1 / 分组1-1',     // ← 路径是字符串（/ 分隔）
+  'ancestor-node': '分组1',   // 第一层祖先节点名
+  x: [x0, x1],
+  y: [y0, y1],
+}
+```
+
+**注意**：`path` 是**字符串**，用 ` / ` 分隔，与 partition 的数组不同。
+
+## encode 着色策略
+
+sunburst 展平后内置字段（`name`、`depth`、`path`、`ancestor-node`）可用字符串指定；
+原始数据中的自定义字段不在展平记录中，需用回调通过 `path` 派生：
+
+```javascript
+// ✅ 默认着色（按 ancestor-node，同门类同色）
+encode: { value: 'sum' }  // color 默认为 'ancestor-node'
+
+// ✅ 按 name 字段着色（内置字段，字符串可用）
+encode: { value: 'sum', color: 'name' }
+
+// ✅ 按路径前两级着色（回调）
+encode: {
+  value: 'sum',
+  color: (d) => {
+    const parts = d.path.split(' / ');
+    return [parts[0], parts[1]].join('/');
+  },
+}
+
+// ✅ 按层级深度着色
+encode: { value: 'sum', color: (d) => d.depth }
+```
+
+## 极坐标自定义
+
+```javascript
+// 调整内外半径
+chart.options({
+  type: 'sunburst',
+  data: { value: treeData },
+  encode: { value: 'sum' },
+  coordinate: {
+    type: 'polar',
+    innerRadius: 0.3,   // 默认 0.2
+    outerRadius: 0.9,
+  },
+});
+
+// 还原为直角坐标（得到类似 partition 的矩形布局，但用 partition 更合适）
+coordinate: { type: 'cartesian' }
+```
+
+## 下钻交互
 
 ```javascript
 chart.options({
   type: 'sunburst',
-  data: { value: hierarchyData },
+  data: { value: treeData },
   encode: { value: 'sum' },
   interaction: {
     drillDown: {
       breadCrumb: {
-        rootText: '起始',
+        rootText: '总名称',
+        style: { fontSize: '14px', fill: '#333' },
+        active: { fill: 'red' },
       },
+      isFixedColor: true,   // 下钻后维持原来颜色
     },
   },
 });
 ```
 
-## 完整类型参考
-
-```typescript
-interface SunburstOptions {
-  type: 'sunburst';
-   { value: HierarchyData } | { type: 'fetch'; value: string };
-  encode: {
-    value: string;                          // 数值字段（字符串可用，有专项处理）
-    color?: (d: HierarchyNode) => unknown;  // ⚠️ 颜色必须用回调，不能用字符串
-  };
-  labels?: Array<{
-    text: string;
-    transform?: Array<{ type: string }>;
-  }>;
-  interaction?: {
-    drillDown?: {
-      breadCrumb?: {
-        rootText?: string;
-      };
-    };
-  };
-}
-```
-
-## 旭日图 vs 矩形树图
-
-| 特性 | 旭日图 | 矩形树图 |
-|------|--------|----------|
-| 布局 | 圆形 | 矩形 |
-| 空间利用 | 较低 | 较高 |
-| 层级展示 | 同心圆 | 嵌套矩形 |
-| 适用层级 | ≤4 层 | 更深层级 |
-
 ## 常见错误与修正
 
-### 错误 1：未引入扩展
-
+### 错误 1：未引入扩展库
 ```javascript
-// ❌ 问题：sunburst 需要扩展库
+// ❌ 错误：直接用 Chart from '@antv/g2'，sunburst 未注册
 import { Chart } from '@antv/g2';
+chart.options({ type: 'sunburst', ... });  // ❌ Unknown mark type: sunburst
 
-// ✅ 正确：引入 plotlib 扩展
+// ✅ 正确：通过 extend 注册 plotlib
 import { plotlib } from '@antv/g2-extension-plot';
 import { Runtime, corelib, extend } from '@antv/g2';
 const Chart = extend(Runtime, { ...corelib(), ...plotlib() });
 ```
 
-### 错误 2：层级过深
-
+### 错误 2：data 使用 partition 的数组格式
 ```javascript
-// ⚠️ 注意：层级超过 4 层时，外层扇形过小
-// 建议使用矩形树图替代
-```
-
-### 错误 3：数据格式错误
-
-```javascript
-// ❌ 问题：层次数据不能用简写形式
+// ❌ 错误：sunburst 不接受数组
 chart.options({
   type: 'sunburst',
-   [{ name: 'A', value: 100 }],  // ❌ 数组格式，不是层次结构
+  data: [{ name: 'root', children: [...] }],
 });
 
-// ✅ 正确：使用完整形式 + 层级嵌套结构
+// ✅ 正确：sunburst 使用 { value: root } 对象
 chart.options({
   type: 'sunburst',
-   {
-    value: {
-      name: 'Root',
-      children: [
-        { name: 'A', value: 100 },
-        { name: 'B', children: [...] }
-      ]
-    }
-  },
-  encode: { value: 'sum' },
+  data: { value: { name: 'root', children: [...] } },
 });
 ```
 
----
-
-## 节点数据访问规则（重要！）
-
-层次结构图中，回调函数接收到的参数 `d` **不是原始数据对象**，而是 G2 用 d3-hierarchy 包装后的层次节点，**原始数据在 `d.data` 中**。
-
-### 为什么 `encode.color: 'label'` 不起作用？
-
-**根本原因**：当 encode 是字符串时，G2 内部做的是 `datum[fieldName]`，直接访问层次节点属性。层次节点上没有 `label` 属性，返回 `undefined`，导致所有扇形显示相同颜色。
-
-```
-d['label']        → undefined  ❌（层次节点没有 label 属性）
-d.data['label']   → 'A类'      ✅（原始数据在 d.data 上）
-```
-
-**特例**：`encode.value: 'sum'` 字符串可以工作，因为 G2 对层次 mark 的 `value` 通道做了**专项处理**。其他通道（`color`、`shape` 等）无此特殊处理，必须用回调。
-
-### 回调参数 d 的结构
-
+### 错误 3：把 path 当数组处理
 ```javascript
-// d 是 d3-hierarchy 节点，结构如下：
-{
-  value: 100,              // 节点数值（d3 计算的子树总和）
-  depth: 2,                // 层级深度（0 = 根节点）
-  height: 0,               // 子树高度（叶子节点为 0）
-   {                  // ← 原始数据在这里！
-    name: '前端',
-    sum: 120,
-    label: 'A类',
-    // ... 其它自定义字段
-  },
-  path: ['root', '技术', '前端'],
-}
-```
+// ❌ 错误：sunburst 的 path 是字符串
+color: (d) => d.path[1]          // 拿到的是第 2 个字符，不是第 2 层路径
 
-### encode 中访问字段
-
-```javascript
-// ❌ 错误：字符串字段名对 color 通道不起作用
-encode: {
-  value: 'sum',    // ✅ value 通道有专项处理
-  color: 'label',  // ❌ d['label'] = undefined → 所有扇形颜色相同
-}
-
-// ✅ 正确：color 必须用回调函数
-encode: {
-  value: 'sum',
-  color: (d) => d.data?.label,  // ✅
-}
-```
-
-### 常用着色策略
-
-```javascript
-// 按第二层父节点着色（推荐，同门类同色）
-color: (d) => d.path?.[1] || d.data?.name
-
-// 按层级深度着色
-color: (d) => d.depth
-
-// 按自定义字段着色
-color: (d) => d.data?.label
-color: (d) => d.data?.category
-
-// 按数值着色（连续色板）
-color: (d) => d.value
-```
-
-### 错误 4：encode.color 使用字符串字段名导致所有扇形颜色相同
-
-```javascript
-// ❌ 错误：color: 'label' 等价于 d['label']，层次节点上没有此属性 → undefined
-chart.options({
-  type: 'sunburst',
-  data: { value: data },
-  encode: {
-    value: 'sum',
-    color: 'label',  // ❌ → 所有扇形相同颜色
-  },
-});
-
-// ✅ 正确：color 必须用回调，通过 d.data 访问原始字段
-chart.options({
-  type: 'sunburst',
-  data: { value: data },
-  encode: {
-    value: 'sum',
-    color: (d) => d.path?.[1] || d.data?.name,  // ✅ 按父节点着色
-  },
-});
+// ✅ 正确：先 split
+color: (d) => d.path.split(' / ')[1]
 ```

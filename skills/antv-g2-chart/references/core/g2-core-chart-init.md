@@ -42,7 +42,7 @@ use_cases:
 anti_patterns:
   - "不要在同一个容器上多次 new Chart（会产生多个画布）"
   - "禁止使用链式 API（chart.interval().encode()...）"
-  - "禁止在同一图表中多次调用 chart.options({})（后者会覆盖前者，应合并为一次调用）"
+  - "禁止在同一图表中多次调用 chart.options({})（后者会完全覆盖前者）——合并配置时应合并为一次调用；叠加多个 mark 时应使用 type: 'view' + children"
 
 difficulty: "beginner"
 completeness: "partial"
@@ -259,16 +259,53 @@ const chart = new Chart({
 ## 常见错误与修正
 
 ### 错误 0：多次调用 chart.options({})
+
+`chart.options()` 是**全量替换**，不是合并。第二次调用会完全覆盖第一次，导致前面的配置全部丢失。
+
+**场景 A：合并配置**
 ```javascript
-// ❌ 错误：第二次 options() 会完全覆盖第一次，导致配置丢失
+// ❌ 错误：第二次 options() 覆盖第一次，type/encode 丢失
 chart.options({ type: 'interval', encode: { x: 'genre', y: 'sold' } });
-chart.options({ style: { radius: 4 } }); // 前面的 type/encode 丢失！
+chart.options({ style: { radius: 4 } }); // type/encode 已消失！
 
 // ✅ 正确：所有配置合并为一次 chart.options({}) 调用
 chart.options({
   type: 'interval',
   encode: { x: 'genre', y: 'sold' },
   style: { radius: 4 },
+});
+```
+
+**场景 B：叠加多个 mark（如主图 + 文字注解）**
+```javascript
+// ❌ 错误：第二次 options() 覆盖第一次，interval 被 text 替换
+chart.options({
+  type: 'interval',
+  data: [...],
+  encode: { x: 'x', y: 'y' },
+});
+chart.options({
+  type: 'text',
+  data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
+  encode: { x: 'x', y: 'y', text: 'text' },
+}); // interval 已消失！
+
+// ✅ 正确：多 mark 叠加用 type: 'view' + children
+chart.options({
+  type: 'view',
+  children: [
+    {
+      type: 'interval',
+      data: [...],
+      encode: { x: 'x', y: 'y' },
+    },
+    {
+      type: 'text',
+      data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
+      encode: { x: 'x', y: 'y', text: 'text' },
+      style: { fill: '#E63946', fontSize: 14, textAlign: 'center' },
+    },
+  ],
 });
 ```
 
