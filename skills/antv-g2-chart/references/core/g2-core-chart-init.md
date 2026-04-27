@@ -19,6 +19,14 @@ tags:
   - "init"
   - "spec"
   - "options"
+  - "padding"
+  - "paddingLeft"
+  - "paddingTop"
+  - "paddingRight"
+  - "paddingBottom"
+  - "margin"
+  - "inset"
+  - "布局"
 
 related:
   - "g2-core-encode-channel"
@@ -91,7 +99,10 @@ const chart = new Chart({
   autoFit: true,                 // 自动适应容器尺寸（忽略 width/height）
 
   // ── 内边距 ────────────────────────────
-  padding: 'auto',               // 'auto' | number | [top, right, bottom, left]
+  // padding 只接受 number 或 'auto'，不支持数组形式
+  // 默认 'auto'：G2 根据坐标轴/图例等组件自动计算，无需手动设置
+  padding: 'auto',               // 'auto' | number（四边统一值）
+  // 需要分方向控制时，使用以下单独配置（优先级高于 padding）
   paddingTop: 40,
   paddingRight: 20,
   paddingBottom: 40,
@@ -215,6 +226,36 @@ chart.destroy();
 chart.on('afterrender', () => console.log('渲染完成'));
 ```
 
+## 布局模型：margin / padding / inset
+
+G2 v5 的视图空间分为四层，从外到内：
+
+```
+View Area（width × height）
+  └─ margin（外边距，默认 16，为轴标签等留出空间）
+      └─ Plot Area（绘制区域）
+          └─ padding（内边距，默认 auto，自动为 axis/legend/title 等组件计算空间）
+              └─ Main Area（主区域）
+                  └─ inset（呼吸范围，默认 0，防止数据点紧贴边缘）
+                      └─ Content Area（数据标记绘制区域）
+```
+
+- **`margin`**：外边距，`number`，默认 `16`，用于坐标轴标签等固定组件与容器边界的距离
+- **`padding`**：内边距，`number | 'auto'`，默认 `'auto'`（自适应计算），为 axis/legend/title 预留空间
+- **`inset`**：呼吸范围，`number`，默认 `0`，散点图等防止点紧贴边缘时使用
+
+```javascript
+const chart = new Chart({
+  container: 'container',
+  width: 640,
+  height: 480,
+  margin: 16,        // 默认，通常不需要修改
+  // padding: 'auto',  // 默认，通常不需要修改
+  paddingLeft: 80,   // 仅需要调整某侧时，单独设置
+  inset: 8,          // 散点图建议设置，防止数据点被裁剪
+});
+```
+
 ## 常见错误与修正
 
 ### 错误 0：多次调用 chart.options({})
@@ -263,4 +304,38 @@ const chart = new Chart({ container: 'c', autoFit: true, width: 640 });
 
 // ✅ 正确：autoFit 时只设 height
 const chart = new Chart({ container: 'c', autoFit: true, height: 400 });
+```
+
+### 错误 4：padding 使用数组形式（CSS 简写）
+```javascript
+// ❌ 错误：padding 不支持数组，G2 v5 的类型是 number | 'auto'
+const chart = new Chart({
+  container: 'container',
+  autoFit: true,
+  padding: [40, 30, 40, 50],   // ❌ 无效，会被忽略或引发异常
+});
+
+// ✅ 正确：四边统一
+const chart = new Chart({ container: 'container', padding: 40 });
+
+// ✅ 正确：分方向控制，使用 paddingTop/Right/Bottom/Left
+const chart = new Chart({
+  container: 'container',
+  autoFit: true,
+  paddingTop: 40,
+  paddingRight: 30,
+  paddingBottom: 40,
+  paddingLeft: 50,
+});
+```
+
+### 错误 5：padding 设为 0 导致坐标轴被截断
+```javascript
+// ❌ 错误：padding=0 会关闭自动计算，坐标轴/图例可能显示不全
+const chart = new Chart({ container: 'container', padding: 0 });
+
+// ✅ 正确：默认 'auto' 即可；只需要调整某一方向时，单独设置对应方向
+const chart = new Chart({ container: 'container', paddingLeft: 80 });
+// 或保持默认自动计算
+const chart = new Chart({ container: 'container' });
 ```
