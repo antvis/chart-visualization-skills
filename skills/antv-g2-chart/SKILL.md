@@ -156,7 +156,62 @@ chart.options({
 
 ## 2. Common Mistakes / 常见错误
 
-代码示例：
+### ⚠️ 最高频错误：禁止多次调用 `chart.options()`
+
+`chart.options()` 是**全量替换**，不是合并。多次调用时**只有最后一次生效**，前面的配置全部丢失。**每个图表只能调用一次 `chart.options()`。**
+
+```javascript
+// ❌ Wrong: 多次调用 chart.options() —— 每次完整替换前一次，只有最后一次生效
+chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
+chart.options({ type: 'line',     data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
+chart.options({ type: 'text',     data, encode: { x: 'x', y: 'y', text: 'label' } });  // 只有这个生效
+
+// ✅ Correct: 多 mark 叠加必须用 type: 'view' + children，一次 chart.options() 搞定
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    { type: 'interval', encode: { x: 'x', y: 'y' } },
+    { type: 'line',     encode: { x: 'x', y: 'y' } },
+    { type: 'text',     encode: { x: 'x', y: 'y', text: 'label' } },
+  ],
+});
+
+// ✅ 子 mark 需要不同数据时，在 children 里单独指定 data
+chart.options({
+  type: 'view',
+  data: mainData,
+  children: [
+    { type: 'interval', encode: { x: 'x', y: 'y' } },
+    { type: 'text', data: labelData, encode: { x: 'x', text: 'label' } },
+  ],
+});
+```
+
+多 mark 组合规则：
+- 只能使用 `children`，禁止 `marks`、`layers` 等属性
+- `children` 不能嵌套（`children` 内不能再有 `type: 'view'` + `children`）
+- 复杂多坐标系组合用 `spaceLayer`/`spaceFlex`
+
+```javascript
+// ❌ Wrong: 使用 marks/layers（禁止）
+chart.options({ type: 'view', data, marks: [...] });   // ❌
+chart.options({ type: 'view', data, Layers: [...] });  // ❌
+
+// ❌ Wrong: children 嵌套（禁止）
+chart.options({ type: 'view', children: [{ type: 'view', children: [...] }] });  // ❌
+
+// ✅ Correct: 复杂多坐标系组合用 spaceLayer
+chart.options({
+  type: 'spaceLayer',
+  children: [
+    { type: 'view', children: [...] },
+    { type: 'line', encode: { x: 'x', y: 'y' } },
+  ],
+});
+```
+
+### 其他常见错误
 
 ```javascript
 // ❌ Wrong: padding 数组形式（CSS 简写），G2 v5 不支持，会被忽略
@@ -167,9 +222,6 @@ const chart = new Chart({ container: 'container', padding: 40 });
 
 // ✅ Correct: 分方向控制
 const chart = new Chart({ container: 'container', paddingTop: 40, paddingLeft: 60 });
-
-// ✅ Correct: 默认 'auto' 即可（大多数场景无需配置）
-const chart = new Chart({ container: 'container', autoFit: true, height: 400 });
 
 // ❌ Wrong: missing container
 const chart = new Chart({ width: 640, height: 480 });
@@ -189,96 +241,14 @@ chart.options({ label: { text: 'value' } });
 // ✅ Correct: labels (plural)
 chart.options({ labels: [{ text: 'value' }] });
 
-// ❌ Wrong: 多次调用 chart.options() —— 每次调用完整替换前一次，只有最后一次生效
-chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
-chart.options({ type: 'line',     data, encode: { x: 'x', y: 'y' } });  // ❌ 被覆盖，不渲染
-chart.options({ type: 'text',     data, encode: { x: 'x', y: 'y', text: 'label' } });  // 只有这个生效
-
-// ✅ Correct: 多 mark 叠加必须用 type: 'view' + children
-chart.options({
-  type: 'view',
-  data,                                  // 共享数据（子 mark 可以覆盖）
-  children: [
-    { type: 'interval', encode: { x: 'x', y: 'y' } },
-    { type: 'line',     encode: { x: 'x', y: 'y' } },
-    { type: 'text',     encode: { x: 'x', y: 'y', text: 'label' } },
-  ],
-});
-
-// ✅ 子 mark 需要不同数据时，在 children 里单独指定 data
-chart.options({
-  type: 'view',
-  data: mainData,
-  children: [
-    { type: 'interval', encode: { x: 'x', y: 'y' } },        // 用父级 mainData
-    { type: 'text', data: labelData, encode: { x: 'x', text: 'label' } },  // 用独立数据
-  ],
-});
-
-// ⚠️ 多 mark 组合规则：
-// 1. 只能使用 children，禁止使用 marks、layers 等配置
-// 2. children 不能嵌套（children 内不能再有 children）
-// 3. 复杂组合使用 spaceLayer/spaceFlex
-
-// ❌ Wrong: 使用 marks（禁止）
-chart.options({
-  type: 'view',
-  data,
-  marks: [...],  // ❌ 禁止！
-});
-
-// ❌ Wrong: 使用 layers（禁止）
-chart.options({
-  type: 'view',
-  data,
-  Layers: [...],  // ❌ 禁止！
-});
-
-// ✅ Correct: 使用 children
-chart.options({
-  type: 'view',
-  data,
-  children: [  // ✅ 正确
-    { type: 'line', encode: { x: 'year', y: 'value' } },
-    { type: 'point', encode: { x: 'year', y: 'value' } },
-  ],
-});
-
-// ❌ Wrong: children 嵌套（禁止）
-chart.options({
-  type: 'view',
-  children: [
-    {
-      type: 'view',
-      children: [...],  // ❌ 禁止！children 不能嵌套
-    },
-  ],
-});
-
-// ✅ Correct: 使用 spaceLayer/spaceFlex 处理复杂组合
-chart.options({
-  type: 'spaceLayer',
-  children: [
-    { type: 'view', children: [...] },  // ✅ spaceLayer 下可以有 view + children
-    { type: 'line', ... },
-  ],
-});
-
 // ❌ Wrong: unnecessary scale type specification
-chart.options({
-  scale: {
-    x: { type: 'linear' },  // ❌ 不需要，默认就是 linear
-    y: { type: 'linear' },  // ❌ 不需要
-  },
-});
+chart.options({ scale: { x: { type: 'linear' }, y: { type: 'linear' } } });
 
 // ✅ Correct: let G2 infer scale type automatically
-chart.options({
-  scale: {
-    y: { domain: [0, 100] },  // ✅ 只配置需要的属性
-  },
-});
+chart.options({ scale: { y: { domain: [0, 100] } } });
 ```
+
+<!-- CONSTRAINTS:END -->
 
 ---
 

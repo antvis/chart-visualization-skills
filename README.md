@@ -93,11 +93,17 @@ npm install -g @antv/chart-visualization-skills
 **Retrieve or list skills by query**:
 
 ```bash
-# Retrieve skills by query
-antv retrieve "bar chart" --library g2 --topk 10 --content
+# Retrieve skills by query (metadata only)
+antv retrieve "bar chart" --library g2 --topk 10
+
+# Retrieve skills with full markdown content (core constraints auto-prepended)
+antv retrieve "bar chart" --library g2 --content
 
 # Retrieve skills and output as JSON
 antv retrieve "bar chart" --library g2 --output json
+
+# Get a skill by its exact ID
+antv get g2-mark-interval-basic --library g2
 
 # List all available skills
 antv list --library g2 --category core
@@ -105,7 +111,7 @@ antv list --library g2 --category core
 # List skills and output as JSON
 antv list --output json
 
-# Show skill info
+# Show skill info (core constraints from SKILL.md)
 antv info --library g2
 
 # Show skill info as JSON
@@ -130,43 +136,69 @@ Commands:
   info [options]              Show skill info from SKILL.md
   help [command]              display help for command
 
-Options shared by all commands:
+Options for retrieve:
+  --library <lib>             Filter by library (e.g. g2, g6)
+  --topk <n>                  Number of results to return (default: 7)
+  --content                   Include markdown content body in results; core constraints (SKILL.md Section 1-2) are always prepended as the first result
   --output <format>           Output format: json | text (default: "text")
 ```
+
+> Note: `--content` always prepends the library's core constraints (Section 1 & 2 of SKILL.md, up to the `<!-- CONSTRAINTS:END -->` marker) as the first result, ensuring the model receives essential rules alongside the reference documents.
 
 ### API Usage
 
 ```typescript
 import { retrieve } from '@antv/chart-visualization-skills';
 
-const skills = retrieve('bar chart', 'g2', 5);
-// with content body: retrieve('bar chart', 'g2', 5, true)
+// Metadata only (no content)
+const skills = retrieve('bar chart', { library: 'g2', topK: 5 });
+
+// With full markdown content (core constraints auto-prepended as first result)
+const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: true });
+
+// With content but without core constraints
+const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: true, includeInfo: false });
 ```
 
 ```typescript
-retrieve(query: string, library?: string, topk?: number, content?: boolean)
+retrieve(query: string, options?: RetrieveOptions): Skill[]
+
+interface RetrieveOptions {
+  library?: string;   // Library filter, e.g. 'g2' or 'g6'
+  topK?: number;      // Number of results (default: 7)
+  content?: boolean;  // Include markdown content body (default: false)
+  includeInfo?: boolean; // Prepend SKILL.md core constraints (default: same as content)
+}
 ```
 
-| Parameter | Type | Default | Description |
+| Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `query` | `string` | — | Search query |
-| `library` | `string` | `'g2'` | Library filter (`g2` or `g6`) |
-| `topk` | `number` | `7` | Number of results |
-| `content` | `boolean` | `false` | Whether to include markdown content |
+| `library` | `string` | all | Library filter (`g2` or `g6`) |
+| `topK` | `number` | `7` | Number of results |
+| `content` | `boolean` | `false` | Include markdown content body |
+| `includeInfo` | `boolean` | same as `content` | Prepend SKILL.md core constraints (Section 1-2) as first result |
 
 > Notes:
 > - Default retrieval returns lightweight result objects without the `content` field.
-> - `content = true` returns markdown content body (frontmatter metadata is excluded).
+> - `content: true` returns markdown content body (frontmatter metadata is excluded).
+> - When `includeInfo` is true (the default when `content: true`), the core constraints block — SKILL.md up to `<!-- CONSTRAINTS:END -->` — is injected as the first element (id prefixed with `__info__`), ensuring the model always sees the essential rules.
 
 ```typescript
-import { info } from '@antv/chart-visualization-skills';
+import { getSkillInfo } from '@antv/chart-visualization-skills';
 
-const skillInfo = info('g2');
-// => { name: 'antv-g2-chart', description: '...', content: '...' }
+const skillInfo = getSkillInfo('g2');
+// => { name: 'antv-g2-chart', description: '...', content: '...', constraintsContent: '...' }
 ```
 
 ```typescript
-info(library?: string): SkillInfo | undefined
+getSkillInfo(library?: string): SkillInfo | undefined
+
+interface SkillInfo {
+  name: string;
+  description: string;
+  content: string;            // Full SKILL.md body (after frontmatter)
+  constraintsContent: string; // SKILL.md body up to <!-- CONSTRAINTS:END --> marker; injected by retrieve when includeInfo: true
+}
 ```
 
 | Parameter | Type | Default | Description |

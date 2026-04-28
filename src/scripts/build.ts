@@ -86,10 +86,18 @@ function build(): void {
     if (fs.existsSync(skillMd)) {
       const parsed = matter(fs.readFileSync(skillMd, 'utf-8'));
       const meta = parsed.data as Record<string, any>;
+      const fullContent = parsed.content;
+      const marker = '<!-- CONSTRAINTS:END -->';
+      const markerIdx = fullContent.indexOf(marker);
+      const constraintsContent =
+        markerIdx !== -1
+          ? fullContent.slice(0, markerIdx + marker.length)
+          : fullContent;
       info = {
         name: meta.name || libPath,
         description: (meta.description || '').replace(/\n\s*/g, ' ').trim(),
-        content: parsed.content,
+        content: fullContent,
+        constraintsContent,
       };
     }
 

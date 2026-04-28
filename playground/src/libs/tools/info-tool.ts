@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export function createInfoTool(defaultLibrary: string) {
   return tool({
-    description: '调用 info API，基于 library 获取该图表库相关信息与要求文档。',
+    description: '获取图表库的核心约束文档（使用规则、禁止写法、常见错误）。首轮必须调用。',
     inputSchema: z.object({
       library: z
         .enum(['g2', 'g6'])
@@ -13,9 +13,10 @@ export function createInfoTool(defaultLibrary: string) {
     }),
     execute: async ({ library = defaultLibrary }) => {
       console.log(`Loaded info for library: ${library}`);
+      const skillInfo = info(library);
       return {
         library,
-        content: info(library)
+        content: skillInfo?.constraintsContent ?? skillInfo?.content ?? '',
       };
     }
   });

@@ -7,7 +7,7 @@ export function registerRetrieveCommand(program: Command): void {
     .description('Search for skills matching a query')
     .option('--library <lib>', 'Filter by library (g2 or g6)')
     .option('--topk <n>', 'Number of results to return', '7')
-    .option('--content', 'Include markdown content body')
+    .option('--content', 'Include markdown content of matched reference docs (SKILL.md constraints are always prepended)')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       (
@@ -15,10 +15,13 @@ export function registerRetrieveCommand(program: Command): void {
         opts: { library?: string; topk: string; content?: true; output: string }
       ) => {
         const topK = parseInt(opts.topk, 10) || 7;
+        const withContent = !!opts.content;
+
         const skills = retrieve(query, {
           library: opts.library,
           topK,
-          content: !!opts.content
+          content: withContent,
+          includeInfo: withContent,
         });
 
         if (opts.output === 'json') {
@@ -26,13 +29,26 @@ export function registerRetrieveCommand(program: Command): void {
           return;
         }
 
-        if (skills.length === 0) {
-          console.log('No skills found.');
+        const refSkills = skills.filter((s) => !s.id.startsWith('__info__'));
+        const infoSkills = skills.filter((s) => s.id.startsWith('__info__'));
+
+        if (infoSkills.length > 0) {
+          for (const infoSkill of infoSkills) {
+            console.log(`${'═'.repeat(60)}`);
+            console.log(`  SKILL CONSTRAINTS: ${infoSkill.title}`);
+            console.log(`${'═'.repeat(60)}`);
+            if (infoSkill.content) console.log(infoSkill.content);
+            console.log();
+          }
+        }
+
+        if (refSkills.length === 0) {
+          console.log('No reference documents found.');
           return;
         }
 
-        console.log(`Total ${skills.length} documents found:`);
-        for (const [i, skill] of skills.entries()) {
+        console.log(`Total ${refSkills.length} documents found:`);
+        for (const [i, skill] of refSkills.entries()) {
           console.log(`\n${'─'.repeat(50)}`);
           console.log(`[${i + 1}] ${skill.title}  (${skill.id})`);
           console.log(

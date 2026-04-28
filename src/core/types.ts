@@ -27,6 +27,12 @@ export interface RetrieveOptions {
   library?: string;
   topK?: number;
   content?: boolean;
+  /**
+   * When true, prepend the library's SKILL.md core constraints as the first
+   * result. Callers should set this whenever `content` is true so the model
+   * always receives constraints alongside reference docs.
+   */
+  includeInfo?: boolean;
 }
 
 export interface ListOptions {
@@ -39,7 +45,15 @@ export interface ListOptions {
 export interface SkillInfo {
   name: string;
   description: string;
+  /** Full SKILL.md body (after frontmatter). */
   content: string;
+  /**
+   * Content up to and including the `<!-- CONSTRAINTS:END -->` marker.
+   * Used by `retrieve --content` to inject only the core constraints section
+   * instead of the full document, avoiding context-window bloat.
+   * Falls back to `content` when the marker is absent.
+   */
+  constraintsContent: string;
 }
 
 export interface BM25Options {

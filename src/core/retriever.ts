@@ -69,7 +69,7 @@ export function retrieve(
   query: string,
   options: RetrieveOptions = {}
 ): Skill[] {
-  const { library, topK = 7, content = false } = options;
+  const { library, topK = 7, content = false, includeInfo = content } = options;
 
   let skills: Skill[];
   if (library) {
@@ -85,7 +85,31 @@ export function retrieve(
   }
 
   if (!content) {
-    return skills.map(({ content, ...skill }) => skill);
+    skills = skills.map(({ content, ...skill }) => skill);
+  }
+
+  if (includeInfo) {
+    const libs = library ? [library] : [...new Set(skills.map((s) => s.library))];
+    const infoSkills: Skill[] = libs.flatMap((lib) => {
+      const skillInfo = getSkillInfo(lib);
+      if (!skillInfo) return [];
+      return [{
+        id: `__info__${lib}`,
+        title: skillInfo.name,
+        description: skillInfo.description,
+        library: lib,
+        version: '',
+        category: '__info__',
+        subcategory: '',
+        tags: [],
+        difficulty: '',
+        use_cases: [],
+        anti_patterns: [],
+        related: [],
+        content: skillInfo.constraintsContent,
+      }];
+    });
+    skills = [...infoSkills, ...skills];
   }
 
   return skills;

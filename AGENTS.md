@@ -55,11 +55,14 @@ Skills are the **single source of truth** for chart generation knowledge.
 
 ### 2. CLI Tool (`src/`)
 
-The build script (`src/scripts/build.ts`) parses all skill markdown files and generates JSON index files (`src/index/*.index.json`). The CLI (`antv` command) provides three commands:
+The build script (`src/scripts/build.ts`) parses all skill markdown files and generates JSON index files (`src/index/*.index.json`). Each index stores two things: the `skills[]` array (reference docs) and `info` (SKILL.md metadata including `constraintsContent` — the core constraints section up to `<!-- CONSTRAINTS:END -->`).
 
-- `antv retrieve <query>` - BM25 full-text search over skills
+The CLI (`antv` command) provides four commands:
+
+- `antv retrieve <query>` - BM25 full-text search over skills; `--content` returns reference doc markdown and auto-prepends the core constraints block as the first result
+- `antv get <id>` - Get a single skill by exact ID
 - `antv list` - List/filter available skills
-- `antv info <library>` - Show library metadata
+- `antv info <library>` - Show library core constraints (SKILL.md Section 1-2)
 
 The retrieval engine (`src/core/bm25.ts`) implements BM25 with Chinese/English tokenization, synonym expansion, and chart-type boosting.
 
@@ -100,8 +103,8 @@ Iterates until MAX_PASSES consecutive clean passes are achieved.
 Next.js web app for interactive chart generation. Dual-panel UI with chat interface, code editor (Monaco), and real-time chart preview.
 
 Two retrieval modes:
-- **Skill mode** - Agent calls `load_skill` / `read_file` tools
-- **CLI mode** - Pre-injected BM25 results in system prompt
+- **Skill mode** - Agent calls `load_skill` / `read_file` tools to load SKILL.md and reference docs on demand
+- **CLI mode** - Agent calls `info` (first turn, gets core constraints) and `retrieve` tools (each turn, gets BM25-matched reference docs with constraints auto-prepended)
 
 ## Project Structure
 
