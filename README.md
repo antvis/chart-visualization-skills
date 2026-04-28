@@ -184,14 +184,14 @@ interface RetrieveOptions {
 > - When `includeInfo` is true (the default when `content: true`), the core constraints block — SKILL.md up to `<!-- CONSTRAINTS:END -->` — is injected as the first element (id prefixed with `__info__`), ensuring the model always sees the essential rules.
 
 ```typescript
-import { getSkillInfo } from '@antv/chart-visualization-skills';
+import { info } from '@antv/chart-visualization-skills';
 
-const skillInfo = getSkillInfo('g2');
+const skillInfo = info('g2');
 // => { name: 'antv-g2-chart', description: '...', content: '...', constraintsContent: '...' }
 ```
 
 ```typescript
-getSkillInfo(library?: string): SkillInfo | undefined
+info(library?: string): SkillInfo | undefined
 
 interface SkillInfo {
   name: string;
