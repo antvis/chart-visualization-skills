@@ -77,9 +77,7 @@ const MyNode = ({ data }) => (
 // 3. 在 Graph 中使用
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
-   {
+  data: {
     nodes: [
       { id: 'n1', style: { x: 100, y: 200 }, data: { label: '服务A' } },
       { id: 'n2', style: { x: 400, y: 200 },  { label: '服务B' } },
@@ -172,9 +170,7 @@ const ActionNode = ({ data, graph }) => {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
-   {
+  data: {
     nodes: [
       {
         id: 'n1',

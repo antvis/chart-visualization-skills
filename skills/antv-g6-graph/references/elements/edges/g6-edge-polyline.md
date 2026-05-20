@@ -56,8 +56,6 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
        { id: 'n1', data: { label: '步骤1' } },

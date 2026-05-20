@@ -104,7 +104,6 @@ const graph = new Graph({
       type: 'hover-activate',
       degree: 1,              // 高亮几跳邻居（1=直接邻居）
       state: 'active',        // 激活状态名
-      inactiveState: 'inactive',  // 其他元素的状态名
     },
   ],
 });

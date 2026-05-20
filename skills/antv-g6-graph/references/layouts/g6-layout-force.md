@@ -49,6 +49,8 @@ source_url: "https://g6.antv.antgroup.com/manual/layout/force"
 - **引力（edge attraction）**：边将连接的节点拉近
 - **向心力（gravity）**：将节点吸引到画布中心
 
+> **约束**：`nodeStrength` 必须为非负数（≥ 0），负值会导致布局计算异常或节点行为不可预测。
+
 G6 提供三种力导向布局：
 | 布局类型 | 特点 |
 |----------|------|
@@ -63,8 +65,6 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
        { id: 'n1', data: { label: '节点1' } },

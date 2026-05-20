@@ -54,8 +54,6 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
       { id: 'node1' },
@@ -256,8 +254,6 @@ const data = {
 // ❌ 错误示例：缺少 data 字段
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   { nodes: [...], edges: [...] },  // 语法错误，缺少 data: 键名
   behaviors: ['drag-canvas'],
 });
@@ -265,8 +261,6 @@ const graph = new Graph({
 // ✅ 正确示例
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [{ id: 'node1' }, { id: 'node2' }],
     edges: [{ source: 'node1', target: 'node2' }],

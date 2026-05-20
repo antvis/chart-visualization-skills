@@ -37,8 +37,6 @@ Transforms 是在数据绑定到图元素前的处理管道，用于数据到可
 ```javascript
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
        { id: 'n1', data: { label: 'A', value: 10 } },

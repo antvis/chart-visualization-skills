@@ -41,10 +41,8 @@ import { Graph, GraphEvent } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   // ❌ 不要在此设置 autoFit: 'view'，会在力导向迭代前触发导致白屏
-   {
+  data: {
     nodes: [
       { id: 'n1', combo: 'c1', data: { label: '节点1' } },
       { id: 'n2', combo: 'c1',  { label: '节点2' } },

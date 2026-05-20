@@ -89,8 +89,6 @@ graph.render();
 ```javascript
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 800,
   data: {
     nodes: Array.from({ length: 20 }, (_, i) => ({ id: `n${i}`, data: {} })),
     edges: [
@@ -162,9 +160,7 @@ const graph = new Graph({
 ```javascript
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
-    { nodes: [...], edges: [...] },
+  data: { nodes: [...], edges: [...] },
   layout: {
     type: 'fruchterman',
     // 迭代次数（越多越稳定，越慢）

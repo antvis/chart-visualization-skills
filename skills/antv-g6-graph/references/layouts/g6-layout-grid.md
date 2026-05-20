@@ -49,8 +49,6 @@ const nodes = Array.from({ length: 12 }, (_, i) => ({
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 500,
   data: { nodes, edges: [] },
   node: {
     type: 'circle',

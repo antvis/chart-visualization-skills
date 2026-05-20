@@ -145,7 +145,6 @@ const graph = new Graph({
       type: 'hover-activate',
       degree: 1,
       state: 'active',
-      inactiveState: 'inactive',
     },
     {
       type: 'click-select',

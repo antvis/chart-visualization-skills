@@ -49,8 +49,6 @@ const data = {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data,
   node: {
     type: 'circle',

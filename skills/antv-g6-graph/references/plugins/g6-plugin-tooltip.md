@@ -109,7 +109,7 @@ plugins: [
       const [item] = items;
       const d = item.data;
       return `
-        <div style="background:#fff;border:1px solid #eee;padding:12px;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+        <div>
           <h4 style="margin:0 0 8px">${d.name}</h4>
           <table style="border-collapse:collapse">
             ${Object.entries(d).map(([k, v]) => `

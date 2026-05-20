@@ -73,12 +73,8 @@ const NODE_STYLE = {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 650,
   autoFit: 'view',
-
   data,
-
   node: {
     // 根据 type 选择不同节点形状
     type: (d) => {

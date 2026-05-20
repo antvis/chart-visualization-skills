@@ -42,9 +42,7 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 500,
-   {
+  data: {
     nodes: [
       { id: 'A', style: { x: 100, y: 300 } },
       { id: 'B', style: { x: 400, y: 150 } },
@@ -153,10 +151,8 @@ import { Graph, treeToGraphData } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 800,
   autoFit: 'view',
-   treeToGraphData({
+  data: treeToGraphData({
     id: 'root',
     children: [
       { id: 'a1', children: [{ id: 'a1-1' }, { id: 'a1-2' }] },
@@ -203,8 +199,6 @@ import { Graph, treeToGraphData } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 800,
   autoFit: 'view',
   data: treeToGraphData({
     id: '根节点',
@@ -257,9 +251,7 @@ import { Graph } from '@antv/g6';
 // 微服务依赖图：A 调用 B 的多个 API，B 返回响应
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 500,
-   {
+  data: {
     nodes: [
       { id: 'service-a', data: { label: '服务A' } },
       { id: 'service-b', data: { label: '服务B' } },

@@ -62,8 +62,6 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
       { id: 'n1', data: { name: '节点A', type: 'user' } },
@@ -205,8 +203,6 @@ const treeData = {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: treeToGraphData(treeData),   // 转换为 GraphData 格式
   layout: {
     type: 'mindmap',
@@ -223,8 +219,6 @@ graph.render();
 ```javascript
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: { nodes: [], edges: [] },  // 初始空数据
   layout: { type: 'force' },
   behaviors: ['drag-canvas', 'zoom-canvas'],

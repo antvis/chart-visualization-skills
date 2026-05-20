@@ -115,8 +115,6 @@ register(ExtensionCategory.NODE, 'status-node', StatusNode);
 // 使用
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
        { id: 'server1', data: { label: 'Web Server', status: 'online' } },
@@ -189,8 +187,6 @@ register(ExtensionCategory.NODE, 'breathing-circle', BreathingCircle);
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: {
     nodes: [
       { id: 'node-0' },
@@ -340,7 +336,6 @@ register(ExtensionCategory.EDGE, 'line-dash', DashEdge);
 
 const graph = new Graph({
   container: 'container',
-  width: 800, height: 600,
   data: {
     nodes: [
       { id: 'n1', data: { label: '开始' } },

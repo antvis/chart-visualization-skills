@@ -56,8 +56,6 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container',   // 必填：DOM 元素 id 或 HTMLElement
-  width: 800,
-  height: 600,
   data: {
     nodes: [
       { id: 'node1', data: { label: '节点1' } },
@@ -83,8 +81,8 @@ graph.render();
 ```javascript
 const graph = new Graph({
   container: 'container',         // 字符串 id 或 DOM 元素
-  width: 800,                     // 画布宽度（px）
-  height: 600,                    // 画布高度（px）
+  width: 800,                     // 画布宽度（px），默认不用配置
+  height: 600,                    // 画布高度（px），默认不用配置
   autoFit: 'view',                // 自动适配：'center' | 'view' | false
   padding: [20, 20, 20, 20],      // 内边距 [top, right, bottom, left]
   devicePixelRatio: 2,            // 设备像素比，高清屏设置
@@ -290,8 +288,6 @@ const treeData = {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: treeToGraphData(treeData),   // ✅ 必须转换后传入
   layout: { type: 'compact-box' },
   behaviors: ['drag-canvas', 'zoom-canvas'],
@@ -308,25 +304,23 @@ graph.render();
 
 ```javascript
 // ❌ 错误
-const graph = new Graph({ width: 800, height: 600 });
+const graph = new Graph({ });
 
 // ✅ 正确
-const graph = new Graph({ container: 'container', width: 800, height: 600 });
+const graph = new Graph({ container: 'container' });
 ```
 
 ### 错误2：使用 v4 的 graph.data() 方式
 
 ```javascript
 // ❌ 错误（v4 写法）
-const graph = new G6.Graph({ container: 'container', width: 800, height: 600 });
+const graph = new G6.Graph({ container: 'container' });
 graph.data({ nodes: [...], edges: [...] });
 graph.render();
 
 // ✅ 正确（v5 写法）
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data: { nodes: [...], edges: [...] },
 });
 graph.render();
@@ -364,15 +358,11 @@ behaviors: ['drag-canvas', 'zoom-canvas']
 // ❌ autoFit: true 同时设置 width/height 会产生不可预期结果
 const graph = new Graph({
   autoFit: true,   // 旧写法
-  width: 800,
-  height: 600,
 });
 
 // ✅ 正确：使用 'view' 或 'center'
 const graph = new Graph({
   autoFit: 'view',   // 或 'center'，或 false（手动控制）
-  width: 800,
-  height: 600,
 });
 ```
 

@@ -29,8 +29,8 @@ import { Graph } from '@antv/g6';
 
 const graph = new Graph({
   container: 'container', // 容器 ID 或 DOM 元素
-  width: 800,             // 可选，画布宽度
-  height: 600,            // 可选，画布高度
+  width: 800,             // 画布宽度，默认不用配置
+  height: 600,            // 画布高度，默认不用配置
   data: {
     nodes: [...],
     edges: [...],
@@ -388,8 +388,6 @@ const data = {
 
 const graph = new Graph({
   container: 'container',
-  width: 800,
-  height: 600,
   data,
   layout: { type: 'grid' },
   behaviors: ['zoom-canvas', 'drag-canvas', 'drag-element'],
@@ -440,7 +438,7 @@ const graph = new Graph({
       getContent: (e, items) => {
         let result = `<h4>Custom Content</h4>`;
         items.forEach((item) => {
-          result += `<p>Type: ${item.data.description}</p>`;
+          result += `<p>Type: ${item.data?.description}</p>`;
         });
         return result;
       },
