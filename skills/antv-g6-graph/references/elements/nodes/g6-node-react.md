@@ -80,7 +80,7 @@ const graph = new Graph({
   data: {
     nodes: [
       { id: 'n1', style: { x: 100, y: 200 }, data: { label: '服务A' } },
-      { id: 'n2', style: { x: 400, y: 200 },  { label: '服务B' } },
+      { id: 'n2', style: { x: 400, y: 200 }, data: { label: '服务B' } },
     ],
     edges: [{ source: 'n1', target: 'n2' }],
   },

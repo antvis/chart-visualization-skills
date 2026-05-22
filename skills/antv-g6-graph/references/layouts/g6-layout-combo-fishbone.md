@@ -45,9 +45,9 @@ const graph = new Graph({
   data: {
     nodes: [
       { id: 'n1', combo: 'c1', data: { label: '节点1' } },
-      { id: 'n2', combo: 'c1',  { label: '节点2' } },
-      { id: 'n3', combo: 'c1',  { label: '节点3' } },
-      { id: 'n4', combo: 'c2',  { label: '节点4' } },
+      { id: 'n2', combo: 'c1', data: { label: '节点2' } },
+      { id: 'n3', combo: 'c1', data: { label: '节点3' } },
+      { id: 'n4', combo: 'c2', data: { label: '节点4' } },
       { id: 'n5', combo: 'c2', data: { label: '节点5' } },
       { id: 'n6', data: { label: '游离节点' } },
     ],
