@@ -285,3 +285,33 @@ chart.options({
 // 方案：取 Top 7 + "其他"
 const processedData = aggregateTopN(data, 'province', 7);
 ```
+
+### 错误 4：把 hex 色值放在数据中作为颜色字段
+
+```javascript
+// ❌ 错误：数据中的 hex 字符串被 Ordinal scale 当作类别 key
+// 最终渲染颜色是 G2 默认调色板，图例显示无意义的 '#1e3a5f' 等字符串
+const barData = [
+  { group: '法律界', value: 85, color: '#1e3a5f' },
+  { group: '公司治理专家', value: 78, color: '#2d4a6f' },
+];
+chart.options({
+  type: 'interval',
+  data: barData,
+  encode: { x: 'group', y: 'value', color: 'color' },
+  scale: { color: { type: 'ordinal' } },
+});
+
+// ✅ 正确：将 hex 色值放入 scale.color.range，encode.color 指向业务字段
+chart.options({
+  type: 'interval',
+  data: [
+    { group: '法律界', value: 85 },
+    { group: '公司治理专家', value: 78 },
+  ],
+  encode: { x: 'group', y: 'value', color: 'group' },
+  scale: {
+    color: { type: 'ordinal', domain: ['法律界', '公司治理专家'], range: ['#1e3a5f', '#2d4a6f'] },
+  },
+});
+```
