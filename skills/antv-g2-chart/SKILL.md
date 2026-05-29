@@ -30,7 +30,7 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 14. **`padding` 只接受 `number | 'auto'`，禁止数组形式**：`padding: [40, 30, 40, 50]` 在 G2 v5 中无效（会被忽略或报错）。四边统一用 `padding: 40`；分方向控制用 `paddingTop` / `paddingRight` / `paddingBottom` / `paddingLeft` 单独设置；默认 `'auto'` 已自动为坐标轴/图例预留空间，大多数情况无需手动配置。**禁止设置 `padding: 0`**——会关闭自动计算，导致坐标轴/图例被截断；只需调整某一方向时单独设置对应方向即可
 15. **`autoFit: true` 时禁止同时设置 `width`**：`autoFit` 会完全忽略 `width`，同时出现时 `width` 无效。`autoFit: true` 时只设 `height`；需要固定宽高时去掉 `autoFit` 改用 `width` + `height`
 16. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
-17. **禁止在数据中存放 hex 色值并通过 `encode.color` 映射**：`encode.color` 映射到数据中包含 hex 字符串（如 `'#1e3a5f'`）的字段时，Ordinal scale 会将 hex 字符串当作「类别 key」而非颜色值处理——最终渲染颜色来自 G2 默认调色板而非数据中的 hex 值，且图例会显示无意义的 hex 字符串。正确做法：移除数据中的 color 字段，将 hex 色值放入 `scale.color.range`，`encode.color` 指向有业务含义的字段（如 `'group'`），通过 `scale.color.domain` + `range` 精确配对。
+17. **禁止在数据中存放 hex 色值并通过 `encode.color` 映射**：`encode.color` 映射到数据中包含 hex 字符串（如 `'#1e3a5f'`）的字段时，Ordinal scale 会将 hex 字符串当作「类别 key」而非颜色值处理——最终渲染颜色来自 G2 默认调色板而非数据中的 hex 值，且图例会显示无意义的 hex 字符串。正确做法：移除数据中的 color 字段，将 hex 色值放入 `scale.color.range`，`encode.color` 指向有业务含义的字段（如 `'group'`），通过 `scale.color.domain` + `range` 精确配对。**例外情况**：若必须直接使用数据中的动态颜色，需显式配置 `scale: { color: { type: 'identity' } }`。
 
 ### 1.1 Forbidden Patterns / 禁止使用的写法
 
@@ -269,6 +269,19 @@ chart.options({
       domain: ['法律界', '公司治理专家'],
       range: ['#1e3a5f', '#2d4a6f'],
     },
+  },
+});
+
+// ✅ Correct (Dynamic Colors): 若必须直接使用数据中的 hex 颜色，需显式指定 identity 比例尺
+chart.options({
+  type: 'interval',
+  data: [
+    { group: '法律界', value: 85, color: '#1e3a5f' },
+    { group: '公司治理专家', value: 78, color: '#2d4a6f' },
+  ],
+  encode: { x: 'group', y: 'value', color: 'color' },
+  scale: {
+    color: { type: 'identity' },
   },
 });
 
