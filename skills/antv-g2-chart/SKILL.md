@@ -242,6 +242,23 @@ chart.options({ label: { text: 'value' } });
 // ✅ Correct: labels (plural)
 chart.options({ labels: [{ text: 'value' }] });
 
+// ❌ Wrong: labels formatter 把第一个参数当 datum 对象
+// formatter 的第一个参数是 text 已映射的值（如 85），不是 datum
+// d.value 在数字 85 上为 undefined，结果为 "undefined%"
+chart.options({
+  labels: [{ text: 'value', formatter: (d) => d.value + '%' }],
+});
+
+// ✅ Correct: 用 text 函数直接访问 datum 并格式化（推荐）
+chart.options({
+  labels: [{ text: (d) => d.value + '%' }],
+});
+
+// ✅ Correct: 或用 formatter 的正确用法（val 是已映射的数值）
+chart.options({
+  labels: [{ text: 'value', formatter: (val) => val + '%' }],
+});
+
 // ❌ Wrong: hex 色值放在数据中，被 Ordinal scale 当作类别 key
 // 渲染颜色是 G2 默认调色板，图例显示无意义的 '#1e3a5f' 等字符串
 const barData = [
