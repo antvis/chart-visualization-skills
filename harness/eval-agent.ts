@@ -21,9 +21,10 @@ export interface EvalAgentOptions {
   concurrency?: number;
   ids?: string[];
   rootDir?: string;
+  library?: string;
 }
 
-export function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir }: EvalAgentOptions): string {
+export function run({ sample, full, retrieval, dataset, concurrency, ids, rootDir, library }: EvalAgentOptions): string {
   const effectiveRoot = rootDir || MAIN_ROOT_DIR;
   const resultDir = path.join(effectiveRoot, 'eval', 'result');
 
@@ -31,10 +32,14 @@ export function run({ sample, full, retrieval, dataset, concurrency, ids, rootDi
     fs.mkdirSync(resultDir, { recursive: true });
   }
 
+  // Infer library from dataset name if not explicitly provided
+  const inferredLibrary = library || (dataset?.match(/^(g2|g6|x6)-/)?.[1]) || 'g2';
+
   const argv = [
     path.join(MAIN_ROOT_DIR, 'eval', 'eval-cli', 'index.ts'),
     'eval',
-    `--retrieval=${retrieval}`
+    `--retrieval=${retrieval}`,
+    `--library=${inferredLibrary}`
   ];
   if (full) {
     argv.push('--full');

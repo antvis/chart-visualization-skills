@@ -43,7 +43,7 @@ const LIBRARY_REGISTRY: Record<string, LibraryConfig> = {
       const srcDir = process.env.G2_SRC_DIR || null;
       const docsDir = process.env.G2_DOCS_DIR || null;
       return srcDir || docsDir ? { srcDir, docsDir } : null;
-    })()
+    })(),
   },
   g6: {
     id: 'g6',
@@ -60,15 +60,32 @@ const LIBRARY_REGISTRY: Record<string, LibraryConfig> = {
       const srcDir = process.env.G6_SRC_DIR || null;
       const docsDir = process.env.G6_DOCS_DIR || null;
       return srcDir || docsDir ? { srcDir, docsDir } : null;
-    })()
-  }
+    })(),
+  },
+  x6: {
+    id: 'x6',
+    friendlyName: 'AntV X6',
+    npmPackage: '@antv/x6',
+    cdnUrl: 'https://cdn.jsdelivr.net/npm/@antv/x6@3.1.7/dist/x6.min.js',
+    windowGlobal: 'X6',
+    entry: 'Graph',
+    skillsPath: 'antv-x6-editor/references',
+    buildCmd: 'node dist/scripts/build.js',
+    detectPattern: '@antv/x6',
+    defaultDataset: 'x6-dataset-136.json',
+    refs: (() => {
+      const srcDir = process.env.X6_SRC_DIR || null;
+      const docsDir = process.env.X6_DOCS_DIR || null;
+      return srcDir || docsDir ? { srcDir, docsDir } : null;
+    })(),
+  },
 };
 
 export function getLibraryConfig(id: string): LibraryConfig {
   const config = LIBRARY_REGISTRY[id];
   if (!config) {
     const available = Object.keys(LIBRARY_REGISTRY).join(', ');
-    throw new Error(`Unknown library: "${id}". Available: ${available}`);
+    throw new Error(`Unknown library: '${id}'. Available: ${available}`);
   }
   return config;
 }

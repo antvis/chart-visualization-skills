@@ -11,6 +11,8 @@ export interface Skill {
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
+  /** Relative path from project root to the source markdown file. */
+  path?: string;
   content?: string;
 }
 

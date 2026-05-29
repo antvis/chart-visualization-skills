@@ -12,13 +12,23 @@ import type { Skill, SkillIndex } from '../core/types';
 
 // Allow overriding the project root via --root=<dir> (used by harness when running inside a worktree)
 const rootArg = process.argv.find((a) => a.startsWith('--root='));
-const PKG_ROOT = rootArg ? path.resolve(rootArg.slice('--root='.length)) : path.resolve(__dirname, '../..');
+const PKG_ROOT = rootArg
+  ? path.resolve(rootArg.slice('--root='.length))
+  : path.resolve(__dirname, '../..');
 const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 
 const LIBRARY_PATHS: Record<string, string> = {
   g2: 'antv-g2-chart',
   g6: 'antv-g6-graph',
+  x6: 'antv-x6-editor',
+};
+
+// Default major version per library (used for index header if SKILL.md doesn't override)
+const LIBRARY_VERSIONS: Record<string, string> = {
+  g2: '5.x',
+  g6: '5.x',
+  x6: '3.x',
 };
 
 function walkDir(dir: string, library: string): Skill[] {
@@ -26,7 +36,8 @@ function walkDir(dir: string, library: string): Skill[] {
   if (!fs.existsSync(dir)) return skills;
 
   // Keep deterministic output across environments to avoid index diff noise.
-  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  const entries = fs
+    .readdirSync(dir, { withFileTypes: true })
     .sort((a, b) => a.name.localeCompare(b.name));
 
   for (const entry of entries) {
@@ -34,7 +45,11 @@ function walkDir(dir: string, library: string): Skill[] {
 
     if (entry.isDirectory()) {
       skills.push(...walkDir(fullPath, library));
-    } else if (entry.isFile() && entry.name.endsWith('.md') && !['README.md', 'CONTRIBUTING.md'].includes(entry.name)) {
+    } else if (
+      entry.isFile() &&
+      entry.name.endsWith('.md') &&
+      !['README.md', 'CONTRIBUTING.md'].includes(entry.name)
+    ) {
       const content = fs.readFileSync(fullPath, 'utf-8');
       const parsed = matter(content);
       const meta = parsed.data as Record<string, any>;
@@ -58,8 +73,11 @@ function walkDir(dir: string, library: string): Skill[] {
         tags: Array.isArray(meta.tags) ? meta.tags : [],
         difficulty: meta.difficulty || 'beginner',
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
-        anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns : [],
+        anti_patterns: Array.isArray(meta.anti_patterns)
+          ? meta.anti_patterns
+          : [],
         related: Array.isArray(meta.related) ? meta.related : [],
+        path: relativePath,
         content: parsed.content,
       });
     }
@@ -83,9 +101,11 @@ function build(): void {
 
     const skillMd = path.join(SKILLS_DIR, libPath, 'SKILL.md');
     let info: SkillIndex['info'];
+    let skillMetaVersion = '';
     if (fs.existsSync(skillMd)) {
       const parsed = matter(fs.readFileSync(skillMd, 'utf-8'));
       const meta = parsed.data as Record<string, any>;
+      skillMetaVersion = meta.version || '';
       const fullContent = parsed.content;
       const marker = '<!-- CONSTRAINTS:END -->';
       const markerIdx = fullContent.indexOf(marker);
@@ -103,7 +123,7 @@ function build(): void {
 
     const indexData: SkillIndex = {
       library: lib,
-      version: '5.x',
+      version: skillMetaVersion || LIBRARY_VERSIONS[lib] || '',
       generated: new Date().toISOString().split('T')[0],
       total: skills.length,
       skills,

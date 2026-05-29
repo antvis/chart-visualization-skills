@@ -115,7 +115,7 @@ function analyzeApiUsage(code: string): ApiUsagePatterns {
 
 function computeStructuralCorrectness(code: string): StructuralCorrectnessResult {
   const issues: string[] = [];
-  const hasImport = /import\s+.*from\s+['"]@antv\/(g2|g6)['"]/.test(code) || /require\s*\(['"]@antv\/(g2|g6)['"]\)/.test(code);
+  const hasImport = /import\s+.*from\s+['"]@antv\/(g2|g6|x6)['"]/.test(code) || /require\s*\(['"]@antv\/(g2|g6|x6)['"]\)/.test(code);
   const hasChartInstance = /new\s+(Chart|Graph)\s*\(/.test(code);
   const hasRender = /\.render\s*\(\s*\)/.test(code);
   const hasData = /data\s*:/.test(code) || /\.data\s*\(/.test(code);

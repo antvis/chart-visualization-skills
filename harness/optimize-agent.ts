@@ -23,7 +23,7 @@ export function writeErrorLog(
   iteration: number,
   errorCases: ErrorCase[],
   skillToErrors: Map<string, ErrorCase[]>,
-  rootDir: string
+  rootDir: string,
 ): void {
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
 
@@ -32,7 +32,7 @@ export function writeErrorLog(
     `Iteration ${iteration}  |  ${new Date().toISOString()}`,
     `Failed cases: ${errorCases.length}`,
     `${'='.repeat(60)}`,
-    ''
+    '',
   ];
 
   for (const c of errorCases) {
@@ -40,7 +40,9 @@ export function writeErrorLog(
       c.renderStatus === 'blank'
         ? '白屏'
         : `渲染报错: ${c.renderError || '未知'}`;
-    lines.push(`[${(c.renderStatus ?? '').toUpperCase()}] ${c.id}  (${renderInfo})`);
+    lines.push(
+      `[${(c.renderStatus ?? '').toUpperCase()}] ${c.id}  (${renderInfo})`,
+    );
     lines.push(`  Query: ${c.query}`);
     if (c.generatedCode) {
       lines.push(`  Generated Code:`);
@@ -53,7 +55,7 @@ export function writeErrorLog(
     lines.push('Skills involved:');
     for (const [skillPath, cases] of skillToErrors) {
       lines.push(
-        `  ${path.relative(rootDir, skillPath)}  (${cases.length} case(s))`
+        `  ${path.relative(rootDir, skillPath)}  (${cases.length} case(s))`,
       );
     }
     lines.push('');
@@ -66,7 +68,9 @@ export function writeErrorLog(
 // ── Filesystem tools for agent loop ──────────────────────────────────────────
 
 function buildRefTools(refs: LibraryRefs): ToolSet {
-  const allowedRoots = [refs.srcDir, refs.docsDir].filter((r): r is string => r !== null);
+  const allowedRoots = [refs.srcDir, refs.docsDir].filter(
+    (r): r is string => r !== null,
+  );
 
   function assertAllowed(filePath: string): void {
     let realPath: string;
@@ -76,67 +80,102 @@ function buildRefTools(refs: LibraryRefs): ToolSet {
       realPath = path.resolve(filePath);
     }
     const realRoots = allowedRoots.map((r) => {
-      try { return fs.realpathSync(path.resolve(r)); } catch { return path.resolve(r); }
+      try {
+        return fs.realpathSync(path.resolve(r));
+      } catch {
+        return path.resolve(r);
+      }
     });
-    if (!realRoots.some((r) => realPath === r || realPath.startsWith(r + path.sep))) {
-      throw new Error(`Access denied: ${filePath} is outside allowed ref paths.`);
+    if (
+      !realRoots.some(
+        (r) => realPath === r || realPath.startsWith(r + path.sep),
+      )
+    ) {
+      throw new Error(
+        `Access denied: ${filePath} is outside allowed ref paths.`,
+      );
     }
   }
 
   return {
     list_directory: tool({
-      description: '列出指定目录下的文件和子目录，用于浏览文档或源码结构以确定要读取的文件。',
-      parameters: z.object({
-        dir_path: z.string().describe('要列出的目录绝对路径')
+      description:
+        '列出指定目录下的文件和子目录，用于浏览文档或源码结构以确定要读取的文件。',
+      inputSchema: z.object({
+        dir_path: z.string().describe('要列出的目录绝对路径'),
       }),
       execute: async (args) => {
         const dir_path = args.dir_path;
         try {
           assertAllowed(dir_path);
-          if (!fs.existsSync(dir_path)) return { error: `Path not found: ${dir_path}` };
+          if (!fs.existsSync(dir_path))
+            return { error: `Path not found: ${dir_path}` };
           const entries = fs
             .readdirSync(dir_path, { withFileTypes: true })
-            .map((e) => ({ name: e.name, type: e.isDirectory() ? 'directory' : 'file' }));
+            .map((e) => ({
+              name: e.name,
+              type: e.isDirectory() ? 'directory' : 'file',
+            }));
           return { dir_path, entries };
         } catch (e) {
           return { error: (e as Error).message };
         }
-      }
+      },
     }),
     read_file: tool({
-      description: '读取指定文件的内容，用于查阅官方文档或源码以获取权威 API 信息。',
-      parameters: z.object({
-        file_path: z.string().describe('要读取的文件绝对路径')
+      description:
+        '读取指定文件的内容，用于查阅官方文档或源码以获取权威 API 信息。',
+      inputSchema: z.object({
+        file_path: z.string().describe('要读取的文件绝对路径'),
       }),
       execute: async (args) => {
         const file_path = args.file_path;
         try {
           assertAllowed(file_path);
-          if (!fs.existsSync(file_path)) return { error: `File not found: ${file_path}` };
+          if (!fs.existsSync(file_path))
+            return { error: `File not found: ${file_path}` };
           const content = fs.readFileSync(file_path, 'utf-8');
           return { file_path, content: content.slice(0, 12000) };
         } catch (e) {
           return { error: (e as Error).message };
         }
-      }
+      },
     }),
     grep_files: tool({
       description: '在文档或源码目录中递归搜索包含指定关键词的文件及匹配行。',
-      parameters: z.object({
-        pattern: z.string().describe('要搜索的关键词或正则表达式（传给 grep -E）'),
-        search_dir: z.string().describe('搜索的根目录绝对路径，必须在允许的 refs 目录内'),
-        file_glob: z.string().optional().describe('文件名 glob 过滤，例如 "*.md" 或 "*.ts"，默认不过滤')
+      inputSchema: z.object({
+        pattern: z
+          .string()
+          .describe('要搜索的关键词或正则表达式（传给 grep -E）'),
+        search_dir: z
+          .string()
+          .describe('搜索的根目录绝对路径，必须在允许的 refs 目录内'),
+        file_glob: z
+          .string()
+          .optional()
+          .describe("文件名 glob 过滤，例如 '*.md' 或 '*.ts'，默认不过滤"),
       }),
       execute: async (args) => {
         const { pattern, search_dir, file_glob } = args;
         try {
           assertAllowed(search_dir);
-          if (!fs.existsSync(search_dir)) return { error: `Path not found: ${search_dir}` };
+          if (!fs.existsSync(search_dir))
+            return { error: `Path not found: ${search_dir}` };
 
-          const grepArgs = ['-rn', '-E', '--include', file_glob || '*', pattern, search_dir];
+          const grepArgs = [
+            '-rn',
+            '-E',
+            '--include',
+            file_glob || '*',
+            pattern,
+            search_dir,
+          ];
           let raw = '';
           try {
-            raw = execFileSync('grep', grepArgs, { encoding: 'utf-8', maxBuffer: 1024 * 1024 });
+            raw = execFileSync('grep', grepArgs, {
+              encoding: 'utf-8',
+              maxBuffer: 1024 * 1024,
+            });
           } catch (e) {
             const err = e as { status?: number; message?: string };
             if (err.status === 1) return { pattern, search_dir, matches: [] };
@@ -145,12 +184,18 @@ function buildRefTools(refs: LibraryRefs): ToolSet {
 
           const lines = raw.split('\n').filter(Boolean);
           const capped = lines.slice(0, 100);
-          return { pattern, search_dir, total: lines.length, shown: capped.length, matches: capped };
+          return {
+            pattern,
+            search_dir,
+            total: lines.length,
+            shown: capped.length,
+            matches: capped,
+          };
         } catch (e) {
           return { error: (e as Error).message };
         }
-      }
-    })
+      },
+    }),
   };
 }
 
@@ -172,12 +217,14 @@ async function optimizeSkill(
   provider: string,
   model: string,
   libraryId?: string,
-  historyContext: string | null = null
+  historyContext: string | null = null,
 ): Promise<void> {
   const skillContent = fs.readFileSync(skillPath, 'utf-8');
   const skillName = path.basename(skillPath, '.md');
 
-  console.log(`\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`);
+  console.log(
+    `\n  Optimizing: ${skillName} (${errorCases.length} error case(s))`,
+  );
 
   const errorContext = errorCases
     .map((c, i) => {
@@ -193,7 +240,7 @@ async function optimizeSkill(
         `Query: ${c.query}`,
         `Render Result: ${renderInfo}`,
         `Generated Code:\n\`\`\`javascript\n${c.generatedCode || '(none)'}\n\`\`\``,
-        `Expected Code:\n\`\`\`javascript\n${c.expectedCode || '(none)'}\n\`\`\``
+        `Expected Code:\n\`\`\`javascript\n${c.expectedCode || '(none)'}\n\`\`\``,
       ].join('\n');
     })
     .join('\n\n');
@@ -203,7 +250,7 @@ async function optimizeSkill(
   const refHint = refs
     ? [
         refs.docsDir ? `- 官方文档目录：${refs.docsDir}` : '',
-        refs.srcDir ? `- 源码目录：${refs.srcDir}` : ''
+        refs.srcDir ? `- 源码目录：${refs.srcDir}` : '',
       ]
         .filter(Boolean)
         .join('\n')
@@ -242,22 +289,22 @@ ${errorContext}
     },
     {
       maxAttempts: 4,
-      baseMs:      10_000,
+      baseMs: 10_000,
       shouldRetry(err) {
         const { action } = classify(err);
         return action.shouldRetry && !action.abort;
       },
       onRetry(err, attempt, delayMs) {
         console.warn(
-          `    [retry] ${skillName}: ${(err as Error).message} — attempt ${attempt} in ${(delayMs / 1000).toFixed(1)}s...`
+          `    [retry] ${skillName}: ${(err as Error).message} — attempt ${attempt} in ${(delayMs / 1000).toFixed(1)}s...`,
         );
       },
-    }
+    },
   );
 
   if (result.toolCallsLog.length > 0) {
     console.log(
-      `    Ref lookups: ${result.toolCallsLog.map((t) => `${t.tool}(${JSON.stringify(t.input).slice(0, 60)})`).join(', ')}`
+      `    Ref lookups: ${result.toolCallsLog.map((t) => `${t.tool}(${JSON.stringify(t.input).slice(0, 60)})`).join(', ')}`,
     );
   }
 
@@ -278,7 +325,7 @@ ${errorContext}
   const originalContent = fs.readFileSync(skillPath, 'utf-8');
   if (newContent.length < originalContent.length * 0.5) {
     console.warn(
-      `    LLM response is suspiciously short (${newContent.length} vs ${originalContent.length} chars), skipping to prevent regression.`
+      `    LLM response is suspiciously short (${newContent.length} vs ${originalContent.length} chars), skipping to prevent regression.`,
     );
     return;
   }
@@ -296,8 +343,16 @@ ${errorContext}
     fs.unlinkSync(backupPath);
     console.log(`    Saved: ${skillPath}`);
   } catch (writeErr) {
-    try { fs.copyFileSync(backupPath, skillPath); } catch { /* best-effort */ }
-    try { fs.unlinkSync(backupPath); } catch { /* best-effort */ }
+    try {
+      fs.copyFileSync(backupPath, skillPath);
+    } catch {
+      /* best-effort */
+    }
+    try {
+      fs.unlinkSync(backupPath);
+    } catch {
+      /* best-effort */
+    }
     throw writeErr;
   }
 }
@@ -309,11 +364,13 @@ export async function createNewSkills(
   provider: string,
   model: string,
   skillsBaseDir: string,
-  libraryId?: string
+  libraryId?: string,
 ): Promise<string[]> {
   if (orphanCases.length === 0) return [];
 
-  console.log(`\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`);
+  console.log(
+    `\n  Creating new skill(s) for ${orphanCases.length} orphan case(s)...`,
+  );
 
   const errorContext = orphanCases
     .map((c, i) => {
@@ -329,7 +386,7 @@ export async function createNewSkills(
         `Query: ${c.query}`,
         `Render Result: ${renderInfo}`,
         `Generated Code:\n\`\`\`javascript\n${c.generatedCode || '(none)'}\n\`\`\``,
-        `Expected Code:\n\`\`\`javascript\n${c.expectedCode || '(none)'}\n\`\`\``
+        `Expected Code:\n\`\`\`javascript\n${c.expectedCode || '(none)'}\n\`\`\``,
       ].join('\n');
     })
     .join('\n\n');
@@ -338,7 +395,7 @@ export async function createNewSkills(
   const refHint = refs
     ? [
         refs.docsDir ? `- 官方文档目录：${refs.docsDir}` : '',
-        refs.srcDir ? `- 源码目录：${refs.srcDir}` : ''
+        refs.srcDir ? `- 源码目录：${refs.srcDir}` : '',
       ]
         .filter(Boolean)
         .join('\n')
@@ -371,7 +428,9 @@ ${errorContext}
   const result = await loop.run(systemPrompt, userMessage);
 
   if (!result?.content) {
-    console.warn(`    LLM returned empty response for new skill creation, skipping.`);
+    console.warn(
+      `    LLM returned empty response for new skill creation, skipping.`,
+    );
     return [];
   }
 
@@ -385,7 +444,7 @@ ${errorContext}
     const fmIdx = content.indexOf('---');
     if (fmIdx > 0) content = content.slice(fmIdx);
     if (!content.startsWith('---')) {
-      console.warn(`    Skipping "${filename}": no YAML front matter found.`);
+      console.warn(`    Skipping '${filename}': no YAML front matter found.`);
       continue;
     }
 
@@ -399,8 +458,16 @@ ${errorContext}
       if (fs.existsSync(existingBackup)) fs.unlinkSync(existingBackup);
     } catch (writeErr) {
       if (fs.existsSync(existingBackup)) {
-        try { fs.copyFileSync(existingBackup, filePath); } catch { /* best-effort */ }
-        try { fs.unlinkSync(existingBackup); } catch { /* best-effort */ }
+        try {
+          fs.copyFileSync(existingBackup, filePath);
+        } catch {
+          /* best-effort */
+        }
+        try {
+          fs.unlinkSync(existingBackup);
+        } catch {
+          /* best-effort */
+        }
       }
       throw writeErr;
     }
@@ -445,7 +512,7 @@ export async function run(
     libraryId,
     skillsRefDir,
     historyContext = {},
-  }: OptimizeAgentOptions
+  }: OptimizeAgentOptions,
 ): Promise<string[]> {
   if (dryRun) {
     writeErrorLog(logFile!, iteration, allErrorCases, skillToErrors, rootDir);
@@ -459,21 +526,38 @@ export async function run(
     console.log(`\nOptimizing ${skillToErrors.size} skill(s) in parallel...`);
     const results = await Promise.allSettled(
       [...skillToErrors.entries()].map(([skillPath, cases]) =>
-        optimizeSkill(skillPath, cases, provider, model, libraryId, historyContext[skillPath] ?? null)
-      )
+        optimizeSkill(
+          skillPath,
+          cases,
+          provider,
+          model,
+          libraryId,
+          historyContext[skillPath] ?? null,
+        ),
+      ),
     );
     for (const r of results) {
       if (r.status === 'rejected') {
-        console.error(`  Skill optimization failed: ${(r.reason as Error)?.message ?? r.reason}`);
+        console.error(
+          `  Skill optimization failed: ${(r.reason as Error)?.message ?? r.reason}`,
+        );
       }
     }
   }
 
   if (orphanCases.length > 0 && skillsRefDir) {
-    const newFiles = await createNewSkills(orphanCases, provider, model, skillsRefDir, libraryId);
+    const newFiles = await createNewSkills(
+      orphanCases,
+      provider,
+      model,
+      skillsRefDir,
+      libraryId,
+    );
     created.push(...newFiles);
   } else if (orphanCases.length > 0) {
-    console.warn(`  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`);
+    console.warn(
+      `  ${orphanCases.length} orphan case(s) skipped: skillsRefDir not provided.`,
+    );
   }
 
   return created;

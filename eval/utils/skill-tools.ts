@@ -24,7 +24,8 @@ const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
 
 const LIBRARY_DIR: Record<string, string> = {
   g2: 'antv-g2-chart',
-  g6: 'antv-g6-graph'
+  g6: 'antv-g6-graph',
+  x6: 'antv-x6-editor'
 };
 
 function resolveLibraryDir(library: string): string {
@@ -135,6 +136,11 @@ export function createReadSkillsTool() {
 export function buildSystemPrompt(library: string): string {
   const dir = resolveLibraryDir(library);
   const skillContent = loadMainSkill(library);
+
+  if (library === 'x6') {
+    return buildX6SystemPrompt(dir, skillContent);
+  }
+
   return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
 ## 输出格式（严格遵守）
@@ -154,6 +160,46 @@ export function buildSystemPrompt(library: string): string {
 
 **工作流程**：
 1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
+2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
+3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
+4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
+5. 生成代码时严格参考文档中的示例写法
+
+--- 知识库概览 ---
+
+${skillContent}`;
+}
+
+function buildX6SystemPrompt(dir: string, skillContent: string): string {
+  return `你是 AntV X6 3.x 图编辑引擎代码生成专家。根据用户描述生成准确、可运行的代码。
+
+## 输出格式（严格遵守）
+
+- **只输出纯 JavaScript 代码**，不要输出 HTML、Markdown 文档或任何解释文字
+- 代码使用 \`import { Graph, ... } from '@antv/x6'\` 风格的导入语句
+- 所有使用到的类（Graph、Shape、Selection 等）都**必须出现在 import 语句中**
+- 禁止使用 \`<script>\`、\`<!DOCTYPE>\`、\`<html>\` 等任何 HTML 标签
+- container 变量已预先定义，**直接使用 container 变量**，禁止重新声明（禁止 \`const container = ...\`、\`let container = ...\`、\`document.getElementById\`）
+- 如需代码块，只用 \`\`\`javascript 包裹，不用其他格式
+
+## X6 3.x 关键规则（必须遵守）
+
+1. **禁止调用 graph.render()**：X6 3.x 在 addNode/addEdge/fromJSON 后自动渲染，无需手动 render
+2. **禁止使用 Graph.Selection、Graph.Keyboard 等命名空间写法**（不存在）
+3. **禁止使用 TypeScript 语法**（interface、type、as、泛型等），必须输出纯 JavaScript
+4. **禁止调用 node.hideTools() / node.showTools()**（3.x 不存在），使用 node.addTools() / node.removeTools()
+5. **禁止重新注册内置节点名**（如 'rect'、'circle' 等已内置，不要 Graph.registerNode('rect', ...)）
+6. **容器配置**：new Graph 的 container 属性直接传入 container 变量：\`new Graph({ container, ... })\`
+7. **插件使用**：plugins 数组中直接 new 实例化，如 \`plugins: [new Selection({ ... })]\`
+
+## 工具使用（必须遵循）
+
+你有一个工具可以查阅详细参考文档：
+
+1. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
+
+**工作流程**：
+1. 分析用户需求，确定涉及的图表/图编辑功能
 2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
 3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
 4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出

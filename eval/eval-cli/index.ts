@@ -15,7 +15,7 @@ import {
   listProviders,
   hasApiKey,
   getApiKeyEnv,
-  getDefaultModel
+  getDefaultModel,
 } from '../utils/provider-registry.js';
 
 const program = new Command();
@@ -27,26 +27,25 @@ program
 
 const DEFAULT_DATASETS: Record<string, string> = {
   g2: 'g2-dataset-174.json',
-  g6: 'g6-dataset-100.json'
+  g6: 'g6-dataset-100.json',
+  x6: 'x6-dataset-136.json',
 };
 
 program
   .command('eval', { isDefault: true })
   .description('Run LLM evaluation')
   .option('--model <id>', 'Model ID (default: from AI_MODEL env)')
-  .option(
-    '--library <lib>',
-    'Target library: g2 | g6',
-    (v) => {
-      const valid = ['g2', 'g6'];
-      if (!valid.includes(v)) throw new Error(`--library must be one of: ${valid.join(', ')}`);
-      return v;
-    }
-  )
+  .option('--library <lib>', 'Target library: g2 | g6 | x6', (v) => {
+    const valid = ['g2', 'g6', 'x6'];
+    if (!valid.includes(v))
+      throw new Error(`--library must be one of: ${valid.join(', ')}`);
+    return v;
+  })
   .option('--dataset <file>', 'Test dataset file (overrides --library default)')
   .option('--sample <n>', 'Sample n random test cases', (v) => {
     const n = parseInt(v, 10);
-    if (isNaN(n) || n <= 0) throw new Error(`--sample must be a positive integer, got: ${v}`);
+    if (isNaN(n) || n <= 0)
+      throw new Error(`--sample must be a positive integer, got: ${v}`);
     return n;
   })
   .option('--full', 'Run all test cases (overrides --sample)')
@@ -55,20 +54,22 @@ program
     'Parallel workers',
     (v) => {
       const n = parseInt(v, 10);
-      if (isNaN(n) || n <= 0) throw new Error(`--concurrency must be a positive integer, got: ${v}`);
+      if (isNaN(n) || n <= 0)
+        throw new Error(`--concurrency must be a positive integer, got: ${v}`);
       return n;
     },
-    1
+    1,
   )
   .option(
     '--retrieval <strategy>',
     'Retrieval strategy: tool-call | bm25 | context7',
     (v) => {
       const valid = ['tool-call', 'bm25', 'context7'];
-      if (!valid.includes(v)) throw new Error(`--retrieval must be one of: ${valid.join(', ')}`);
+      if (!valid.includes(v))
+        throw new Error(`--retrieval must be one of: ${valid.join(', ')}`);
       return v;
     },
-    'tool-call'
+    'tool-call',
   )
   .option('--ids <ids>', 'Comma-separated case IDs to test')
   .option('--verbose', 'Show detailed output')
@@ -93,7 +94,12 @@ async function runEvaluation(opts: {
 
   if (!hasProvider(provider)) {
     console.error(`Unknown provider: ${provider}`);
-    console.error('Available providers:', listProviders().map((p) => p.id).join(', '));
+    console.error(
+      'Available providers:',
+      listProviders()
+        .map((p) => p.id)
+        .join(', '),
+    );
     process.exit(1);
   }
 
@@ -103,9 +109,13 @@ async function runEvaluation(opts: {
     process.exit(1);
   }
 
-  const model = !modelArg || modelArg === provider ? getDefaultModel(provider)! : modelArg;
+  const model =
+    !modelArg || modelArg === provider ? getDefaultModel(provider)! : modelArg;
 
-  const ids = opts.ids?.split(',').map((s) => s.trim()).filter(Boolean);
+  const ids = opts.ids
+    ?.split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   const full = opts.full ?? false;
   // Default to 5 samples when neither --full nor --ids is specified
   const sample = ids ? undefined : (opts.sample ?? (full ? undefined : 5));
@@ -119,8 +129,11 @@ async function runEvaluation(opts: {
     ids,
     concurrency: opts.concurrency ?? 1,
     verbose: opts.verbose ?? false,
-    retrieval: (opts.retrieval ?? 'tool-call') as 'tool-call' | 'bm25' | 'context7',
-    provider
+    retrieval: (opts.retrieval ?? 'tool-call') as
+      | 'tool-call'
+      | 'bm25'
+      | 'context7',
+    provider,
   };
 
   console.log('');
@@ -131,13 +144,16 @@ async function runEvaluation(opts: {
   console.log(`  Model:       ${model}`);
   console.log(`  Library:     ${library}`);
   console.log(`  Dataset:     ${dataset}`);
-  console.log(`  Sample:      ${ids ? `targeted (${ids.length} IDs)` : full ? 'all' : sample}`);
+  console.log(
+    `  Sample:      ${ids ? `targeted (${ids.length} IDs)` : full ? 'all' : sample}`,
+  );
   console.log(`  Concurrency: ${options.concurrency}`);
   console.log(`  Retrieval:   ${options.retrieval}`);
   console.log('='.repeat(60));
   console.log('');
 
-  const { default: EvaluationManager } = await import('../utils/eval-manager.js');
+  const { default: EvaluationManager } =
+    await import('../utils/eval-manager.js');
   const { v4: uuidv4 } = await import('uuid');
 
   const evalManager = new EvaluationManager();
@@ -156,7 +172,11 @@ async function runEvaluation(opts: {
   }, 2000);
 
   try {
-    const { evalId: id, outputPath, summary } = await evalManager.startEvaluation({ id: evalId, ...options });
+    const {
+      evalId: id,
+      outputPath,
+      summary,
+    } = await evalManager.startEvaluation({ id: evalId, ...options });
 
     console.log('');
     console.log('='.repeat(60));
@@ -164,8 +184,12 @@ async function runEvaluation(opts: {
     console.log('='.repeat(60));
     console.log(`  Status:       completed`);
     console.log(`  Total Tests:  ${summary.totalTests}`);
-    console.log(`  Avg Similarity: ${(summary.avgSimilarity * 100).toFixed(1)}%`);
-    console.log(`  Success Rate: ${summary.successCount}/${summary.totalTests}`);
+    console.log(
+      `  Avg Similarity: ${(summary.avgSimilarity * 100).toFixed(1)}%`,
+    );
+    console.log(
+      `  Success Rate: ${summary.successCount}/${summary.totalTests}`,
+    );
     console.log(`  Issues Count: ${summary.issuesCount}`);
     console.log('='.repeat(60));
 

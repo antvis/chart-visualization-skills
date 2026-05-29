@@ -10,11 +10,14 @@
  *   node harness/dist/controller.js --library=g2 --sample=10 --retrieval=bm25
  */
 
-import 'dotenv/config';
-
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// Load .env from project root regardless of cwd
+const __dotenvDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+dotenv.config({ path: path.join(__dotenvDir, '.env') });
 import { Command } from 'commander';
 import { detectProviderFromModel } from '../eval/utils/ai-sdk.js';
 import { getLibraryConfig } from './config.js';
@@ -40,7 +43,7 @@ const program = new Command();
 program
   .name('controller')
   .description('AntV Skills iterative validation harness')
-  .option('--library <id>',          'Library id (g2 | g6)')
+  .option('--library <id>',          'Library id (g2 | g6 | x6)')
   .option('--sample <n>',            'Eval sample size',             (v) => parseInt(v, 10))
   .option('--full',                  'Run full dataset (overrides --sample)')
   .option('--retrieval <strategy>',  'tool-call | bm25 | context7')
@@ -144,6 +147,7 @@ async function main(): Promise<void> {
         concurrency: CONCURRENCY,
         ids,
         rootDir:     activeRootDir,
+        library:     LIBRARY_ID,
       }) as Promise<string>,
       {
         maxAttempts: 3,
@@ -192,6 +196,7 @@ async function main(): Promise<void> {
           dataset:     libConfig.defaultDataset,
           concurrency: CONCURRENCY,
           rootDir:     activeRootDir,
+          library:     LIBRARY_ID,
         }) as Promise<string>,
         {
           maxAttempts: 2,
@@ -215,6 +220,7 @@ async function main(): Promise<void> {
           dataset:     libConfig.defaultDataset,
           concurrency: CONCURRENCY,
           rootDir:     ROOT_DIR,
+          library:     LIBRARY_ID,
         }) as Promise<string>,
         {
           maxAttempts: 2,

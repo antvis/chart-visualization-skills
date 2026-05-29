@@ -8,12 +8,17 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { AgentLoop, callAI } from './ai-sdk.js';
-import { buildQuery, evaluateCode, type TestCase, type EvaluationResult } from './eval-utils.js';
+import {
+  buildQuery,
+  evaluateCode,
+  type TestCase,
+  type EvaluationResult,
+} from './eval-utils.js';
 import {
   createReadSkillsTool,
   loadSkillFile,
   extractKeySections,
-  buildSystemPrompt
+  buildSystemPrompt,
 } from './skill-tools.js';
 import { parallelMap } from './parallel-executor.js';
 import * as context7 from './context7.js';
@@ -21,7 +26,8 @@ import logger from './logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const ROOT_DIR = process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
+const ROOT_DIR =
+  process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
 const MAX_TOOL_ROUNDS = 6;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -86,8 +92,17 @@ interface EvalRun {
 
 export interface WsHandler {
   onEvalStart(evalId: string, options: unknown): void;
-  onEvalProgress(evalId: string, current: number, total: number, result: EvalResult): void;
-  onEvalComplete(evalId: string, summary: EvalSummary, outputPath: string): void;
+  onEvalProgress(
+    evalId: string,
+    current: number,
+    total: number,
+    result: EvalResult,
+  ): void;
+  onEvalComplete(
+    evalId: string,
+    summary: EvalSummary,
+    outputPath: string,
+  ): void;
   onEvalError(evalId: string, error: Error): void;
 }
 
@@ -101,21 +116,40 @@ export interface EvalStartResult {
 
 function loadRetriever() {
   return import('../../src/core/retriever.js') as Promise<{
-    retrieve: (query: string, opts: { library: string; topK: number; indexDir: string }) => Array<{ id: string; title: string; path?: string }>;
+    retrieve: (
+      query: string,
+      opts: {
+        library?: string;
+        topK?: number;
+        indexDir?: string;
+        content?: boolean;
+        includeInfo?: boolean;
+      },
+    ) => Array<{ id: string; title: string; path?: string; content?: string }>;
   }>;
 }
 
 // ── Shared RAG prompt builders ────────────────────────────────────────────────
 
 function buildRagSystemPrompt(library: string, skillContext: string): string {
-  const promptFile = path.join(ROOT_DIR, 'prompts', `${library}-system-prompt.md`);
+  const promptFile = path.join(
+    ROOT_DIR,
+    'prompts',
+    `${library}-system-prompt.md`,
+  );
   const systemPrompt = fs.existsSync(promptFile)
     ? fs.readFileSync(promptFile, 'utf-8')
-    : `你是 AntV ${library.toUpperCase()} v5 专家。`;
-  return systemPrompt.replace('{RETRIEVED_SKILLS_CONTENT}', skillContext || '（暂无相关内容）');
+    : `你是 AntV ${library.toUpperCase()} 代码生成专家。`;
+  return systemPrompt.replace(
+    '{RETRIEVED_SKILLS_CONTENT}',
+    skillContext || '（暂无相关内容）',
+  );
 }
 
 function buildRagUserMessage(library: string, query: string): string {
+  if (library === 'x6') {
+    return `请根据以下描述生成 AntV X6 3.x 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import { Graph, ... } from '@antv/x6' 开头，所有用到的类必须 import\n3. container 变量已预定义，直接使用，禁止重新声明（禁止 const/let container = ...）\n4. 禁止调用 graph.render()，X6 3.x 自动渲染\n5. 禁止使用 TypeScript 语法`;
+  }
   return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import 语句开头，从 @antv/${library} 引入所需模块，禁止使用 CDN URL\n3. container 直接使用变量，不要写成字符串 'container'\n4. 提供的数据不满足需求时，自动补充所需数据\n5. 包含完整的 render() 调用`;
 }
 
@@ -123,17 +157,31 @@ function buildRagUserMessage(library: string, query: string): string {
 
 function buildSummary(results: EvalResult[]): EvalSummary {
   const successResults = results.filter((r) => !r.error);
-  const totalSimilarity = successResults.reduce((s, r) => s + (r.evaluation?.similarity ?? 0), 0);
-  const totalToolCalls = results.reduce((s, r) => s + (r.toolCallsCount ?? 0), 0);
+  const totalSimilarity = successResults.reduce(
+    (s, r) => s + (r.evaluation?.similarity ?? 0),
+    0,
+  );
+  const totalToolCalls = results.reduce(
+    (s, r) => s + (r.toolCallsCount ?? 0),
+    0,
+  );
   return {
     totalTests: results.length,
     successCount: successResults.length,
-    avgDuration: results.reduce((s, r) => s + (r.duration ?? 0), 0) / (results.length || 1),
-    avgSimilarity: successResults.length > 0 ? totalSimilarity / successResults.length : 0,
-    highSimilarityCount: results.filter((r) => (r.evaluation?.similarity ?? 0) >= 0.5).length,
+    avgDuration:
+      results.reduce((s, r) => s + (r.duration ?? 0), 0) /
+      (results.length || 1),
+    avgSimilarity:
+      successResults.length > 0 ? totalSimilarity / successResults.length : 0,
+    highSimilarityCount: results.filter(
+      (r) => (r.evaluation?.similarity ?? 0) >= 0.5,
+    ).length,
     issuesCount: results.filter((r) => r.evaluation?.hasIssues).length,
-    avgToolCalls: successResults.length > 0 ? totalToolCalls / successResults.length : 0,
-    skillHitRate: results.filter((r) => (r.loadedSkillPaths?.length ?? 0) > 0).length / (results.length || 1)
+    avgToolCalls:
+      successResults.length > 0 ? totalToolCalls / successResults.length : 0,
+    skillHitRate:
+      results.filter((r) => (r.loadedSkillPaths?.length ?? 0) > 0).length /
+      (results.length || 1),
   };
 }
 
@@ -146,7 +194,13 @@ function emptyEvaluationResult(errorMsg: string): EvaluationResult {
     codeLength: 0,
     expectedLength: 0,
     extractedCode: '',
-    structuralFeatures: { imports: [], functionCalls: [], objectKeys: [], stringLiterals: [], apiPatterns: [] }
+    structuralFeatures: {
+      imports: [],
+      functionCalls: [],
+      objectKeys: [],
+      stringLiterals: [],
+      apiPatterns: [],
+    },
   };
 }
 
@@ -155,7 +209,10 @@ function emptyEvaluationResult(errorMsg: string): EvaluationResult {
 export default class EvaluationManager {
   private runningEvals = new Map<string, EvalRun>();
 
-  async startEvaluation(options: EvalOptions, wsHandler: WsHandler | null = null): Promise<EvalStartResult> {
+  async startEvaluation(
+    options: EvalOptions,
+    wsHandler: WsHandler | null = null,
+  ): Promise<EvalStartResult> {
     const {
       id: evalId,
       provider,
@@ -166,18 +223,21 @@ export default class EvaluationManager {
       ids,
       concurrency = 1,
       similarityAlgorithm = 'hybrid',
-      retrieval = 'tool-call'
+      retrieval = 'tool-call',
     } = options;
 
     const datasetPath = path.join(__dirname, '..', 'data', dataset);
-    if (!fs.existsSync(datasetPath)) throw new Error(`Dataset not found: ${dataset}`);
+    if (!fs.existsSync(datasetPath))
+      throw new Error(`Dataset not found: ${dataset}`);
 
     const datasetContent = JSON.parse(fs.readFileSync(datasetPath, 'utf-8'));
     const rawData: TestCase[] = Array.isArray(datasetContent)
       ? datasetContent
       : (datasetContent.results ?? []);
 
-    let testData = rawData.map((t, i) => (t.id ? t : { ...t, id: `case-${i}` }));
+    let testData = rawData.map((t, i) =>
+      t.id ? t : { ...t, id: `case-${i}` },
+    );
 
     if (ids && ids.length > 0) {
       const idSet = new Set(ids);
@@ -196,7 +256,7 @@ export default class EvaluationManager {
       startTime: new Date().toISOString(),
       progress: { current: 0, total: testData.length },
       results: [],
-      abortController: new AbortController()
+      abortController: new AbortController(),
     };
 
     this.runningEvals.set(evalId, evalRun);
@@ -207,7 +267,7 @@ export default class EvaluationManager {
     const dateStr = new Date().toISOString().slice(0, 10);
     const outputPath = path.join(
       resultDir,
-      `eval-${retrieval}-${dataset.replace('.json', '')}-${model}-${dateStr}.json`
+      `eval-${retrieval}-${dataset.replace('.json', '')}-${model}-${dateStr}.json`,
     );
 
     wsHandler?.onEvalStart(evalId, options);
@@ -217,10 +277,13 @@ export default class EvaluationManager {
         outputPath,
         similarityAlgorithm,
         concurrency,
-        wsHandler
+        wsHandler,
       });
     } catch (error) {
-      logger.error({ evalId, err: (error as Error).message }, 'Evaluation error');
+      logger.error(
+        { evalId, err: (error as Error).message },
+        'Evaluation error',
+      );
       evalRun.status = 'error';
       evalRun.error = (error as Error).message;
       wsHandler?.onEvalError(evalId, error as Error);
@@ -233,14 +296,22 @@ export default class EvaluationManager {
   private async _runEvaluation(
     evalRun: EvalRun,
     testData: TestCase[],
-    options: { outputPath: string; similarityAlgorithm: string; concurrency: number; wsHandler: WsHandler | null }
+    options: {
+      outputPath: string;
+      similarityAlgorithm: string;
+      concurrency: number;
+      wsHandler: WsHandler | null;
+    },
   ) {
     const { outputPath, similarityAlgorithm, concurrency, wsHandler } = options;
     const { signal } = evalRun.abortController;
 
     const processCase = async (testCase: TestCase, index: number) => {
       if (signal.aborted) throw new Error('Evaluation cancelled');
-      return this._processSingleCase(evalRun, testCase, index, { similarityAlgorithm, signal });
+      return this._processSingleCase(evalRun, testCase, index, {
+        similarityAlgorithm,
+        signal,
+      });
     };
 
     if (concurrency > 1) {
@@ -252,7 +323,7 @@ export default class EvaluationManager {
           evalRun.progress = { current: done, total: testData.length };
           this._saveProgress(evalRun, outputPath);
           wsHandler?.onEvalProgress(evalRun.id, done, testData.length, result!);
-        }
+        },
       });
       // Replace with ordered results for the final output
       evalRun.results = orderedResults.filter(Boolean) as EvalResult[];
@@ -278,7 +349,7 @@ export default class EvaluationManager {
     evalRun: EvalRun,
     testCase: TestCase,
     index: number,
-    options: { similarityAlgorithm: string; signal: AbortSignal }
+    options: { similarityAlgorithm: string; signal: AbortSignal },
   ): Promise<EvalResult> {
     const { similarityAlgorithm } = options;
     const { provider, model, retrieval } = evalRun;
@@ -291,14 +362,32 @@ export default class EvaluationManager {
       let retrievalInfo: Record<string, unknown>;
 
       if (retrieval === 'bm25') {
-        ({ generatedCode, retrievalInfo } = await this._processBm25({ provider, model, query, library }));
+        ({ generatedCode, retrievalInfo } = await this._processBm25({
+          provider,
+          model,
+          query,
+          library,
+        }));
       } else if (retrieval === 'context7') {
-        ({ generatedCode, retrievalInfo } = await this._processContext7({ provider, model, query, library }));
+        ({ generatedCode, retrievalInfo } = await this._processContext7({
+          provider,
+          model,
+          query,
+          library,
+        }));
       } else {
-        ({ generatedCode, retrievalInfo } = await this._processToolCall({ provider, model, query, library }));
+        ({ generatedCode, retrievalInfo } = await this._processToolCall({
+          provider,
+          model,
+          query,
+          library,
+        }));
       }
 
-      const evaluation = evaluateCode(generatedCode, expectedCode, { similarityAlgorithm });
+      const evaluation = evaluateCode(generatedCode, expectedCode, {
+        similarityAlgorithm,
+        library,
+      });
 
       return {
         id: testCase.id ?? `test-${index}`,
@@ -309,7 +398,7 @@ export default class EvaluationManager {
         generatedCode,
         duration: Date.now() - startTime,
         ...retrievalInfo,
-        evaluation
+        evaluation,
       };
     } catch (error) {
       return {
@@ -320,18 +409,28 @@ export default class EvaluationManager {
         expectedCode,
         error: (error as Error).message,
         duration: Date.now() - startTime,
-        evaluation: emptyEvaluationResult((error as Error).message)
+        evaluation: emptyEvaluationResult((error as Error).message),
       };
     }
   }
 
-  private async _processToolCall({ provider, model, query, library }: { provider: string; model: string; query: string; library: string }) {
+  private async _processToolCall({
+    provider,
+    model,
+    query,
+    library,
+  }: {
+    provider: string;
+    model: string;
+    query: string;
+    library: string;
+  }) {
     const systemPrompt = buildSystemPrompt(library);
     const agent = new AgentLoop({
       provider,
       model,
       maxRounds: MAX_TOOL_ROUNDS,
-      tools: { read_skills: createReadSkillsTool() }
+      tools: { read_skills: createReadSkillsTool() },
     });
     const { content, toolCallsLog } = await agent.run(systemPrompt, query);
     return {
@@ -339,24 +438,41 @@ export default class EvaluationManager {
       retrievalInfo: {
         toolCallsCount: toolCallsLog.length,
         toolCallsLog,
-        loadedSkillPaths: this._extractSkillPaths(toolCallsLog)
-      }
+        loadedSkillPaths: this._extractSkillPaths(toolCallsLog),
+      },
     };
   }
 
-  private async _processBm25({ provider, model, query, library }: { provider: string; model: string; query: string; library: string }) {
+  private async _processBm25({
+    provider,
+    model,
+    query,
+    library,
+  }: {
+    provider: string;
+    model: string;
+    query: string;
+    library: string;
+  }) {
     const retriever = await loadRetriever();
     const indexDir = path.join(ROOT_DIR, 'dist', 'index');
-    const retrievedSkills = retriever.retrieve(query, { library, topK: 5, indexDir });
+    const retrievedSkills = retriever.retrieve(query, {
+      library,
+      topK: 5,
+      indexDir,
+      content: true,
+      includeInfo: true,
+    });
 
     let skillContext = '';
     const retrievedSkillIds: string[] = [];
     const loadedSkillPaths: string[] = [];
 
     for (const skill of retrievedSkills) {
-      const content = skill.path ? loadSkillFile(skill.path) : null;
-      if (content) {
-        skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${extractKeySections(content)}`;
+      const fileContent = skill.path ? loadSkillFile(skill.path) : null;
+      const resolvedContent = fileContent || skill.content || null;
+      if (resolvedContent) {
+        skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${extractKeySections(resolvedContent)}`;
         retrievedSkillIds.push(skill.id);
         if (skill.path) loadedSkillPaths.push(skill.path);
       }
@@ -369,25 +485,39 @@ export default class EvaluationManager {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
+        { role: 'user', content: userMessage },
       ],
       temperature: 0.3,
-      maxTokens: 2000
+      maxTokens: 2000,
     });
 
     return {
       generatedCode: this._extractCode(response.content),
-      retrievalInfo: { retrievedSkillIds, loadedSkillPaths }
+      retrievalInfo: { retrievedSkillIds, loadedSkillPaths },
     };
   }
 
-  private async _processContext7({ provider, model, query, library }: { provider: string; model: string; query: string; library: string }) {
+  private async _processContext7({
+    provider,
+    model,
+    query,
+    library,
+  }: {
+    provider: string;
+    model: string;
+    query: string;
+    library: string;
+  }) {
     const libraryId = context7.resolveLibraryId(library);
     let skillContext = '';
     let context7Error: string | undefined;
 
     try {
-      const data = await context7.fetchDocs(query, libraryId, process.env.CONTEXT7_API_KEY);
+      const data = await context7.fetchDocs(
+        query,
+        libraryId,
+        process.env.CONTEXT7_API_KEY,
+      );
       skillContext = context7.formatDocs(data);
     } catch (err) {
       context7Error = (err as Error).message;
@@ -401,21 +531,23 @@ export default class EvaluationManager {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage }
+        { role: 'user', content: userMessage },
       ],
       temperature: 0.3,
-      maxTokens: 2000
+      maxTokens: 2000,
     });
 
     return {
       generatedCode: this._extractCode(response.content),
-      retrievalInfo: { libraryId, ...(context7Error ? { context7Error } : {}) }
+      retrievalInfo: { libraryId, ...(context7Error ? { context7Error } : {}) },
     };
   }
 
   private _extractCode(response: string): string {
     if (!response) return '';
-    const codeBlockMatch = response.match(/```(?:javascript|js|typescript|ts)?\s*([\s\S]*?)```/);
+    const codeBlockMatch = response.match(
+      /```(?:javascript|js|typescript|ts)?\s*([\s\S]*?)```/,
+    );
     if (codeBlockMatch) return codeBlockMatch[1].trim();
     const importMatch = response.match(/import[\s\S]*/);
     if (importMatch) return importMatch[0].trim();
@@ -424,7 +556,10 @@ export default class EvaluationManager {
 
   private _extractSkillPaths(toolCallsLog: unknown[]): string[] {
     const paths: string[] = [];
-    for (const call of toolCallsLog as Array<{ tool: string; input: { paths?: string[] } }>) {
+    for (const call of toolCallsLog as Array<{
+      tool: string;
+      input: { paths?: string[] };
+    }>) {
       if (call.tool === 'read_skills' && call.input?.paths) {
         paths.push(...call.input.paths);
       }
@@ -443,7 +578,7 @@ export default class EvaluationManager {
       status: evalRun.status,
       ...extra,
       summary: buildSummary(evalRun.results),
-      results: evalRun.results
+      results: evalRun.results,
     };
   }
 
@@ -467,7 +602,7 @@ export default class EvaluationManager {
       startTime: evalRun.startTime,
       endTime: evalRun.endTime,
       summary: evalRun.summary,
-      error: evalRun.error
+      error: evalRun.error,
     };
   }
 

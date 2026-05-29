@@ -102,7 +102,8 @@ function evaluateRecall() {
   let totalWithResults = 0;
 
   for (const { description } of dataset) {
-    const library = description.includes('G6') || description.includes('图分析') ? 'g6' : 'g2';
+    const library = description.includes('X6') || description.includes('@antv/x6') ? 'x6'
+      : description.includes('G6') || description.includes('图分析') ? 'g6' : 'g2';
     const results = retrieveSkills(description, { library, topK: 5 });
     if (results.length === 0) continue;
 
@@ -131,7 +132,8 @@ function evaluateRecall() {
   console.log('\n📝 检索示例');
   console.log('─'.repeat(40));
   for (const { id, description } of dataset.slice(0, 5)) {
-    const library = description.includes('G6') || description.includes('图分析') ? 'g6' : 'g2';
+    const library = description.includes('X6') || description.includes('@antv/x6') ? 'x6'
+      : description.includes('G6') || description.includes('图分析') ? 'g6' : 'g2';
     const results = retrieveSkills(description, { library, topK: 3 });
     console.log(`\n[${id}] ${description.substring(0, 50)}...`);
     console.log(`  检索结果: ${results.map((s) => s.id).join(', ')}`);

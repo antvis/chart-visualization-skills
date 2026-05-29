@@ -7,6 +7,7 @@ import { calculateSimilarity, extractStructuralFeatures, StructuralFeatures } fr
 // ── 库检测 ──────────────────────────────────────────────────────────────────────
 
 function detectLibrary(codeString: string): string {
+  if (codeString.includes('@antv/x6')) return 'x6';
   if (codeString.includes('@antv/g6')) return 'g6';
   return 'g2';
 }
@@ -74,11 +75,12 @@ export interface EvaluationResult {
 export function evaluateCode(
   generatedCode: string,
   expectedCode: string,
-  options: { similarityAlgorithm?: string } = {}
+  options: { similarityAlgorithm?: string; library?: string } = {}
 ): EvaluationResult {
   const issues: string[] = [];
   const warnings: string[] = [];
   const extractedCode = extractCodeFromResponse(generatedCode);
+  const isX6 = options.library === 'x6' || extractedCode.includes('@antv/x6');
 
   if (!extractedCode.includes('import') && !extractedCode.includes('require')) {
     issues.push('缺少 import/require 语句');
@@ -86,14 +88,16 @@ export function evaluateCode(
   if (!extractedCode.includes('new Chart') && !extractedCode.includes('new Graph')) {
     issues.push('缺少 Chart/Graph 实例化');
   }
-  if (!extractedCode.includes('.render')) {
+  // X6 不需要显式 .render() 调用；Graph 实例化后通过 fromJSON/addNode 即可渲染
+  if (!isX6 && !extractedCode.includes('.render')) {
     issues.push('缺少 render() 调用');
   }
   if (/chart\.(interval|line|point|area|cell)\s*\(/.test(extractedCode)) {
     issues.push('使用了 V4 链式 API（chart.interval() 等）');
   }
   if (extractedCode.includes('createView')) issues.push('使用了 V4 createView');
-  if (/\.position\s*\(/.test(extractedCode)) issues.push('使用了 V4 .position() 语法');
+  // X6 中 .position() 是合法的节点方法，仅对 G2 检查
+  if (!isX6 && /\.position\s*\(/.test(extractedCode)) issues.push('使用了 V4 .position() 语法');
   if (/coordinate\s*:\s*\{\s*type\s*:\s*['"]transpose['"]/.test(extractedCode)) {
     warnings.push('coordinate transpose 应使用 transform 数组而非 type');
   }
@@ -105,7 +109,8 @@ export function evaluateCode(
   }
 
   const similarity = calculateSimilarity(extractedCode, expectedCode, {
-    algorithm: (options.similarityAlgorithm as 'hybrid') ?? 'hybrid'
+    algorithm: (options.similarityAlgorithm as 'hybrid') ?? 'hybrid',
+    library: options.library,
   });
   const structuralFeatures = extractStructuralFeatures(extractedCode);
 
