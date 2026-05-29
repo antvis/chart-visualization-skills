@@ -302,6 +302,25 @@ chart.options({
   },
 });
 
+// ❌ Wrong: area 图上使用 stroke + lineWidth 会包裹整个填充区域
+// 底部和两侧也会被描边，正确做法是 view + children 叠加 area + line
+chart.options({
+  type: 'area',
+  data,
+  encode: { x: 'date', y: 'value' },
+  style: { fill: '#FF5924', fillOpacity: 0.4, stroke: '#FF5924', lineWidth: 2 },
+});
+
+// ✅ Correct: view + area(填充) + line(顶部边缘线)
+chart.options({
+  type: 'view',
+  data,
+  children: [
+    { type: 'area', encode: { x: 'date', y: 'value' }, style: { fill: '#FF5924', fillOpacity: 0.4 } },
+    { type: 'line', encode: { x: 'date', y: 'value' }, style: { stroke: '#FF5924', lineWidth: 2 } },
+  ],
+});
+
 // ❌ Wrong: unnecessary scale type specification
 chart.options({ scale: { x: { type: 'linear' }, y: { type: 'linear' } } });
 
