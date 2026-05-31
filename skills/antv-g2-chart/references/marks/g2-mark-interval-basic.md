@@ -256,7 +256,12 @@ chart.options({
   },
 
   // 数据标签（注意是 labels 复数）
-  labels: [{ text: 'sold', position: 'outside' }],
+  labels: [
+    {
+      text: 'sold',
+      position: 'outside', // 'inside' | 'outside' | 'top-left' | 'top-right'
+    }
+  ],
 
   // Tooltip
   tooltip: { title: 'genre', items: [{ field: 'sold' }] },
