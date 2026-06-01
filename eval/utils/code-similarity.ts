@@ -345,7 +345,10 @@ function normalizeX6Code(code: string): string {
   );
 
   // 2. 移除注释
-  normalized = normalized.replace(/\/\/.*$/gm, '');
+  //    用 (?<!:) 负向回顾，避免吞掉 URL 中的 //（http://、https://、ws://、
+  //    wss://、ftp://、file:// 等任意 scheme），否则会把字符串字面量截断、
+  //    破坏后续 tokenize / 结构特征提取的稳定性。
+  normalized = normalized.replace(/(?<!:)\/\/.*$/gm, '');
   normalized = normalized.replace(/\/\*[\s\S]*?\*\//g, '');
 
   // 3. 删除 console.* 调用（一行或多行括号内容）— 与渲染结果无关
@@ -388,9 +391,21 @@ function normalizeX6Code(code: string): string {
     '$1',
   );
 
-  // 7. 字符串字面量归一化 — 'Source'/'Target'/'node1' 等都视为等价占位符
-  //    保留属性键名，仅替换值
-  normalized = normalized.replace(/:\s*['"][^'"]*['"]/g, ': ""');
+  // 7. 字符串字面量归一化 — 'Source'/'Target'/'node1' 等占位符值视为等价
+  //    仅归一化非关键属性的字符串值，保留 extractStructuralFeatures.apiPatterns
+  //    中按字符串值匹配的关键 key（shape/router/connector/type），
+  //    否则会导致这些维度在两侧都恒为空，丧失判别力。
+  const PRESERVE_VALUE_KEYS = new Set([
+    'shape',
+    'router',
+    'connector',
+    'type',
+  ]);
+  normalized = normalized.replace(
+    /(\b\w+)(\s*:\s*)(['"])((?:\\.|(?!\3)[^\\])*)\3/g,
+    (match, key, sep, _quote, _value) =>
+      PRESERVE_VALUE_KEYS.has(key) ? match : `${key}${sep}""`,
+  );
 
   // 8. 数字归一化 — width/height/x/y 等数值差异不影响功能
   normalized = normalized.replace(/:\s*-?\d+(\.\d+)?/g, ': 0');
