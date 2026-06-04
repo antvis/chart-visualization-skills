@@ -361,3 +361,53 @@ axis: { x: { title: '产品类型' } }  // 这是 X 轴标题
 // ✅ 图例标题在 legend 里
 legend: { color: { title: '产品类型' } }  // 这是图例标题
 ```
+
+---
+
+## 图例与 Label 的布局冲突
+
+### 饼图外侧 label + 顶部 legend 重叠
+
+饼图使用 `position: 'outside'` 或 `'spider'` 的 label 时，标签分布在饼图周围的上下左右。如果 legend 使用默认的 `position: 'top'`，顶部的 label 和 legend 会发生重叠。
+
+```javascript
+// ❌ 错误：spider label + 默认 top legend → 上方空间冲突
+chart.options({
+  type: 'interval',
+  data,
+  encode: { y: 'value', color: 'type' },
+  transform: [{ type: 'stackY' }],
+  coordinate: { type: 'theta' },
+  labels: [{ text: 'type', position: 'spider' }],
+  // legend 默认 'top'，与顶部 spider label 重叠
+});
+
+// ✅ 方案一：legend 移到 bottom（推荐）
+chart.options({
+  type: 'interval',
+  data,
+  encode: { y: 'value', color: 'type' },
+  transform: [{ type: 'stackY' }],
+  coordinate: { type: 'theta' },
+  labels: [{ text: 'type', position: 'spider' }],
+  legend: {
+    color: {
+      position: 'bottom',
+      layout: { justifyContent: 'center' },
+    },
+  },
+});
+
+// ✅ 方案二：增大 paddingTop 留出空间
+chart.options({
+  type: 'interval',
+  data,
+  encode: { y: 'value', color: 'type' },
+  transform: [{ type: 'stackY' }],
+  coordinate: { type: 'theta' },
+  labels: [{ text: 'type', position: 'spider' }],
+  paddingTop: 60,
+});
+```
+
+**适用范围**：所有使用 `position: 'outside'` / `'spider'` / `'surround'` 标签的非笛卡尔坐标图（饼图、环形图、玫瑰图）。

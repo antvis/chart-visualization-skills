@@ -217,3 +217,47 @@ axis: { y: { gridConnect: 'polygon' } }
 // ✅ 正确
 axis: { y: { gridConnect: 'line' } }
 ```
+
+---
+
+## 雷达图描边不显示问题
+
+雷达图通过 `coordinate: { type: 'polar' }` + `area` + `line` Mark 组合实现。`line` Mark 在极坐标下的 stroke 依赖 color scale 推导——如果未显式设置 `lineWidth`，部分主题/场景下描边可能不可见。
+
+```javascript
+// ❌ 错误：line mark 未设置 lineWidth，在某些主题下描边不可见
+chart.options({
+  type: 'view',
+  data,
+  coordinate: { type: 'polar' },
+  children: [
+    { type: 'area', encode: { x: 'item', y: 'score', color: 'type' }, style: { fillOpacity: 0.2 } },
+    { type: 'line', encode: { x: 'item', y: 'score', color: 'type' } },  // ❌ 缺少 lineWidth
+  ],
+});
+
+// ✅ 正确：显式设置 lineWidth
+chart.options({
+  type: 'view',
+  data,
+  coordinate: { type: 'polar' },
+  children: [
+    { type: 'area', encode: { x: 'item', y: 'score', color: 'type' }, style: { fillOpacity: 0.2 } },
+    { type: 'line', encode: { x: 'item', y: 'score', color: 'type' }, style: { lineWidth: 2 } },
+  ],
+});
+```
+
+## 雷达图主题默认值
+
+G2 主题中雷达图坐标轴（`axisRadar`）的默认值：
+
+| 属性 | 默认值 | 说明 |
+|------|--------|------|
+| `gridStrokeOpacity` | `0.3` | 网格线透明度 |
+| `gridType` | `'surround'` | 环绕式网格 |
+| `tick` | `false` | 不显示刻度线 |
+| `titlePosition` | `'start'` | 标题在轴起始位置 |
+| `girdClosed` | `true` | 网格闭合 |
+
+> **深色背景适配**：雷达图在深色背景下轴标签不可见时，使用 `theme: 'classicDark'` 一行解决，或手动设置各轴 `labelFill`/`gridStroke`。详见 [深色主题适配](../concepts/g2-concept-dark-theme-adaptation.md)

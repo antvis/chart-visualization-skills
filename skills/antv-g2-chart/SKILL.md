@@ -31,6 +31,8 @@ You are an expert in AntV G2 v5 charting library. Generate accurate, runnable co
 15. **`autoFit: true` 时禁止同时设置 `width`**：`autoFit` 会完全忽略 `width`，同时出现时 `width` 无效。`autoFit: true` 时只设 `height`；需要固定宽高时去掉 `autoFit` 改用 `width` + `height`
 16. **用户未指定容器时**： `container` 默认为 `'container'`，不要通过 `document.createElement('div')` 进行创建，代码末尾必须有 `chart.render();`
 17. **禁止在数据中存放 hex 色值并通过 `encode.color` 映射**：`encode.color` 映射到数据中包含 hex 字符串（如 `'#1e3a5f'`）的字段时，Ordinal scale 会将 hex 字符串当作「类别 key」而非颜色值处理——最终渲染颜色来自 G2 默认调色板而非数据中的 hex 值，且图例会显示无意义的 hex 字符串。正确做法：移除数据中的 color 字段，将 hex 色值放入 `scale.color.range`，`encode.color` 指向有业务含义的字段（如 `'group'`），通过 `scale.color.domain` + `range` 精确配对。**例外情况**：若必须直接使用数据中的动态颜色，需显式配置 `scale: { color: { type: 'identity' } }`。
+18. **Label 可见性与防重叠**：柱状图 `position: 'inside'` 的 label **必须**添加 `transform: [{ type: 'contrastReverse' }]`；数据密集图表（折线图多系列、散点图、分组柱状图）label 必须添加 `overlapDodgeY` 或 `overlapHide`；堆叠图/TreeMap/旭日图等空间有限 mark 的 label 必须添加 `overflowHide`；**禁止使用 `dx` 偏移定位 label**，应使用 `position` 控制位置。详见 [标签配置](references/components/g2-comp-label-config.md)
+19. **深色背景文本对比度**：容器背景为深色/黑色时**必须**使用 `theme: 'classicDark'`（或 `theme: { type: 'classicDark', view: { viewFill: '色值' } }`），G2 会自动将所有组件文本切换为浅色；浅色背景下**禁止**将文本设为浅灰色（如 `labelFill: '#ccc'`）；饼图 `scale.color.range` 中**禁止**包含与背景相同或近似的颜色。详见 [深色主题适配](references/concepts/g2-concept-dark-theme-adaptation.md)
 
 ### 1.1 Forbidden Patterns / 禁止使用的写法
 

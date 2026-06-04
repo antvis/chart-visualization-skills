@@ -356,3 +356,7 @@ chart.options({
   interaction: [{ type: 'tooltip', shared: true }],   // ✅
 });
 ```
+
+---
+
+> **深色背景适配**：深色背景下 tooltip 样式需要适配时，使用 `theme: 'classicDark'` 自动切换，或通过 `interaction.tooltip.css` 手动控制。详见 [深色主题适配](../concepts/g2-concept-dark-theme-adaptation.md)

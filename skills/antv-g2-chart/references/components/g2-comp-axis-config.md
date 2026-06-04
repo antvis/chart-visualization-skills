@@ -646,3 +646,7 @@ legend: {
   }
 }
 ```
+
+---
+
+> **深色背景适配**：深色背景下坐标轴标签/标题不可见时，使用 `theme: 'classicDark'` 一行解决，或手动设置 `labelFill`/`titleFill`。详见 [深色主题适配](../concepts/g2-concept-dark-theme-adaptation.md)

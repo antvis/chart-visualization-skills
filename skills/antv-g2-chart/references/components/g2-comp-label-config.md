@@ -405,6 +405,80 @@ labels: [
 | backgroundRadius        | 背景框圆角半径     | _number_          | -      |
 | backgroundPadding       | 背景框内边距       | _number[]_        | -      |
 
+## 推荐 Label Transform 组合
+
+不同场景下的最佳 transform 组合，避免标签可见性问题：
+
+### 柱状图 inside label（多色柱）
+
+多色柱状图的 label 放在柱体内部时，必须使用 `contrastReverse` 自动适配背景色，配合 `overflowHide` 隐藏放不下的标签：
+
+```javascript
+labels: [
+  {
+    text: 'value',
+    position: 'inside',
+    transform: [{ type: 'contrastReverse' }, { type: 'overflowHide' }],
+  },
+]
+```
+
+### 折线图末端标签（密集系列）
+
+多系列折线图末端标签容易重叠，用 `overlapDodgeY` 在 Y 方向自动避让，`exceedAdjust` 防止溢出边界：
+
+```javascript
+labels: [
+  {
+    text: 'type',
+    selector: 'last',
+    position: 'right',
+    transform: [{ type: 'overlapDodgeY' }, { type: 'exceedAdjust' }],
+  },
+]
+```
+
+### 饼图外侧标签
+
+饼图 `spider` 或 `outside` 位置的标签可能重叠，用 `overlapHide` 隐藏碰撞标签：
+
+```javascript
+labels: [
+  {
+    text: (d) => `${d.name}: ${d.value}%`,
+    position: 'spider',
+    transform: [{ type: 'overlapHide' }],
+  },
+]
+```
+
+### 堆叠图 / TreeMap / 旭日图
+
+空间有限的 mark 使用 `overflowHide` 隐藏放不下的标签，配合 `contrastReverse` 确保可读性：
+
+```javascript
+labels: [
+  {
+    text: 'name',
+    position: 'inside',
+    transform: [{ type: 'contrastReverse' }, { type: 'overflowHide' }],
+  },
+]
+```
+
+### 通用安全组合（适用于大多数场景）
+
+不确定该用哪种 transform 时，以下组合覆盖最常见的标签问题：
+
+```javascript
+labels: [
+  {
+    text: 'field',
+    transform: [{ type: 'overlapHide' }, { type: 'exceedAdjust' }],
+  },
+]
+```
+
 ## innerHTML / render 自定义 HTML 标签
 
 除了 `text` 字段映射，还可以使用 `innerHTML` 或 `render` 渲染自定义 HTML 内容。
