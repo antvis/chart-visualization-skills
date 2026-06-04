@@ -36,7 +36,6 @@ completeness: "full"
 created: "2025-06-04"
 updated: "2025-06-04"
 author: "antv-team"
-source_url: "https://g2.antv.antgroup.com/manual/introduction/bindbindbindbindng-started"
 ---
 
 ## 快速排查清单

@@ -258,6 +258,6 @@ G2 主题中雷达图坐标轴（`axisRadar`）的默认值：
 | `gridType` | `'surround'` | 环绕式网格 |
 | `tick` | `false` | 不显示刻度线 |
 | `titlePosition` | `'start'` | 标题在轴起始位置 |
-| `girdClosed` | `true` | 网格闭合 |
+| `gridClosed` | `true` | 网格闭合 |
 
 > **深色背景适配**：雷达图在深色背景下轴标签不可见时，使用 `theme: 'classicDark'` 一行解决，或手动设置各轴 `labelFill`/`gridStroke`。详见 [深色主题适配](../concepts/g2-concept-dark-theme-adaptation.md)
