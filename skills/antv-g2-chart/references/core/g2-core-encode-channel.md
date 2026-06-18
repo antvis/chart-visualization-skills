@@ -174,7 +174,7 @@ chart.options({
 | `text` | `text` | 文本内容（字段名或函数）|
 | `image` | `src` | 图片 URL 字段 |
 | `vector` | `rotate`, `size` | 方向角度和长度 |
-| `sankey`/`chord`/`forceGraph` | `source`, `target`, `value` | 关系图的起终点和权重 |
+| `sankey`/`chord` | `source`, `target`, `value` | 关系图的起终点和权重 |
 
 ## encode 常量 vs 字段名判定
 

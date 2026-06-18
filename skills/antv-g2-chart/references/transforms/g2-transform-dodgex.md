@@ -88,8 +88,8 @@ chart.options({
   data,
   encode: { x: 'quarter', y: 'value', color: 'type', series: 'group' },
   transform: [
-    { type: 'dodgeX' },   // 按 series 分组
-    { type: 'stackY' },   // 组内按 color 堆叠
+    { type: 'dodgeX', groupBy: 'x' },   // 按 series 分组，指定 groupBy: 'x' 避免 color 参与分组
+    { type: 'stackY' },                 // 组内按 color 堆叠
   ],
 });
 ```
