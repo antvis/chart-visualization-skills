@@ -337,17 +337,10 @@ interface IntervalSpec {
 
 ## 常见错误与修正
 
-### 错误 1：使用 API 链式调用
+### 错误 1：使用 V4 链式 API（详见核心约束 Forbidden Patterns）
 ```javascript
-// ❌ 错误（G2 API 链式调用写法）
-chart.interval().encode('x', 'genre');
-
-// ✅ 正确（G2 Spec 写法）
-chart.options({
-  type: 'interval',
-  data,
-  encode: { x: 'genre', y: 'sold', color: 'genre' },
-});
+// ❌ chart.interval().encode('x', 'genre');
+// ✅ chart.options({ type: 'interval', data, encode: { x: 'genre', y: 'sold' } });
 ```
 
 ### 错误 2：缺少 container 参数
@@ -415,31 +408,10 @@ chart.options({
 });
 ```
 
-### 错误 7：复合视图中未正确组织 children 结构
+### 错误 7：多 mark 需要 view+children（详见核心约束 #3）
 ```javascript
-// ❌ 错误：没有使用 view 的 children 属性来组合多个 mark
-chart.options({
-  type: 'interval',
-  data: [...],
-  encode: {...}
-});
-
-// ✅ 正确：使用 view 包含多个 children mark
-chart.options({
-  type: 'view',
-  children: [
-    {
-      type: 'interval',
-      data: [...],
-      encode: {...}
-    },
-    {
-      type: 'image',
-      data: [{ src: '...' }],
-      encode: { src: 'src' }
-    }
-  ]
-});
+// ❌ 多次 chart.options() → 只有最后一次生效
+// ✅ chart.options({ type: 'view', children: [{ type: 'interval', ... }, { type: 'image', ... }] });
 ```
 
 ### 错误 8：image mark 使用错误的编码字段

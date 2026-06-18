@@ -32,7 +32,7 @@ use_cases:
   - "配置多通道映射"
 
 difficulty: "beginner"
-completeness: "partial"
+completeness: "full"
 created: "2024-01-01"
 updated: "2025-03-01"
 author: "antv-team"
@@ -160,6 +160,34 @@ chart.options({
 | `.size('count')` | `encode: { size: 'count' }` |
 | `.shape('circle')` | `encode: { shape: 'circle' }` |
 | `.opacity('rate')` | `encode: { opacity: 'rate' }` |
+
+## Mark 特有通道
+
+不同 mark 类型支持额外的通道：
+
+| Mark | 特有通道 | 说明 |
+|------|---------|------|
+| `interval` | `y1` | 区间终点（甘特图、范围柱）|
+| `line` | `shape` | 线型：`'line'`\|`'smooth'`\|`'hv'`\|`'vh'`\|`'hvh'`\|`'vhv'` |
+| `point` | `shape` | 点形：`'circle'`\|`'square'`\|`'diamond'`\|`'triangle'`\|... |
+| `area` | `shape` | 区域：`'area'`\|`'smooth'`\|`'hvh'` |
+| `text` | `text` | 文本内容（字段名或函数）|
+| `image` | `src` | 图片 URL 字段 |
+| `vector` | `rotate`, `size` | 方向角度和长度 |
+| `sankey`/`chord`/`forceGraph` | `source`, `target`, `value` | 关系图的起终点和权重 |
+
+## encode 常量 vs 字段名判定
+
+```javascript
+encode: {
+  color: 'type',       // 字段名 → 按 type 字段分色
+  color: '#1890ff',    // # 开头 → 颜色常量，所有元素同色
+  color: 'steelblue',  // CSS 颜色名 → 颜色常量
+  color: () => 'red',  // 函数 → 常量（返回固定值时等同常量）
+  size: 'population',  // 字段名 → 按 population 映射大小
+  size: 10,            // 数字 → 大小常量
+}
+```
 
 ## 常见错误与修正
 

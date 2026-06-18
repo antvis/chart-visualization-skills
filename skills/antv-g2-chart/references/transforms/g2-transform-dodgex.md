@@ -26,7 +26,7 @@ use_cases:
   - "分组散点图"
 
 difficulty: "beginner"
-completeness: "partial"
+completeness: "full"
 created: "2024-01-01"
 updated: "2025-03-01"
 author: "antv-team"
@@ -78,13 +78,71 @@ chart.options({ transform: [{ type: 'dodgeX' }] });
 chart.options({ transform: [{ type: 'stackY' }] });
 ```
 
+## 分组 + 堆叠组合
+
+同时分组和堆叠：先 dodgeX 再 stackY，实现「组内堆叠、组间并排」。
+
+```javascript
+chart.options({
+  type: 'interval',
+  data,
+  encode: { x: 'quarter', y: 'value', color: 'type', series: 'group' },
+  transform: [
+    { type: 'dodgeX' },   // 按 series 分组
+    { type: 'stackY' },   // 组内按 color 堆叠
+  ],
+});
+```
+
+## 水平分组条形图
+
+```javascript
+chart.options({
+  type: 'interval',
+  data,
+  encode: { x: 'category', y: 'value', color: 'type' },
+  transform: [{ type: 'dodgeX' }],
+  coordinate: { transform: [{ type: 'transpose' }] },
+});
+```
+
 ## 常见错误与修正
 
-### 错误：transform 写成对象
+### 错误 1：transform 写成对象
 ```javascript
-// ❌ 错误
-chart.options({ transform: { type: 'dodgeX' } });
+// ❌ chart.options({ transform: { type: 'dodgeX' } });
+// ✅ chart.options({ transform: [{ type: 'dodgeX' }] });
+```
 
-// ✅ 正确：必须是数组
-chart.options({ transform: [{ type: 'dodgeX' }] });
+### 错误 2：多系列 interval 没有分组/堆叠变换
+```javascript
+// ❌ 错误：多系列数据无 transform，柱体重叠在同一位置
+chart.options({
+  type: 'interval',
+  data: multiSeriesData,
+  encode: { x: 'month', y: 'value', color: 'type' },
+});
+
+// ✅ 正确：添加 dodgeX 分组展示
+chart.options({
+  type: 'interval',
+  data: multiSeriesData,
+  encode: { x: 'month', y: 'value', color: 'type' },
+  transform: [{ type: 'dodgeX' }],
+});
+```
+
+### 错误 3：dodgeX 放在 data.transform 中
+```javascript
+// ❌ 错误：dodgeX 是 Mark Transform，不是 Data Transform
+chart.options({
+  data: { type: 'inline', value: data, transform: [{ type: 'dodgeX' }] },
+});
+
+// ✅ 正确：与 data/encode 同级
+chart.options({
+  data,
+  encode: { x: 'x', y: 'y', color: 'type' },
+  transform: [{ type: 'dodgeX' }],
+});
 ```

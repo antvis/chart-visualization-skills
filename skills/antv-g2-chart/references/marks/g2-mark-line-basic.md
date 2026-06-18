@@ -212,7 +212,9 @@ chart.options({
 
 ## 宽表数据 + fold 转长表
 
-宽表每行含多个指标列，用 `fold` transform 转为长表再绘制多系列：
+宽表每行含多个指标列，用 `fold` data transform 转为长表再绘制多系列。
+
+⚠️ `fold` 是 **data transform**，必须放在 `data.transform` 中，不能放在 mark 级 `transform`。
 
 ```javascript
 const wideData = [
@@ -223,15 +225,18 @@ const wideData = [
 
 chart.options({
   type: 'line',
-   wideData,
-  transform: [
-    {
-      type: 'fold',
-      fields: ['DAU', 'MAU'],   // 要转换的列
-      key: 'metric',             // 新增列名（存原字段名）
-      value: 'count',            // 新增列名（存原字段值）
-    },
-  ],
+  data: {
+    type: 'inline',
+    value: wideData,
+    transform: [
+      {
+        type: 'fold',
+        fields: ['DAU', 'MAU'],   // 要转换的列
+        key: 'metric',             // 新增列名（存原字段名）
+        value: 'count',            // 新增列名（存原字段值）
+      },
+    ],
+  },
   encode: {
     x: 'date',
     y: 'count',      // fold 后使用 value 字段名
@@ -334,19 +339,8 @@ chart.options({
 });
 ```
 
-### 错误 3：多 Mark 叠加忘用 view 容器
+### 错误 3：多 Mark 叠加需要 view+children（详见核心约束 #3）
 ```javascript
-// ❌ 错误：直接调用 options 两次会覆盖
-chart.options({ type: 'line', ... });
-chart.options({ type: 'point', ... });  // 覆盖了上面！
-
-// ✅ 正确：用 type: 'view' + children 数组
-chart.options({
-  type: 'view',
-  data: [...],
-  children: [
-    { type: 'line', encode: { x: 'month', y: 'value' } },
-    { type: 'point', encode: { x: 'month', y: 'value' }, style: { r: 4 } },
-  ],
-});
+// ❌ chart.options({ type: 'line', ... }); chart.options({ type: 'point', ... }); → 只有 point 生效
+// ✅ chart.options({ type: 'view', data, children: [{ type: 'line', ... }, { type: 'point', ... }] });
 ```

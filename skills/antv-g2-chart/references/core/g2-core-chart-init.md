@@ -45,7 +45,7 @@ anti_patterns:
   - "禁止在同一图表中多次调用 chart.options({})（后者会完全覆盖前者）——合并配置时应合并为一次调用；叠加多个 mark 时应使用 type: 'view' + children"
 
 difficulty: "beginner"
-completeness: "partial"
+completeness: "full"
 created: "2024-01-01"
 updated: "2025-03-27"
 author: "antv-team"
@@ -260,51 +260,19 @@ const chart = new Chart({
 
 ### 错误 0：多次调用 chart.options({})
 
-`chart.options()` 是**全量替换**，不是合并。第二次调用会完全覆盖第一次，导致前面的配置全部丢失。
+`chart.options()` 是**全量替换**，不是合并。每个图表只能调用一次。多 mark 叠加必须用 `type: 'view'` + `children`。详见 SKILL.md 核心约束 #3。
 
-**场景 A：合并配置**
 ```javascript
-// ❌ 错误：第二次 options() 覆盖第一次，type/encode 丢失
-chart.options({ type: 'interval', encode: { x: 'genre', y: 'sold' } });
-chart.options({ style: { radius: 4 } }); // type/encode 已消失！
+// ❌ 错误：多次调用，只有最后一次生效
+chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });
+chart.options({ type: 'text', data: labelData, encode: { x: 'x', y: 'y', text: 'text' } });
 
-// ✅ 正确：所有配置合并为一次 chart.options({}) 调用
-chart.options({
-  type: 'interval',
-  encode: { x: 'genre', y: 'sold' },
-  style: { radius: 4 },
-});
-```
-
-**场景 B：叠加多个 mark（如主图 + 文字注解）**
-```javascript
-// ❌ 错误：第二次 options() 覆盖第一次，interval 被 text 替换
-chart.options({
-  type: 'interval',
-  data: [...],
-  encode: { x: 'x', y: 'y' },
-});
-chart.options({
-  type: 'text',
-  data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
-  encode: { x: 'x', y: 'y', text: 'text' },
-}); // interval 已消失！
-
-// ✅ 正确：多 mark 叠加用 type: 'view' + children
+// ✅ 正确：一次 chart.options()，用 view + children 组合
 chart.options({
   type: 'view',
   children: [
-    {
-      type: 'interval',
-      data: [...],
-      encode: { x: 'x', y: 'y' },
-    },
-    {
-      type: 'text',
-      data: [{ x: 0.5, y: 0.1, text: '注解文字' }],
-      encode: { x: 'x', y: 'y', text: 'text' },
-      style: { fill: '#E63946', fontSize: 14, textAlign: 'center' },
-    },
+    { type: 'interval', data, encode: { x: 'x', y: 'y' } },
+    { type: 'text', data: labelData, encode: { x: 'x', y: 'y', text: 'text' } },
   ],
 });
 ```

@@ -31,7 +31,7 @@ use_cases:
   - "创建饼图（配合 theta 坐标系）"
 
 difficulty: "beginner"
-completeness: "partial"
+completeness: "full"
 created: "2024-01-01"
 updated: "2025-03-26"
 author: "antv-team"
