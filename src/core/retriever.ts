@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
-import { getSyncEmbedder } from './retrieval/embedder';
+import { getSyncEmbedder, isCJK } from './retrieval/embedder';
 import { openZvecStoreSync } from './retrieval/zvec-store';
 import type { IZvecStore, ZvecQueryResult } from './retrieval/zvec-store';
 
@@ -194,6 +194,69 @@ function retrieveHybrid(query: string, params: StrategyParams): Skill[] {
     .filter((s): s is Skill => s !== undefined);
 }
 
+// ---------------------------------------------------------------------------
+// Token budget helpers
+// ---------------------------------------------------------------------------
+
+function estimateTokens(text: string): number {
+  let n = 0;
+  for (const ch of text) n += isCJK(ch) ? 0.67 : 0.25;
+  return Math.ceil(n);
+}
+
+function extractCodeBlocks(content: string): string[] {
+  const blocks: string[] = [];
+  for (const m of content.matchAll(/```[\s\S]*?```/g)) blocks.push(m[0]);
+  return blocks;
+}
+
+function truncateContent(content: string, maxTokens: number): string {
+  let tokens = 0, i = 0;
+  for (; i < content.length; i++) {
+    tokens += isCJK(content[i]) ? 0.67 : 0.25;
+    if (tokens >= maxTokens) break;
+  }
+  return content.slice(0, i) + (i < content.length ? '\n<!-- truncated -->' : '');
+}
+
+/** Trim skill content to fit within maxTokens budget, respecting progressiveLevel. */
+function applyTokenBudget(skills: Skill[], maxTokens: number, level: 0 | 1 | 2): Skill[] {
+  const infoIdx = skills.findIndex((s) => s.id.startsWith('__info__'));
+  const constraints = infoIdx >= 0 ? skills[infoIdx].content || '' : '';
+  let budget = maxTokens - estimateTokens(constraints);
+
+  for (let i = 0; i < skills.length; i++) {
+    const skill = skills[i];
+    if (skill.id.startsWith('__info__')) continue;
+    if (budget <= 0) { skill.content = undefined; continue; }
+
+    const formatted = formatForBudget(skill, level, budget);
+    skill.content = formatted;
+    budget -= Math.min(estimateTokens(formatted), budget);
+  }
+
+  return skills;
+}
+
+function formatForBudget(skill: Skill, level: number, budget: number): string {
+  const parts: string[] = [];
+  parts.push(`## ${skill.title}\n`);
+  if (skill.description) parts.push(`${skill.description}\n`);
+  const body = skill.content || '';
+
+  if (level === 2) return parts.join('\n');                     // summary only
+  if (level === 0) return parts.join('\n') + '\n' + body;       // full
+
+  // level 1: summary + code blocks
+  const codeBlocks = extractCodeBlocks(body);
+  const codeStr = codeBlocks.join('\n\n');
+  const header = parts.join('\n');
+  if (estimateTokens(header + codeStr) > budget) {
+    return truncateContent(body, budget);
+  }
+  return header + '\n' + codeStr;
+}
+
 /**
  * Retrieve relevant skills based on a query and options.
  * @param query The search query.
@@ -210,6 +273,8 @@ export function retrieve(
     content = false,
     includeInfo = content,
     strategy = 'hybrid',
+    maxTokens,
+    progressiveLevel = 1,
   } = options;
 
   let skills: Skill[] =
@@ -243,6 +308,11 @@ export function retrieve(
       }];
     });
     skills = [...infoSkills, ...skills];
+  }
+
+  // Token budget trimming — applied when maxTokens is set and content is included
+  if (maxTokens && content) {
+    skills = applyTokenBudget(skills, maxTokens, progressiveLevel);
   }
 
   return skills;

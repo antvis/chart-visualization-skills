@@ -220,7 +220,7 @@ function tokenize(text: string): string[] {
   return tokens;
 }
 
-function isCJK(ch: string): boolean {
+export function isCJK(ch: string): boolean {
   const cp = ch.codePointAt(0)!;
   return (
     (cp >= 0x4e00 && cp <= 0x9fff) || // CJK Unified

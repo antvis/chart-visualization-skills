@@ -149,7 +149,7 @@ Options for retrieve:
 ### API Usage
 
 ```typescript
-import { retrieve, createContext } from '@antv/chart-visualization-skills';
+import { retrieve } from '@antv/chart-visualization-skills';
 
 // Metadata only (no content)
 const skills = retrieve('bar chart', { library: 'g2', topK: 5 });
@@ -160,16 +160,13 @@ const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: true });
 // Hybrid search (default) — FTS + Vector + RRF fusion
 const skills = retrieve('bar chart', { library: 'g2', strategy: 'hybrid' });
 
-// Pure vector search
-const skills = retrieve('bar chart', { library: 'g2', strategy: 'vector' });
-
-// One-stop context generation — constraints + token-budgeted skills
-const ctx = await createContext('按月趋势图', {
+// With token budget — content trimmed to fit 4000 tokens, summary + code only
+const skills = retrieve('bar chart', {
   library: 'g2',
-  strategy: 'hybrid',
+  content: true,
   maxTokens: 4000,
+  progressiveLevel: 1,
 });
-// => { constraints, skills[], tokenCount, truncated, expandableIds[] }
 ```
 
 ```typescript
@@ -181,6 +178,8 @@ interface RetrieveOptions {
   content?: boolean;   // Include markdown content body (default: false)
   includeInfo?: boolean; // Prepend SKILL.md core constraints (default: same as content)
   strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
+  maxTokens?: number;  // Token budget — content trimmed to fit when set
+  progressiveLevel?: 0 | 1 | 2;  // 0=full, 1=summary+code, 2=summary (default: 1)
 }
 ```
 
@@ -191,13 +190,15 @@ interface RetrieveOptions {
 | `content` | `boolean` | `false` | Include markdown content body |
 | `includeInfo` | `boolean` | same as `content` | Prepend SKILL.md core constraints as first result |
 | `strategy` | `'hybrid' \| 'vector'` | `'hybrid'` | Retrieval strategy |
+| `maxTokens` | `number` | — | Token budget; content trimmed to fit when set |
+| `progressiveLevel` | `0 \| 1 \| 2` | `1` | 0=full, 1=summary+code, 2=summary only |
 
 > Notes:
 > - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
 > - `strategy: 'vector'` uses pure ANN vector similarity search.
 > - `content: true` returns markdown content body (frontmatter metadata is excluded).
-> - When `includeInfo` is true, the core constraints block — SKILL.md up to `<!-- CONSTRAINTS:END -->` — is injected as the first element (id prefixed with `__info__`).
-> - `createContext()` assembles constraints-first context with token budget control, ready for direct LLM injection.
+> - When `includeInfo` is true, the core constraints block is injected as the first element (id prefixed with `__info__`).
+> - When `maxTokens` is set, skill content is formatted and trimmed to fit the budget according to `progressiveLevel`.
 
 ```typescript
 import { info } from '@antv/chart-visualization-skills';

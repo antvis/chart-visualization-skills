@@ -74,7 +74,7 @@ The retrieval engine uses **zvec** (in-process vector database) with two strateg
 
 Embedding is handled by `SimpleEmbedder` (tokenizer + multi-hash, 384d, synchronous). No model download required.
 
-Public API (`src/api.ts`) exports `retrieve()`, `createContext()`, `info()`, `getSkillById()`, `libraries()`, and `listSkills()` for programmatic use.
+Public API (`src/api.ts`) exports `retrieve()`, `info()`, `getSkillById()`, `libraries()`, and `listSkills()` for programmatic use.
 
 Additional components:
 - **HTTP Server** (`http-server/`): Standalone REST API deployment package

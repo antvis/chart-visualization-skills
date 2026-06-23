@@ -36,20 +36,28 @@ const CDN_URLS: Record<LibraryKind, string> = {
 
 /**
  * Dynamically load a script and return a Promise that resolves when done.
- * Skips if the script is already loaded (cached by URL).
+ * Uses a Promise cache to prevent concurrent calls from creating duplicate
+ * <script> tags or resolving before the script has finished loading.
  */
+const _scriptCache = new Map<string, Promise<void>>();
+
 function loadScript(url: string): Promise<void> {
-  if (document.querySelector(`script[data-cdn="${url}"]`)) {
-    return Promise.resolve();
-  }
-  return new Promise((resolve, reject) => {
+  const cached = _scriptCache.get(url);
+  if (cached) return cached;
+
+  const promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement("script");
     script.src = url;
-    script.dataset.cdn = url;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load: ${url}`));
+    script.onerror = () => {
+      _scriptCache.delete(url); // allow retry on failure
+      reject(new Error(`Failed to load: ${url}`));
+    };
     document.head.appendChild(script);
   });
+
+  _scriptCache.set(url, promise);
+  return promise;
 }
 
 const LIBRARY_SPECS: LibrarySpec[] = [
