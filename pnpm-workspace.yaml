@@ -3,3 +3,7 @@ packages:
   - 'eval'
   - 'eval/studio'
   - 'harness'
+allowBuilds:
+  '@zvec/zvec': true
+  esbuild: true
+  sharp: true

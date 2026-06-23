@@ -35,11 +35,19 @@ function getLibraryProfile(library: string): LibraryProfile {
   return LIBRARY_PROFILES[displayName] ?? LIBRARY_PROFILES.G2;
 }
 
-export function buildCliSystemPrompt(library: string): string {
+import type { RetrieveOptions } from "@antv/chart-visualization-skills";
+
+export function buildCliSystemPrompt(library: string, strategy?: RetrieveOptions["strategy"]): string {
   const libraryName = getLibraryDisplayName(library);
   const profile = getLibraryProfile(library);
+  const strategyNote = strategy
+    ? `\n当前检索策略为 \`${strategy}\`。` +
+      (strategy === "hybrid"
+        ? "混合检索结合了关键词和语义向量搜索，能更好地理解用户意图。"
+        : "语义向量搜索将根据查询的语义相似度召回文档。")
+    : "";
   return `你是 AntV ${libraryName} ${profile.versionTag} 专家。你可以使用以下工具获取技术文档内容，帮你完成任务：
-  - 调用 \`retrieve\`，通过用户需求或检索关键词，召回最相关的参考文档；结果首位自动包含核心约束（使用规则、禁止写法、常见错误），无需单独获取；
+  - 调用 \`retrieve\`，通过用户需求或检索关键词，召回最相关的参考文档；结果首位自动包含核心约束（使用规则、禁止写法、常见错误），无需单独获取；${strategyNote}
 
 ## 工作流程
 
@@ -57,8 +65,11 @@ export function buildCliSystemPrompt(library: string): string {
 6. 关键配置处可加简短注释，但不要过度注释`;
 }
 
-export function createCliModeTools(library: string) {
+export function createCliModeTools(
+  library: string,
+  strategy?: RetrieveOptions["strategy"],
+) {
   return {
-    retrieve: createRetrieveTool(library),
+    retrieve: createRetrieveTool(library, strategy),
   };
 }

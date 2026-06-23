@@ -44,9 +44,9 @@ export default function RootLayout({
           rel="stylesheet"
         />
         {/* G2 / G6 / X6 libraries loaded via CDN for runtime execution */}
-        <script src="https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js" defer />
-        <script src="https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js" defer />
-        <script src="https://unpkg.com/@antv/x6@3.1.7/dist/x6.min.js" defer />
+        <script src="https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js" />
+        <script src="https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js" />
+        <script src="https://unpkg.com/@antv/x6@3.1.7/dist/x6.min.js" />
       </head>
       <body>{children}</body>
     </html>

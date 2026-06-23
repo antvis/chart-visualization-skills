@@ -5,6 +5,7 @@ import {
   useRef,
   useCallback,
   useImperativeHandle,
+  useState,
   forwardRef,
 } from "react";
 
@@ -24,6 +25,31 @@ interface LibrarySpec {
   pkg: string; // npm package name used in import statements
   globalName: "G2" | "G6" | "X6";
   defaultExports: string[]; // names always destructured even if not explicitly imported
+}
+
+/** CDN URLs – loaded dynamically on first render to survive HMR. */
+const CDN_URLS: Record<LibraryKind, string> = {
+  g2: "https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js",
+  g6: "https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js",
+  x6: "https://unpkg.com/@antv/x6@3.1.7/dist/x6.min.js",
+};
+
+/**
+ * Dynamically load a script and return a Promise that resolves when done.
+ * Skips if the script is already loaded (cached by URL).
+ */
+function loadScript(url: string): Promise<void> {
+  if (document.querySelector(`script[data-cdn="${url}"]`)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = url;
+    script.dataset.cdn = url;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error(`Failed to load: ${url}`));
+    document.head.appendChild(script);
+  });
 }
 
 const LIBRARY_SPECS: LibrarySpec[] = [
@@ -69,6 +95,16 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<unknown>(null);
+  const [scriptsReady, setScriptsReady] = useState(false);
+
+  // Load all CDN scripts on first mount – survives HMR because DOM persists
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(Object.values(CDN_URLS).map(loadScript))
+      .then(() => { if (!cancelled) setScriptsReady(true); })
+      .catch((e) => console.error("[Preview] CDN load failed:", e));
+    return () => { cancelled = true; };
+  }, []);
 
   const execCode = useCallback(
     (container: HTMLDivElement) => {
@@ -78,7 +114,9 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
       ];
 
       if (!globalLib) {
-        throw new Error(`${spec.globalName} 库尚未加载，请稍后重试`);
+        throw new Error(
+          `${spec.globalName} CDN 脚本加载超时（30s）。请检查网络是否能访问 cdn.jsdelivr.net，或刷新页面重试。`,
+        );
       }
 
       // 提取该包所有 named imports（处理多行、别名、`type X`）
@@ -174,31 +212,13 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
 
   useImperativeHandle(ref, () => ({ run: runCode }), [runCode]);
 
-  // 自动运行（带去抖）；轮询等待 CDN 库就绪
+  // 自动运行：CDN 就绪 + 代码非空 → 800ms 防抖后执行
   useEffect(() => {
-    if (!code.trim()) return;
+    if (!scriptsReady || !code.trim()) return;
 
-    let pollTimer: ReturnType<typeof setTimeout>;
-    const debounceTimer = setTimeout(() => {
-      const spec = detectLibrary(code);
-      const check = () => {
-        const ready = !!(window as unknown as Record<string, unknown>)[
-          spec.globalName
-        ];
-        if (ready) {
-          runCode();
-        } else {
-          pollTimer = setTimeout(check, 200);
-        }
-      };
-      check();
-    }, 800);
-
-    return () => {
-      clearTimeout(debounceTimer);
-      clearTimeout(pollTimer!);
-    };
-  }, [code, runCode]);
+    const timer = setTimeout(() => runCode(), 800);
+    return () => clearTimeout(timer);
+  }, [code, scriptsReady, runCode]);
 
   return (
     <div className="preview-panel">
@@ -221,6 +241,11 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
             </div>
             <p>运行代码后在此预览</p>
             <small>点击「运行」或修改代码自动触发</small>
+          </div>
+        )}
+        {code.trim() && !scriptsReady && (
+          <div className="preview-placeholder">
+            <p>正在加载可视化库…</p>
           </div>
         )}
         <div

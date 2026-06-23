@@ -76,6 +76,7 @@ settings.local.json
 
 # temp
 temp/
+temp-*/
 
 # eval studio (Next.js)
 eval/studio/.next/

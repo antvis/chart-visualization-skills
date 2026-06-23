@@ -35,6 +35,12 @@ export interface RetrieveOptions {
    * always receives constraints alongside reference docs.
    */
   includeInfo?: boolean;
+  /**
+   * Retrieval strategy:
+   * - 'vector'  dense vector similarity via zvec index
+   * - 'hybrid'  FTS + vector via zvec native multiQuery, RRF-fused (default)
+   */
+  strategy?: 'vector' | 'hybrid';
 }
 
 export interface ListOptions {
@@ -58,8 +64,3 @@ export interface SkillInfo {
   constraintsContent: string;
 }
 
-export interface BM25Options {
-  k1?: number;
-  b?: number;
-  fieldWeights?: Record<string, number>;
-}
