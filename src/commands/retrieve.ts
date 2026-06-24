@@ -5,16 +5,24 @@ export function registerRetrieveCommand(program: Command): void {
   program
     .command('retrieve <query>')
     .description('Search for skills matching a query')
-    .option('--library <lib>', 'Filter by library (g2 or g6)')
+    .option('--library <lib>', 'Filter by library (g2, g6, x6)')
     .option('--topk <n>', 'Number of results to return', '7')
+    .option('--strategy <s>', 'Retrieval strategy: hybrid | vector', 'hybrid')
     .option('--content', 'Include markdown content of matched reference docs (SKILL.md constraints are always prepended)')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       (
         query: string,
-        opts: { library?: string; topk: string; content?: true; output: string }
+        opts: {
+          library?: string;
+          topk: string;
+          strategy: string;
+          content?: true;
+          output: string;
+        }
       ) => {
         const topK = parseInt(opts.topk, 10) || 7;
+        const strategy = opts.strategy === 'vector' ? 'vector' : 'hybrid';
         const withContent = !!opts.content;
 
         const skills = retrieve(query, {
@@ -22,6 +30,7 @@ export function registerRetrieveCommand(program: Command): void {
           topK,
           content: withContent,
           includeInfo: withContent,
+          strategy,
         });
 
         if (opts.output === 'json') {

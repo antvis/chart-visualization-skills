@@ -139,13 +139,14 @@ export default function Home() {
   const previewRef = useRef<PreviewHandle>(null);
   const [library, setLibrary] = useState("g2");
   const [mode, setMode] = useState<"skill" | "cli">("skill");
+  const [strategy, setStrategy] = useState<string>("hybrid");
   const [code, setCode] = useState("");
   const [input, setInput] = useState("");
   const [status, setStatus] = useState("就绪");
   const [statusColor, setStatusColor] = useState("var(--text-tertiary)");
 
-  const bodyRef = useRef({ library, mode, currentCode: code || null });
-  bodyRef.current = { library, mode, currentCode: code || null };
+  const bodyRef = useRef({ library, mode, currentCode: code || null, strategy });
+  bodyRef.current = { library, mode, currentCode: code || null, strategy };
 
   const [transport] = useState(
     () =>
@@ -330,6 +331,7 @@ export default function Home() {
           <ControlsBar
             library={library}
             mode={mode}
+            strategy={strategy}
             onLibraryChange={(value) => {
               setLibrary(value);
               setMessages([]);
@@ -337,6 +339,10 @@ export default function Home() {
             }}
             onModeChange={(value) => {
               setMode(value as "skill" | "cli");
+              setMessages([]);
+            }}
+            onStrategyChange={(value) => {
+              setStrategy(value);
               setMessages([]);
             }}
           />

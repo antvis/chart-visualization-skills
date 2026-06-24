@@ -35,6 +35,21 @@ export interface RetrieveOptions {
    * always receives constraints alongside reference docs.
    */
   includeInfo?: boolean;
+  /**
+   * Retrieval strategy:
+   * - 'vector'  dense vector similarity via zvec index
+   * - 'hybrid'  FTS + vector via zvec native multiQuery, RRF-fused (default)
+   */
+  strategy?: 'vector' | 'hybrid';
+  /** Maximum token budget for skill content. When set, content is trimmed to fit. */
+  maxTokens?: number;
+  /**
+   * Progressive disclosure level (only applies when maxTokens is set):
+   * - 0 = full content
+   * - 1 = summary + code blocks only (default)
+   * - 2 = summary only
+   */
+  progressiveLevel?: 0 | 1 | 2;
 }
 
 export interface ListOptions {
@@ -58,8 +73,3 @@ export interface SkillInfo {
   constraintsContent: string;
 }
 
-export interface BM25Options {
-  k1?: number;
-  b?: number;
-  fieldWeights?: Record<string, number>;
-}

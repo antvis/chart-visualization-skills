@@ -137,8 +137,9 @@ Commands:
   help [command]              display help for command
 
 Options for retrieve:
-  --library <lib>             Filter by library (e.g. g2, g6)
+  --library <lib>             Filter by library (e.g. g2, g6, x6)
   --topk <n>                  Number of results to return (default: 7)
+  --strategy <s>              Retrieval strategy: hybrid | vector (default: hybrid)
   --content                   Include markdown content body in results; core constraints (SKILL.md Section 1-2) are always prepended as the first result
   --output <format>           Output format: json | text (default: "text")
 ```
@@ -156,32 +157,48 @@ const skills = retrieve('bar chart', { library: 'g2', topK: 5 });
 // With full markdown content (core constraints auto-prepended as first result)
 const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: true });
 
-// With content but without core constraints
-const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: true, includeInfo: false });
+// Hybrid search (default) — FTS + Vector + RRF fusion
+const skills = retrieve('bar chart', { library: 'g2', strategy: 'hybrid' });
+
+// With token budget — content trimmed to fit 4000 tokens, summary + code only
+const skills = retrieve('bar chart', {
+  library: 'g2',
+  content: true,
+  maxTokens: 4000,
+  progressiveLevel: 1,
+});
 ```
 
 ```typescript
 retrieve(query: string, options?: RetrieveOptions): Skill[]
 
 interface RetrieveOptions {
-  library?: string;   // Library filter, e.g. 'g2' or 'g6'
-  topK?: number;      // Number of results (default: 7)
-  content?: boolean;  // Include markdown content body (default: false)
+  library?: string;    // Library filter, e.g. 'g2' or 'g6'
+  topK?: number;       // Number of results (default: 7)
+  content?: boolean;   // Include markdown content body (default: false)
   includeInfo?: boolean; // Prepend SKILL.md core constraints (default: same as content)
+  strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
+  maxTokens?: number;  // Token budget — content trimmed to fit when set
+  progressiveLevel?: 0 | 1 | 2;  // 0=full, 1=summary+code, 2=summary (default: 1)
 }
 ```
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `library` | `string` | all | Library filter (`g2` or `g6`) |
+| `library` | `string` | all | Library filter (`g2` / `g6` / `x6`) |
 | `topK` | `number` | `7` | Number of results |
 | `content` | `boolean` | `false` | Include markdown content body |
-| `includeInfo` | `boolean` | same as `content` | Prepend SKILL.md core constraints (Section 1-2) as first result |
+| `includeInfo` | `boolean` | same as `content` | Prepend SKILL.md core constraints as first result |
+| `strategy` | `'hybrid' \| 'vector'` | `'hybrid'` | Retrieval strategy |
+| `maxTokens` | `number` | — | Token budget; content trimmed to fit when set |
+| `progressiveLevel` | `0 \| 1 \| 2` | `1` | 0=full, 1=summary+code, 2=summary only |
 
 > Notes:
-> - Default retrieval returns lightweight result objects without the `content` field.
+> - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
+> - `strategy: 'vector'` uses pure ANN vector similarity search.
 > - `content: true` returns markdown content body (frontmatter metadata is excluded).
-> - When `includeInfo` is true (the default when `content: true`), the core constraints block — SKILL.md up to `<!-- CONSTRAINTS:END -->` — is injected as the first element (id prefixed with `__info__`), ensuring the model always sees the essential rules.
+> - When `includeInfo` is true, the core constraints block is injected as the first element (id prefixed with `__info__`).
+> - When `maxTokens` is set, skill content is formatted and trimmed to fit the budget according to `progressiveLevel`.
 
 ```typescript
 import { info } from '@antv/chart-visualization-skills';

@@ -2,11 +2,12 @@ import {
   retrieve as _retrieve,
   getSkillById as _getSkillById,
   getSkillInfo,
-  availableLibraries
+  availableLibraries,
+  listSkills as _listSkills,
 } from './core/retriever';
-import type { Skill, SkillInfo, RetrieveOptions } from './core/types';
+import type { Skill, SkillInfo, RetrieveOptions, ListOptions } from './core/types';
 
-export type { Skill, SkillInfo, RetrieveOptions };
+export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
 
 /**
  * Retrieve skills based on a query.
@@ -66,4 +67,14 @@ export function info(library = 'g2'): SkillInfo | undefined {
  */
 export function libraries(): string[] {
   return availableLibraries();
+}
+
+/**
+ * List available skills, optionally filtered by library, category, tags, or difficulty.
+ * @param options Filter options.
+ * @example listSkills({ library: 'g2', tags: ['bar'] })
+ * @example listSkills({ difficulty: 'beginner' })
+ */
+export function listSkills(options: ListOptions = {}): Skill[] {
+  return _listSkills(options);
 }
