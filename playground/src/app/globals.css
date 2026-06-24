@@ -601,7 +601,9 @@ body {
   border-radius: var(--radius);
   color: #fca5a5;
   font-size: 12px;
-  margin: 16px;
+  margin: 16px auto;
+  max-width: 90%;
+  text-align: center;
   font-family: 'Monaco', 'Menlo', monospace;
 }
 
