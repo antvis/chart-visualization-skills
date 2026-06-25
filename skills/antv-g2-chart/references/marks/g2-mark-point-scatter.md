@@ -106,10 +106,8 @@ const allData = [
   ...data2015.map(d => ({ ...d, year: '2015' })),
 ];
 
-const color1990 = '#fb7678';
-const color1990Dark = '#cc4649';
-const color2015 = '#81e7ee';
-const color2015Dark = '#25b7cf';
+// 颜色映射表：scale.color.range 和 fill 回调共用
+const COLOR_MAP = { '1990': '#fb7678', '2015': '#81e7ee' };
 
 chart.options({
   type: 'point',
@@ -123,19 +121,19 @@ chart.options({
   },
   scale: {
     size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺 + 合适的气泡范围
-    color: { domain: ['1990', '2015'], range: ['#fb7678', '#81e7ee'] },
+    color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
   },
   style: {
     fillOpacity: 0.85,
     lineWidth: 0,
-    fill: (datum, index, data, column) => {
-      const is1990 = datum.year === '1990';
-      const baseColor = is1990 ? color1990 : color2015;
-      const darkColor = is1990 ? color1990Dark : color2015Dark;
-      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${baseColor} 80%, ${darkColor} 100%)`;
+    // 径向渐变 + 阴影：模拟 3D 球体质感
+    // 通过 COLOR_MAP[datum.year] 获取颜色，与 scale.color.range 保持一致
+    fill: (datum) => {
+      const color = COLOR_MAP[datum.year];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
     },
     shadowBlur: 10,
-    shadowColor: (datum) => datum.year === '1990' ? 'rgba(120, 36, 50, 0.5)' : 'rgba(25, 100, 150, 0.5)',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
     shadowOffsetY: 5,
   },
   legend: { size: false },    // size 图例意义不大，建议隐藏
@@ -160,7 +158,7 @@ chart.options({
 chart.render();
 ```
 
-> 气泡图完整样式指南（含进阶阴影/径向渐变等实验性样式）见 [气泡图文档](g2-mark-point-bubble.md)。
+> 气泡图完整样式指南（含径向渐变、阴影等）见 [气泡图文档](g2-mark-point-bubble.md)。
 
 ## 自定义点形状
 

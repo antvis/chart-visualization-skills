@@ -9,9 +9,10 @@ description: |
   样式要点：
   1. 不要使用白色描边（stroke: '#fff'），浅色主题下会显得像错误图表；
   2. 推荐径向渐变填充（radial-gradient）+ 阴影（shadow），模拟 3D 球体质感；
-  3. size 比例尺推荐使用 sqrt 类型，确保气泡面积与数值成正比；
-  4. 合理设置 size.range（建议 [4, 40] 区间），避免极端大小差异；
-  5. 坐标轴使用虚线网格（gridLineDash），背景更清爽。
+  3. 定义颜色映射表 COLOR_MAP，scale.color.range 和 fill 回调共用，保持一致；
+  4. size 比例尺推荐使用 sqrt 类型，确保气泡面积与数值成正比；
+  5. 合理设置 size.range（建议 [4, 40] 区间），避免极端大小差异；
+  6. 坐标轴使用虚线网格（gridLineDash），背景更清爽。
 
 library: "g2"
 version: "5.x"
@@ -99,19 +100,8 @@ const allData = [
   ...data2015.map(d => ({ ...d, year: '2015' })),
 ];
 
-// 系列配色：1990 红色系，2015 蓝色系
-const color1990 = '#fb7678';
-const color1990Dark = '#cc4649';
-const color2015 = '#81e7ee';
-const color2015Dark = '#25b7cf';
-
-// 辅助函数：加深颜色，用于渐变终点
-function darken(hex, amount = 60) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${Math.max(0, r - amount)}, ${Math.max(0, g - amount)}, ${Math.max(0, b - amount)})`;
-}
+// 颜色映射表：scale.color.range 和 fill 回调共用，保持一致
+const COLOR_MAP = { '1990': '#fb7678', '2015': '#81e7ee' };
 
 const chart = new Chart({ container: 'container', width: 800, height: 500 });
 
@@ -130,22 +120,22 @@ chart.options({
       },
       scale: {
         size: { type: 'sqrt', range: [4, 40] },   // ✅ sqrt 比例尺：确保面积与数值成正比
-        color: { domain: ['1990', '2015'], range: ['#fb7678', '#81e7ee'] },
+        color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
         y: { nice: true },
       },
       style: {
         fillOpacity: 0.85,
         lineWidth: 0,
-        // ✅ 径向渐变：从亮色中心到深色边缘，模拟 3D 球体感
-        fill: (datum, index, data, column) => {
-          const is1990 = datum.year === '1990';
-          const baseColor = is1990 ? color1990 : color2015;
-          const darkColor = is1990 ? color1990Dark : color2015Dark;
-          return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${baseColor} 80%, ${darkColor} 100%)`;
+        // ✅ 径向渐变：从白色中心到映射色边缘，模拟 3D 球体感
+        // 通过 COLOR_MAP[datum.year] 获取颜色，与 scale.color.range 保持一致
+        // 注意：channel.color[index] 存的是映射前的原始值（如 '1990'），不是映射后的颜色
+        fill: (datum) => {
+          const color = COLOR_MAP[datum.year];
+          return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
         },
         // ✅ 阴影：让气泡有浮起感
         shadowBlur: 10,
-        shadowColor: (datum) => datum.year === '1990' ? 'rgba(120, 36, 50, 0.5)' : 'rgba(25, 100, 150, 0.5)',
+        shadowColor: 'rgba(0, 0, 0, 0.15)',
         shadowOffsetY: 5,
       },
       legend: { size: false },
@@ -173,7 +163,7 @@ chart.render();
 ```
 
 > **设计要点**：
-> - **径向渐变**（`radial-gradient`）— 从亮色中心到深色边缘，模拟 3D 球体质感
+> - **径向渐变**（`radial-gradient`）— 从白色中心到映射色边缘，模拟 3D 球体质感
 > - **阴影**（`shadowBlur` + `shadowColor` + `shadowOffsetY`）— 让气泡有浮起感
 > - **sqrt 比例尺** — 确保气泡面积与数值成正比，而非半径
 > - **虚线网格**（`gridLineDash: [4, 4]`）— 背景更清爽不喧宾夺主
@@ -206,21 +196,20 @@ chart.options({
   encode: { x: 'income', y: 'life', size: 'population', color: 'year' },
   scale: {
     size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺
-    color: { domain: ['1990', '2015'], range: ['#fb7678', '#81e7ee'] },
+    color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
   },
   style: {
     fillOpacity: 0.85,
     lineWidth: 0,
-    // 径向渐变：从亮色中心到深色边缘，模拟 3D 球体感
+    // 径向渐变：从白色中心到映射色边缘，模拟 3D 球体感
+    // 通过 COLOR_MAP[datum.year] 获取颜色，与 scale.color.range 保持一致
     fill: (datum) => {
-      const is1990 = datum.year === '1990';
-      const baseColor = is1990 ? '#fb7678' : '#81e7ee';
-      const darkColor = is1990 ? '#cc4649' : '#25b7cf';
-      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${baseColor} 80%, ${darkColor} 100%)`;
+      const color = COLOR_MAP[datum.year];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
     },
     // 阴影：让气泡有浮起感
     shadowBlur: 10,
-    shadowColor: (datum) => datum.year === '1990' ? 'rgba(120, 36, 50, 0.5)' : 'rgba(25, 100, 150, 0.5)',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
     shadowOffsetY: 5,
   },
   legend: { size: false },
@@ -292,13 +281,12 @@ chart.options({
     fillOpacity: 0.85,
     lineWidth: 0,
     fill: (datum) => {
-      // 径向渐变：从亮色中心到深色边缘，模拟 3D 球体感
-      const baseColor = datum.year === '1990' ? '#fb7678' : '#81e7ee';
-      const darkColor = datum.year === '1990' ? '#cc4649' : '#25b7cf';
-      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${baseColor} 80%, ${darkColor} 100%)`;
+      // 径向渐变：从白色中心到映射色边缘，模拟 3D 球体感
+      const color = COLOR_MAP[datum.year];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
     },
     shadowBlur: 10,
-    shadowColor: (datum) => datum.year === '1990' ? 'rgba(120, 36, 50, 0.5)' : 'rgba(25, 100, 150, 0.5)',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
     shadowOffsetY: 5,
   },
 });

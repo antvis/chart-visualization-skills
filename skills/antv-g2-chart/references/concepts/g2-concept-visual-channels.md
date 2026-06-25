@@ -88,6 +88,9 @@ chart.options({
 
 ```javascript
 // x位置 + y位置 + 大小（size） = 三维数值编码
+// 颜色映射表：scale.color.range 和 fill 回调共用
+const COLOR_MAP = { 'Asia': '#fb7678', 'Europe': '#81e7ee', 'Americas': '#5B8FF9' };
+
 chart.options({
   type: 'point',
   data,
@@ -100,13 +103,19 @@ chart.options({
   },
   scale: {
     size: { type: 'sqrt', range: [4, 40] },   // sqrt 比例尺，确保面积与数值成正比
+    color: { range: Object.values(COLOR_MAP) },
   },
   style: {
     fillOpacity: 0.85,
     lineWidth: 0,
-    fill: (datum) => `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${datum.color || '#5B8FF9'} 80%, #2D5BFF 100%)`,
+    // 径向渐变：从白色中心到映射色边缘，模拟 3D 球体质感
+    // 通过 COLOR_MAP[datum.Region] 获取颜色，与 scale.color.range 保持一致
+    fill: (datum) => {
+      const color = COLOR_MAP[datum.Region];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
+    },
     shadowBlur: 10,
-    shadowColor: 'rgba(25, 100, 150, 0.5)',
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
     shadowOffsetY: 5,
   },  // 不要用 stroke:'#fff'
   legend: { size: false },
