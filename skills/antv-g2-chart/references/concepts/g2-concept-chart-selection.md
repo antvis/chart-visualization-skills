@@ -141,8 +141,18 @@ chart.options({
     y: 'happiness',
     size: 'population',  // 第三数值维度
     color: 'region',
+    shape: 'point',
   },
-  scale: { size: { range: [4, 30] } },
+  scale: { size: { type: 'sqrt', range: [4, 40] } },    // sqrt 比例尺 + 合适的气泡范围
+  style: {
+    fillOpacity: 0.85,
+    lineWidth: 0,
+    fill: (datum) => `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${datum.color || '#5B8FF9'} 80%, #2D5BFF 100%)`,
+    shadowBlur: 10,
+    shadowColor: 'rgba(25, 100, 150, 0.5)',
+    shadowOffsetY: 5,
+  },
+  legend: { size: false },
 });
 ```
 

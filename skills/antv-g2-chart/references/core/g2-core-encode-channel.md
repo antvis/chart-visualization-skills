@@ -119,8 +119,20 @@ chart.options({
     shape: 'point',
   },
   scale: {
-    size: { range: [10, 60] },
+    size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺 + 合适的气泡范围
   },
+  style: {
+    fillOpacity: 0.85,            // 不要用 stroke: '#fff'，浅色主题下像错误图表
+    lineWidth: 0,
+    fill: (datum) => {
+      // 径向渐变：模拟 3D 球体质感
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${datum.color || '#5B8FF9'} 80%, #2D5BFF 100%)`;
+    },
+    shadowBlur: 10,
+    shadowColor: 'rgba(25, 100, 150, 0.5)',
+    shadowOffsetY: 5,
+  },
+  legend: { size: false },        // size 图例意义不大，建议隐藏
 });
 ```
 

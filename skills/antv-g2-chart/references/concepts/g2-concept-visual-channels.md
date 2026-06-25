@@ -96,10 +96,20 @@ chart.options({
     y: 'LifeExpectancy',// 定量 → 位置
     size: 'Population', // 定量 → 大小（第三维度）
     color: 'Region',    // 分类 → 颜色色相（第四维度）
+    shape: 'point',
   },
   scale: {
-    size: { range: [4, 40] },   // 气泡大小范围
+    size: { type: 'sqrt', range: [4, 40] },   // sqrt 比例尺，确保面积与数值成正比
   },
+  style: {
+    fillOpacity: 0.85,
+    lineWidth: 0,
+    fill: (datum) => `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${datum.color || '#5B8FF9'} 80%, #2D5BFF 100%)`,
+    shadowBlur: 10,
+    shadowColor: 'rgba(25, 100, 150, 0.5)',
+    shadowOffsetY: 5,
+  },  // 不要用 stroke:'#fff'
+  legend: { size: false },
 });
 ```
 
