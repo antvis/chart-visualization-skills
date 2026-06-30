@@ -114,7 +114,7 @@ type RetrieverModule = {
       library?: string;
       topK?: number;
       content?: boolean;
-      includeInfo?: boolean;
+      includeConstraints?: boolean;
       strategy?: 'vector' | 'hybrid';
     }
   ) => Promise<Array<{ id: string; title: string; content?: string }>>;
@@ -450,8 +450,6 @@ export default class EvaluationManager {
     const retrievedSkills = await retriever.retrieve(query, {
       library,
       topK: zvecTopK,
-      content: true,
-      includeInfo: true,
       strategy: zvecStrategy
     });
 

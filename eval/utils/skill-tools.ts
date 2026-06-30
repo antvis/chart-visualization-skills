@@ -92,7 +92,7 @@ export function createSearchSkillsTool(
               library?: string;
               topK?: number;
               content?: boolean;
-              includeInfo?: boolean;
+              includeConstraints?: boolean;
             },
           ) => Promise<Array<{
             id: string;
@@ -105,8 +105,7 @@ export function createSearchSkillsTool(
         const skills = await mod.retrieve(query, {
           library,
           topK: 5,
-          content: true,
-          includeInfo: false,
+          includeConstraints: false,
         });
         const ids = skills.map((s) => s.id);
         onResult?.(query, ids);

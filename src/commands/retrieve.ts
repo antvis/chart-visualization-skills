@@ -8,7 +8,7 @@ export function registerRetrieveCommand(program: Command): void {
     .option('--library <lib>', 'Filter by library (g2, g6, x6)')
     .option('--topk <n>', 'Number of results to return', '7')
     .option('--strategy <s>', 'Retrieval strategy: hybrid | vector', 'hybrid')
-    .option('--content', 'Include markdown content of matched reference docs (SKILL.md constraints are always prepended)')
+    .option('--content', 'Include markdown content of matched reference docs (constraints are always prepended when content is shown)')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       async (
@@ -29,7 +29,7 @@ export function registerRetrieveCommand(program: Command): void {
           library: opts.library,
           topK,
           content: withContent,
-          includeInfo: withContent,
+          includeConstraints: withContent,
           strategy,
         });
 

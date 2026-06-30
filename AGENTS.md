@@ -86,7 +86,7 @@ cd http-server && npm run dev    # starts on http://localhost:3100 (configurable
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, includeInfo, strategy, maxTokens, progressiveLevel}` |
+| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, includeConstraints, strategy, maxTokens, progressiveLevel}` |
 | `/info` | POST | Get library core constraints. Body: `{library}` |
 | `/get` | POST | Get single skill by exact ID. Body: `{id, library}` |
 | `/list` | POST | List/filter skills. Body: `{library, category, tags}` |

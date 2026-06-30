@@ -41,8 +41,6 @@ export function createRetrieveTool(
       const retrievedSkills = await retrieve(query, {
         library: library ?? defaultLibrary,
         topK: topk ?? 5,
-        content: true,
-        includeInfo: true,
         strategy: strategy ?? defaultStrategy,
       });
       console.log(

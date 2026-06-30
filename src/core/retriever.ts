@@ -192,8 +192,8 @@ export async function retrieve(
   const {
     library,
     topK = 7,
-    content = false,
-    includeInfo = content,
+    content = true,
+    includeConstraints = content,
     strategy = 'hybrid',
     maxTokens,
     progressiveLevel = 1
@@ -208,7 +208,7 @@ export async function retrieve(
     skills = skills.map(({ content, ...skill }) => skill);
   }
 
-  if (includeInfo) {
+  if (includeConstraints) {
     const libs = library
       ? [library]
       : [...new Set(skills.map((s) => s.library))];

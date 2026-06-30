@@ -15,10 +15,10 @@ import type {
 export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
 
 /**
- * Retrieve skills based on a query.
+ * Retrieve skills based on a query. Returns skill content by default.
  *
- * Preferred: pass an options object.
- * @example retrieve('bar chart', { library: 'g2', topK: 5, content: true })
+ * @example retrieve('bar chart', { library: 'g2', topK: 5 })
+ * @example retrieve('bar chart', { library: 'g2', content: false })  // metadata only
  *
  * Legacy positional signature still supported for backwards compatibility.
  * @example retrieve('bar chart', 'g2', 5, true)
@@ -35,7 +35,7 @@ export async function retrieve(
   query: string,
   libraryOrOpts?: string | RetrieveOptions,
   topk = 7,
-  content = false
+  content = true
 ): Promise<Skill[]> {
   if (typeof libraryOrOpts === 'string' || libraryOrOpts === undefined) {
     return await _retrieve(query, { library: libraryOrOpts, topK: topk, content });

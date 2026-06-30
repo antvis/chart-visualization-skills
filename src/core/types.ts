@@ -28,13 +28,13 @@ export interface SkillIndex {
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
+  /** Include markdown content body (default: true). */
   content?: boolean;
   /**
-   * When true, prepend the library's SKILL.md core constraints as the first
-   * result. Callers should set this whenever `content` is true so the model
-   * always receives constraints alongside reference docs.
+   * When true, prepend the library's constraints as the first result
+   * (id prefixed with `__info__`). Default: same as `content`.
    */
-  includeInfo?: boolean;
+  includeConstraints?: boolean;
   /**
    * Retrieval strategy:
    * - 'vector'  dense vector similarity via zvec index
