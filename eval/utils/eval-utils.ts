@@ -38,7 +38,13 @@ export function buildQuery(testCase: TestCase, options: { includeData?: boolean 
   const library = detectLibrary(codeString);
   const { includeData = true } = options;
 
-  let query = description;
+  // Strip inline "参考数据" from description for retrieval.
+  // Dataset descriptions embed reference JSON inline in two formats:
+  //   "…高亮交互。\n参考数据：\n[{sets:…}]"     (newline-separated)
+  //   "…高亮交互。参考数据：[{sets:…}]"        (inline after period)
+  const cleanDescription = description.split(/参考数据[：:]/)[0].trim();
+
+  let query = includeData ? description : cleanDescription;
   if (includeData) {
     const refData = extractDataFromCode(codeString);
     if (refData.length > 0 && !description.includes('参考数据')) {
