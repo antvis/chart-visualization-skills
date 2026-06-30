@@ -60,7 +60,7 @@ graph.centerContent();
 | Serialization (toJSON, fromJSON) | `POST /api/v1/context {"query":"serialization toJSON fromJSON","library":"x6","topK":3,"content":true}` |
 | Animation / gradient | `POST /api/v1/context {"query":"animation gradient defs marker","library":"x6","topK":3,"content":true}` |
 | Group / nesting / embedding | `POST /api/v1/context {"query":"group nesting embedding parent child","library":"x6","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /info {"library":"x6"}` |
+| Library constraints (MUST read first) | `POST /api/v1/info {"library":"x6"}` |
 
 ## Critical Rules
 

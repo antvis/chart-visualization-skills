@@ -45,7 +45,7 @@ chart.render();
 | Facet / view composition | `POST /api/v1/context {"query":"facet view composition","library":"g2","topK":3,"content":true}` |
 | Chart type selection guide | `POST /api/v1/context {"query":"chart type selection","library":"g2","topK":3,"content":true}` |
 | Rendering troubleshoot | `POST /api/v1/context {"query":"rendering troubleshoot debug","library":"g2","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /info {"library":"g2"}` |
+| Library constraints (MUST read first) | `POST /api/v1/info {"library":"g2"}` |
 
 ## Critical Rules
 

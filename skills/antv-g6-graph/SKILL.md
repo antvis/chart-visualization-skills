@@ -45,7 +45,7 @@ await graph.render();
 | Data structure / transforms | `POST /api/v1/context {"query":"data structure transforms","library":"g6","topK":3,"content":true}` |
 | Theme / background | `POST /api/v1/context {"query":"theme background style","library":"g6","topK":3,"content":true}` |
 | Lasso select / collapse-expand | `POST /api/v1/context {"query":"lasso collapse expand select","library":"g6","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /info {"library":"g6"}` |
+| Library constraints (MUST read first) | `POST /api/v1/info {"library":"g6"}` |
 
 ## Critical Rules
 
