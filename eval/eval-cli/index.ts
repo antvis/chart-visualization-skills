@@ -62,14 +62,34 @@ program
   )
   .option(
     '--retrieval <strategy>',
-    'Retrieval strategy: tool-call | bm25 | context7',
+    'Retrieval strategy: zvec | context7',
     (v) => {
-      const valid = ['tool-call', 'bm25', 'context7'];
+      const valid = ['zvec', 'context7'];
       if (!valid.includes(v))
         throw new Error(`--retrieval must be one of: ${valid.join(', ')}`);
       return v;
     },
-    'tool-call',
+    'zvec',
+  )
+  .option(
+    '--zvec-topK <n>',
+    'Top-K for zvec retrieval (default 5)',
+    (v) => {
+      const n = parseInt(v, 10);
+      if (isNaN(n) || n <= 0)
+        throw new Error(`--zvec-topK must be a positive integer, got: ${v}`);
+      return n;
+    },
+  )
+  .option(
+    '--zvec-strategy <s>',
+    'zvec retrieval strategy: vector | hybrid (default hybrid)',
+    (v) => {
+      const valid = ['vector', 'hybrid'];
+      if (!valid.includes(v))
+        throw new Error(`--zvec-strategy must be one of: ${valid.join(', ')}`);
+      return v;
+    },
   )
   .option('--ids <ids>', 'Comma-separated case IDs to test')
   .option('--verbose', 'Show detailed output')
@@ -83,6 +103,8 @@ async function runEvaluation(opts: {
   full?: boolean;
   concurrency?: number;
   retrieval?: string;
+  zvecTopK?: number;
+  zvecStrategy?: string;
   ids?: string;
   verbose?: boolean;
 }) {
@@ -129,11 +151,12 @@ async function runEvaluation(opts: {
     ids,
     concurrency: opts.concurrency ?? 1,
     verbose: opts.verbose ?? false,
-    retrieval: (opts.retrieval ?? 'tool-call') as
-      | 'tool-call'
-      | 'bm25'
+    retrieval: (opts.retrieval ?? 'zvec') as
+      | 'zvec'
       | 'context7',
     provider,
+    zvecTopK: opts.zvecTopK ?? 5,
+    zvecStrategy: (opts.zvecStrategy ?? 'hybrid') as 'vector' | 'hybrid',
   };
 
   console.log('');
@@ -149,6 +172,10 @@ async function runEvaluation(opts: {
   );
   console.log(`  Concurrency: ${options.concurrency}`);
   console.log(`  Retrieval:   ${options.retrieval}`);
+  if (options.retrieval === 'zvec') {
+    console.log(`  ZVec topK:   ${options.zvecTopK}`);
+    console.log(`  ZVec strat:  ${options.zvecStrategy}`);
+  }
   console.log('='.repeat(60));
   console.log('');
 

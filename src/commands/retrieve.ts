@@ -11,7 +11,7 @@ export function registerRetrieveCommand(program: Command): void {
     .option('--content', 'Include markdown content of matched reference docs (SKILL.md constraints are always prepended)')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
-      (
+      async (
         query: string,
         opts: {
           library?: string;
@@ -25,7 +25,7 @@ export function registerRetrieveCommand(program: Command): void {
         const strategy = opts.strategy === 'vector' ? 'vector' : 'hybrid';
         const withContent = !!opts.content;
 
-        const skills = retrieve(query, {
+        const skills = await retrieve(query, {
           library: opts.library,
           topK,
           content: withContent,

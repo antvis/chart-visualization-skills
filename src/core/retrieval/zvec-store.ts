@@ -54,18 +54,32 @@ export interface IZvecStore {
 // ---------------------------------------------------------------------------
 
 export const SKILL_SCALAR_FIELDS = [
-  'title', 'description', 'library', 'category', 'tags',
-  'difficulty', 'content', 'use_cases', 'anti_patterns',
-  'path', 'content_hash', 'source', 'expires_at',
+  'title',
+  'description',
+  'library',
+  'category',
+  'tags',
+  'content',
+  'use_cases',
+  'anti_patterns',
+  'path',
+  'content_hash',
+  'source',
+  'expires_at'
 ] as const;
 
 /** Fields that get FTS indexes in ActualZvecStore. */
 export const FTS_FIELDS = [
-  'title', 'description', 'tags', 'content', 'use_cases', 'anti_patterns',
+  'title',
+  'description',
+  'tags',
+  'content',
+  'use_cases',
+  'anti_patterns'
 ] as const;
 
 export const VECTOR_FIELD = 'embedding';
-export const VECTOR_DIMS = 384;
+export const VECTOR_DIMS = 512;
 
 // ---------------------------------------------------------------------------
 // MemoryZvecStore – pure JS fallback (cosine similarity + linear scan + text)
@@ -127,11 +141,17 @@ export class MemoryZvecStore implements IZvecStore {
     // 2. Vector path: cosine similarity
     const vecRanked = this.docs
       .filter((d) => !filter || evalMemoryFilter(filter, d.fields))
-      .map((doc) => ({ id: doc.id, score: cosineSimilarity(queryVector, doc.vector) }))
+      .map((doc) => ({
+        id: doc.id,
+        score: cosineSimilarity(queryVector, doc.vector)
+      }))
       .sort((a, b) => b.score - a.score);
 
     for (let i = 0; i < vecRanked.length; i++) {
-      rrScores.set(vecRanked[i].id, (rrScores.get(vecRanked[i].id) ?? 0) + 1 / (i + 1));
+      rrScores.set(
+        vecRanked[i].id,
+        (rrScores.get(vecRanked[i].id) ?? 0) + 1 / (i + 1)
+      );
     }
 
     // 3. Merge by RRF score
@@ -159,13 +179,17 @@ export class MemoryZvecStore implements IZvecStore {
 
 function doSyncSearch(
   docs: ZvecDoc[],
-  params: ZvecSearchParams,
+  params: ZvecSearchParams
 ): ZvecQueryResult[] {
   const { vector, topK, filter } = params;
   const scored: ZvecQueryResult[] = [];
   for (const doc of docs) {
     if (filter && !evalMemoryFilter(filter, doc.fields)) continue;
-    scored.push({ id: doc.id, score: cosineSimilarity(vector, doc.vector), fields: doc.fields });
+    scored.push({
+      id: doc.id,
+      score: cosineSimilarity(vector, doc.vector),
+      fields: doc.fields
+    });
   }
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, topK);
@@ -173,7 +197,7 @@ function doSyncSearch(
 
 function doSyncHybridSearch(
   docs: ZvecDoc[],
-  params: ZvecHybridParams,
+  params: ZvecHybridParams
 ): ZvecQueryResult[] {
   const { queryText, queryVector, topK, filter } = params;
   const rrScores = new Map<string, number>();
@@ -206,11 +230,17 @@ function doSyncHybridSearch(
   // Vector path
   const vecRanked = docs
     .filter((d) => !filter || evalMemoryFilter(filter, d.fields))
-    .map((doc) => ({ id: doc.id, score: cosineSimilarity(queryVector, doc.vector) }))
+    .map((doc) => ({
+      id: doc.id,
+      score: cosineSimilarity(queryVector, doc.vector)
+    }))
     .sort((a, b) => b.score - a.score);
 
   for (let i = 0; i < vecRanked.length; i++) {
-    rrScores.set(vecRanked[i].id, (rrScores.get(vecRanked[i].id) ?? 0) + 1 / (i + 1));
+    rrScores.set(
+      vecRanked[i].id,
+      (rrScores.get(vecRanked[i].id) ?? 0) + 1 / (i + 1)
+    );
   }
 
   return [...rrScores.entries()]
@@ -223,7 +253,9 @@ function doSyncHybridSearch(
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0, na = 0, nb = 0;
+  let dot = 0,
+    na = 0,
+    nb = 0;
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
     na += a[i] * a[i];
@@ -233,7 +265,10 @@ function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom;
 }
 
-function evalMemoryFilter(filter: string, fields: Record<string, string | number>): boolean {
+function evalMemoryFilter(
+  filter: string,
+  fields: Record<string, string | number>
+): boolean {
   // Simple `field = 'value'` parser for MemoryZvecStore (zvec SQL-style syntax)
   const m = filter.match(/^(\w+)\s*=\s*'([^']*)'$/);
   if (!m) return true;
@@ -268,7 +303,7 @@ function loadZvecSync(): any | undefined {
  * fuses both in the engine.
  */
 export class ActualZvecStore implements IZvecStore {
-  private _collection: any;  // ZVecCollection
+  private _collection: any; // ZVecCollection
   private _closed = false;
 
   constructor(collection: any) {
@@ -314,7 +349,7 @@ export class ActualZvecStore implements IZvecStore {
     const records = docs.map((d) => ({
       id: d.id,
       vectors: { [VECTOR_FIELD]: d.vector },
-      fields: d.fields,
+      fields: d.fields
     }));
     this._collection.insertSync(records);
   }
@@ -326,14 +361,24 @@ export class ActualZvecStore implements IZvecStore {
       fieldName: VECTOR_FIELD,
       vector: params.vector,
       topk: params.topK,
-      filter: params.filter,
+      filter: params.filter
     });
 
     return rawResults.map((r: any) => ({
       id: r.id,
       score: r.score,
-      fields: r.fields ?? {},
+      fields: r.fields ?? {}
     }));
+  }
+
+  /** Build multi-field FTS query paths for hybrid search. */
+  private _buildFtsQueries(queryText: string, topK: number): any[] {
+    const ftsParams = this._getFtsQueryParams();
+    return [
+      { fieldName: 'title', fts: { matchString: queryText }, numCandidates: topK * 2, params: ftsParams },
+      { fieldName: 'tags', fts: { matchString: queryText }, numCandidates: topK * 2, params: ftsParams },
+      { fieldName: 'content', fts: { matchString: queryText }, numCandidates: topK * 2, params: ftsParams },
+    ];
   }
 
   async searchHybrid(params: ZvecHybridParams): Promise<ZvecQueryResult[]> {
@@ -345,25 +390,20 @@ export class ActualZvecStore implements IZvecStore {
         {
           fieldName: VECTOR_FIELD,
           vector: params.queryVector,
-          numCandidates: params.topK * 2,
+          numCandidates: params.topK * 2
         },
-        // Path 2: FTS on content – raw text, no embedding needed
-        {
-          fieldName: 'content',
-          fts: { matchString: params.queryText },
-          numCandidates: params.topK * 2,
-          params: this._getFtsQueryParams(),
-        },
+        // Paths 2-5: multi-field FTS (title, tags, description, content)
+        ...this._buildFtsQueries(params.queryText, params.topK),
       ],
       topk: params.topK,
       filter: params.filter,
-      rerank: { type: 'rrf', rankConstant: 60 },
+      rerank: { type: 'rrf', rankConstant: 60 }
     });
 
     return rawResults.map((r: any) => ({
       id: r.id,
       score: r.score,
-      fields: r.fields ?? {},
+      fields: r.fields ?? {}
     }));
   }
 
@@ -374,13 +414,13 @@ export class ActualZvecStore implements IZvecStore {
       fieldName: VECTOR_FIELD,
       vector: params.vector,
       topk: params.topK,
-      filter: params.filter,
+      filter: params.filter
     });
 
     return rawResults.map((r: any) => ({
       id: r.id,
       score: r.score,
-      fields: r.fields ?? {},
+      fields: r.fields ?? {}
     }));
   }
 
@@ -389,23 +429,23 @@ export class ActualZvecStore implements IZvecStore {
 
     const rawResults = this._collection.multiQuerySync({
       queries: [
-        { fieldName: VECTOR_FIELD, vector: params.queryVector, numCandidates: params.topK * 2 },
         {
-          fieldName: 'content',
-          fts: { matchString: params.queryText },
-          numCandidates: params.topK * 2,
-          params: this._getFtsQueryParams(),
+          fieldName: VECTOR_FIELD,
+          vector: params.queryVector,
+          numCandidates: params.topK * 2
         },
+        // Multi-field FTS: title, tags, description, content
+        ...this._buildFtsQueries(params.queryText, params.topK),
       ],
       topk: params.topK,
       filter: params.filter,
-      rerank: { type: 'rrf', rankConstant: 60 },
+      rerank: { type: 'rrf', rankConstant: 60 }
     });
 
     return rawResults.map((r: any) => ({
       id: r.id,
       score: r.score,
-      fields: r.fields ?? {},
+      fields: r.fields ?? {}
     }));
   }
 
@@ -444,7 +484,8 @@ function requireZvecSync(): any {
  * - FTS indexes on title, description, tags, content, use_cases, anti_patterns
  */
 function buildSkillSchema(z: any, dims: number): any {
-  const { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } = z;
+  const { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } =
+    z;
 
   const vectorSchema = {
     name: VECTOR_FIELD,
@@ -454,30 +495,69 @@ function buildSkillSchema(z: any, dims: number): any {
       indexType: ZVecIndexType.HNSW,
       metricType: ZVecMetricType.COSINE,
       m: 32,
-      efConstruction: 200,
-    },
+      efConstruction: 200
+    }
   };
 
   const fieldSchemas = [
-    { name: 'title',        dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba', filters: ['lowercase'] } },
-    { name: 'description',  dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' } },
-    { name: 'library',      dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.INVERT } },
-    { name: 'category',     dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.INVERT } },
-    { name: 'tags',         dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' } },
-    { name: 'difficulty',   dataType: ZVecDataType.STRING },
-    { name: 'content',      dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba', filters: ['lowercase'] } },
-    { name: 'use_cases',    dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' } },
-    { name: 'anti_patterns',dataType: ZVecDataType.STRING, indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' } },
-    { name: 'path',         dataType: ZVecDataType.STRING },
+    {
+      name: 'title',
+      dataType: ZVecDataType.STRING,
+      indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: 'jieba',
+        filters: ['lowercase']
+      }
+    },
+    {
+      name: 'description',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' }
+    },
+    {
+      name: 'library',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.INVERT }
+    },
+    {
+      name: 'category',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.INVERT }
+    },
+    {
+      name: 'tags',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' }
+    },
+    {
+      name: 'content',
+      dataType: ZVecDataType.STRING,
+      indexParams: {
+        indexType: ZVecIndexType.FTS,
+        tokenizerName: 'jieba',
+        filters: ['lowercase']
+      }
+    },
+    {
+      name: 'use_cases',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' }
+    },
+    {
+      name: 'anti_patterns',
+      dataType: ZVecDataType.STRING,
+      indexParams: { indexType: ZVecIndexType.FTS, tokenizerName: 'jieba' }
+    },
+    { name: 'path', dataType: ZVecDataType.STRING },
     { name: 'content_hash', dataType: ZVecDataType.STRING },
-    { name: 'source',       dataType: ZVecDataType.STRING },
-    { name: 'expires_at',   dataType: ZVecDataType.INT64 },
+    { name: 'source', dataType: ZVecDataType.STRING },
+    { name: 'expires_at', dataType: ZVecDataType.INT64 }
   ];
 
   return new ZVecCollectionSchema({
     name: 'skills',
     vectors: vectorSchema,
-    fields: fieldSchemas,
+    fields: fieldSchemas
   });
 }
 
@@ -514,8 +594,8 @@ export function openZvecStoreSync(path: string): IZvecStore {
   }
   throw new Error(
     'Cannot open zvec store: @zvec/zvec is not installed and MemoryZvecStore ' +
-    'has no persistence. Install @zvec/zvec or use createZvecStore() to create ' +
-    'a new MemoryZvecStore.'
+      'has no persistence. Install @zvec/zvec or use createZvecStore() to create ' +
+      'a new MemoryZvecStore.'
   );
 }
 

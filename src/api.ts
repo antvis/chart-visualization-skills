@@ -3,9 +3,14 @@ import {
   getSkillById as _getSkillById,
   getSkillInfo,
   availableLibraries,
-  listSkills as _listSkills,
+  listSkills as _listSkills
 } from './core/retriever';
-import type { Skill, SkillInfo, RetrieveOptions, ListOptions } from './core/types';
+import type {
+  Skill,
+  SkillInfo,
+  RetrieveOptions,
+  ListOptions
+} from './core/types';
 
 export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
 
@@ -18,24 +23,24 @@ export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
  * Legacy positional signature still supported for backwards compatibility.
  * @example retrieve('bar chart', 'g2', 5, true)
  */
-export function retrieve(query: string, options?: RetrieveOptions): Skill[];
+export function retrieve(query: string, options?: RetrieveOptions): Promise<Skill[]>;
 /** @deprecated Use the options-object overload instead. */
 export function retrieve(
   query: string,
   library?: string,
   topk?: number,
   content?: boolean
-): Skill[];
-export function retrieve(
+): Promise<Skill[]>;
+export async function retrieve(
   query: string,
   libraryOrOpts?: string | RetrieveOptions,
   topk = 7,
   content = false
-): Skill[] {
+): Promise<Skill[]> {
   if (typeof libraryOrOpts === 'string' || libraryOrOpts === undefined) {
-    return _retrieve(query, { library: libraryOrOpts, topK: topk, content });
+    return await _retrieve(query, { library: libraryOrOpts, topK: topk, content });
   }
-  return _retrieve(query, libraryOrOpts);
+  return await _retrieve(query, libraryOrOpts);
 }
 
 /**
@@ -70,10 +75,9 @@ export function libraries(): string[] {
 }
 
 /**
- * List available skills, optionally filtered by library, category, tags, or difficulty.
+ * List available skills, optionally filtered by library, category or tags.
  * @param options Filter options.
  * @example listSkills({ library: 'g2', tags: ['bar'] })
- * @example listSkills({ difficulty: 'beginner' })
  */
 export function listSkills(options: ListOptions = {}): Skill[] {
   return _listSkills(options);

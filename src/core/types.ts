@@ -1,13 +1,13 @@
 export interface Skill {
   id: string;
   title: string;
+  title_en: string;
   description: string;
   library: string;
   version: string;
   category: string;
   subcategory: string;
   tags: string[];
-  difficulty: string;
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
@@ -56,7 +56,6 @@ export interface ListOptions {
   library?: string;
   category?: string | null;
   tags?: string[];
-  difficulty?: string | null;
 }
 
 export interface SkillInfo {
@@ -72,4 +71,3 @@ export interface SkillInfo {
    */
   constraintsContent: string;
 }
-
