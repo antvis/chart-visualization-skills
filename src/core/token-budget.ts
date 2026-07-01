@@ -111,12 +111,19 @@ export function applyTokenBudget(
   maxTokens: number,
   level: 0 | 1 | 2
 ): Doc[] {
-  const infoIdx = docs.findIndex((d) => d.id.startsWith('__info__'));
-  const constraints = infoIdx >= 0 ? docs[infoIdx].content || '' : '';
+  // Shallow-copy each doc to avoid mutating cached objects from
+  // indexCache / docMapCache.  Without this, setting doc.content = undefined
+  // or doc.content = formatted would permanently pollute the cache,
+  // causing subsequent retrieve() calls (even without maxTokens) to
+  // return corrupted data.
+  const result: Doc[] = docs.map((d) => ({ ...d }));
+
+  const infoIdx = result.findIndex((d) => d.id.startsWith('__info__'));
+  const constraints = infoIdx >= 0 ? result[infoIdx].content || '' : '';
   let budget = maxTokens - estimateTokens(constraints);
 
-  for (let i = 0; i < docs.length; i++) {
-    const doc = docs[i];
+  for (let i = 0; i < result.length; i++) {
+    const doc = result[i];
     if (doc.id.startsWith('__info__')) continue;
     if (budget <= 0) {
       doc.content = undefined;
@@ -128,5 +135,5 @@ export function applyTokenBudget(
     budget -= Math.min(estimateTokens(formatted), budget);
   }
 
-  return docs;
+  return result;
 }

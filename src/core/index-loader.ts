@@ -91,7 +91,7 @@ export function loadIndex(library: string): DocIndex {
  */
 export function buildDocMap(libs: string[]): Map<string, Doc> {
   // Cache key: sorted, comma-separated library list
-  const cacheKey = libs.sort().join(',');
+  const cacheKey = [...libs].sort().join(',');
   if (docMapCache.has(cacheKey)) return docMapCache.get(cacheKey)!;
 
   const map = new Map<string, Doc>();
@@ -138,7 +138,9 @@ export function getDocById(id: string, library?: string): Doc | undefined {
  * @param options Filter options.
  * @returns An array of docs matching the filters.
  */
-export function listDocs(options: { library?: string; category?: string | null; tags?: string[] } = {}): Doc[] {
+export function listDocs(
+  options: { library?: string; category?: string | null; tags?: string[] } = {}
+): Doc[] {
   const { library, category = null, tags = [] } = options;
 
   const libs = library ? [library] : availableLibraries();
