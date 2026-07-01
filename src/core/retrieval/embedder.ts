@@ -188,20 +188,20 @@ export async function getEmbedder(): Promise<Embedder> {
     } catch (err) {
       console.warn(
         `[embedder] 双语模型 (bge-small-zh-v1.5) 加载失败，降级为 SimpleEmbedder。\n` +
-        `  错误: ${(err as Error).message?.split('\n')[0]}\n` +
-        `\n` +
-        `  SimpleEmbedder 的召回质量较低，建议修复模型下载：\n` +
-        `    1. 设置镜像: export HF_ENDPOINT=https://hf-mirror.com\n` +
-        `    2. 手动下载: node scripts/download-model.mjs\n`
+          `  错误: ${(err as Error).message?.split('\n')[0]}\n` +
+          `\n` +
+          `  SimpleEmbedder 的召回质量较低，建议修复模型下载：\n` +
+          `    1. 设置镜像: export HF_ENDPOINT=https://hf-mirror.com\n` +
+          `    2. 手动下载: node scripts/download-model.mjs\n`
       );
       _defaultEmbedder = new SimpleEmbedder();
     }
   } else {
     console.warn(
       '[embedder] @huggingface/transformers 未安装，使用 SimpleEmbedder。\n' +
-      '  安装后可使用双语模型提升召回质量:\n' +
-      '    npm install @huggingface/transformers\n' +
-      '    node scripts/download-model.mjs\n'
+        '  安装后可使用双语模型提升召回质量:\n' +
+        '    npm install @huggingface/transformers\n' +
+        '    node scripts/download-model.mjs\n'
     );
     _defaultEmbedder = new SimpleEmbedder();
   }
@@ -246,12 +246,12 @@ interface WeightedToken {
 // Unigram: "图", "型" — mostly noise                    → weight 0.15
 // ────────────────────────────────────────────────────────────────────────────
 const CJK_UNIGRAM_WEIGHT = 0.15;
-const CJK_BIGRAM_WEIGHT  = 1.0;
+const CJK_BIGRAM_WEIGHT = 1.0;
 const CJK_TRIGRAM_WEIGHT = 2.0;
 
 // ── English word weights ────────────────────────────────────────────────────
-const EN_WORD_WEIGHT        = 1.5;  // "treemap", "sankey" — discriminative
-const EN_SINGLE_CHAR_WEIGHT = 0.1;  // "x", "y" — axis labels, noise
+const EN_WORD_WEIGHT = 1.5; // "treemap", "sankey" — discriminative
+const EN_SINGLE_CHAR_WEIGHT = 0.1; // "x", "y" — axis labels, noise
 
 // ── Chart-type synonym map ──────────────────────────────────────────────────
 // Now uses the shared synonyms.ts module instead of a local copy.
@@ -274,12 +274,18 @@ function tokenizeWeighted(text: string): WeightedToken[] {
       // Trigrams first (highest weight)
       for (let i = 0; i + 3 <= seg.length; i++) {
         const t = seg.slice(i, i + 3);
-        if (!seen.has(t)) { seen.add(t); tokens.push({ token: t, weight: CJK_TRIGRAM_WEIGHT }); }
+        if (!seen.has(t)) {
+          seen.add(t);
+          tokens.push({ token: t, weight: CJK_TRIGRAM_WEIGHT });
+        }
       }
       // Bigrams
       for (let i = 0; i + 2 <= seg.length; i++) {
         const t = seg.slice(i, i + 2);
-        if (!seen.has(t)) { seen.add(t); tokens.push({ token: t, weight: CJK_BIGRAM_WEIGHT }); }
+        if (!seen.has(t)) {
+          seen.add(t);
+          tokens.push({ token: t, weight: CJK_BIGRAM_WEIGHT });
+        }
       }
       // Unigrams (lowest weight, may be stopped)
       for (const ch of seg) {
@@ -304,9 +310,8 @@ function tokenizeWeighted(text: string): WeightedToken[] {
         const trimmed = w.trim();
         if (!trimmed || STOP_WORDS.has(trimmed) || seen.has(trimmed)) continue;
         seen.add(trimmed);
-        const weight = trimmed.length === 1
-          ? EN_SINGLE_CHAR_WEIGHT
-          : EN_WORD_WEIGHT;
+        const weight =
+          trimmed.length === 1 ? EN_SINGLE_CHAR_WEIGHT : EN_WORD_WEIGHT;
         tokens.push({ token: trimmed, weight });
 
         // Synonym expansion for English terms
@@ -368,30 +373,174 @@ function hashToken(token: string, seed = 0): number {
 
 // ── Stop words ──────────────────────────────────────────────────────────────
 // Extended from the original minimal set to include high-frequency
-// chart-document CJK terms that appear in nearly every skill doc.
+// chart-document CJK terms that appear in nearly every doc.
 // ────────────────────────────────────────────────────────────────────────────
 const STOP_WORDS = new Set([
   // Original
-  '的','了','在','是','我','有','和','就','不',
-  'the','a','an','is','are','was','were','be','been','being',
-  'to','of','in','for','on','with','at','by','from','as',
-  'i','me','my','we','our','he','him','his','she','her','it','its',
-  'and','but','or','if','this','that','these','those',
-  'not','no','nor','only',
-  'chart','using','use',
+  '的',
+  '了',
+  '在',
+  '是',
+  '我',
+  '有',
+  '和',
+  '就',
+  '不',
+  'the',
+  'a',
+  'an',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'being',
+  'to',
+  'of',
+  'in',
+  'for',
+  'on',
+  'with',
+  'at',
+  'by',
+  'from',
+  'as',
+  'i',
+  'me',
+  'my',
+  'we',
+  'our',
+  'he',
+  'him',
+  'his',
+  'she',
+  'her',
+  'it',
+  'its',
+  'and',
+  'but',
+  'or',
+  'if',
+  'this',
+  'that',
+  'these',
+  'those',
+  'not',
+  'no',
+  'nor',
+  'only',
+  'chart',
+  'using',
+  'use',
   // Extended: high-frequency chart-document CJK
-  '图表','数据','配置','展示','需要','支持','进行','通过',
-  '绘制','实现','基于','根据','使用','方式','效果','功能',
-  '用于','可以','一个','表示','如下','参考',
+  '图表',
+  '数据',
+  '配置',
+  '展示',
+  '需要',
+  '支持',
+  '进行',
+  '通过',
+  '绘制',
+  '实现',
+  '基于',
+  '根据',
+  '使用',
+  '方式',
+  '效果',
+  '功能',
+  '用于',
+  '可以',
+  '一个',
+  '表示',
+  '如下',
+  '参考'
 ]);
 
 // Single CJK characters that carry almost no discriminative signal.
 // Stopped at the unigram level (bigrams/trigrams containing these are kept).
 const CJK_UNIGRAM_STOP = new Set([
-  '的','了','在','是','和','就','不','也','都','很','到','要','会','着',
-  '能','可','以','对','与','或','而','且','但','则','因','所','被','把',
-  '从','由','向','往','用','为','让','使','给','将','比','更','最','只',
-  '这','那','其','各','某','每','任','何','另','别','全','整','些','几',
-  '上','下','中','内','外','前','后','左','右','大','小','多','少','高',
-  '一','二','三','两','个','次','种','项','批','组','类','型',
+  '的',
+  '了',
+  '在',
+  '是',
+  '和',
+  '就',
+  '不',
+  '也',
+  '都',
+  '很',
+  '到',
+  '要',
+  '会',
+  '着',
+  '能',
+  '可',
+  '以',
+  '对',
+  '与',
+  '或',
+  '而',
+  '且',
+  '但',
+  '则',
+  '因',
+  '所',
+  '被',
+  '把',
+  '从',
+  '由',
+  '向',
+  '往',
+  '用',
+  '为',
+  '让',
+  '使',
+  '给',
+  '将',
+  '比',
+  '更',
+  '最',
+  '只',
+  '这',
+  '那',
+  '其',
+  '各',
+  '某',
+  '每',
+  '任',
+  '何',
+  '另',
+  '别',
+  '全',
+  '整',
+  '些',
+  '几',
+  '上',
+  '下',
+  '中',
+  '内',
+  '外',
+  '前',
+  '后',
+  '左',
+  '右',
+  '大',
+  '小',
+  '多',
+  '少',
+  '高',
+  '一',
+  '二',
+  '三',
+  '两',
+  '个',
+  '次',
+  '种',
+  '项',
+  '批',
+  '组',
+  '类',
+  '型'
 ]);

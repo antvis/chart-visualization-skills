@@ -1,14 +1,14 @@
 /**
- * Index loader — loads skill index JSON files from disk with caching.
+ * Index loader — loads doc index JSON files from disk with caching.
  *
  * Extracted from retriever.ts for independent testing and reuse.
- * Key improvement: index files and skill maps are cached after first load
+ * Key improvement: index files and doc maps are cached after first load
  * instead of being re-read from disk on every retrieval call.
  */
 
 import fs from 'fs';
 import path from 'path';
-import type { Skill, SkillIndex } from './types';
+import type { Doc, DocIndex } from './types';
 
 // Index files are always expected in a sibling index directory.
 const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
@@ -21,8 +21,8 @@ const DEFAULT_LIBRARY = 'g2';
 // Playground multi-turn scenarios where retrieve() is called per message.
 // ---------------------------------------------------------------------------
 
-const indexCache = new Map<string, SkillIndex>();
-const skillMapCache = new Map<string, Map<string, Skill>>();
+const indexCache = new Map<string, DocIndex>();
+const docMapCache = new Map<string, Map<string, Doc>>();
 let cachedLibraries: string[] | null = null;
 
 /**
@@ -31,7 +31,7 @@ let cachedLibraries: string[] | null = null;
  */
 export function invalidateCache(): void {
   indexCache.clear();
-  skillMapCache.clear();
+  docMapCache.clear();
   cachedLibraries = null;
 }
 
@@ -59,9 +59,9 @@ export function availableLibraries(): string[] {
  * Load the index JSON file for a library (with caching).
  *
  * @param library The library name.
- * @returns The skill index for the specified library.
+ * @returns The doc index for the specified library.
  */
-export function loadIndex(library: string): SkillIndex {
+export function loadIndex(library: string): DocIndex {
   if (indexCache.has(library)) return indexCache.get(library)!;
 
   const indexFile = path.join(DEFAULT_INDEX_DIR, `${library}.index.json`);
@@ -76,77 +76,77 @@ export function loadIndex(library: string): SkillIndex {
     );
   }
 
-  const index: SkillIndex = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
+  const index: DocIndex = JSON.parse(fs.readFileSync(indexFile, 'utf-8'));
   indexCache.set(library, index);
   return index;
 }
 
 /**
- * Build a skill map (id → Skill) from index files for ID→Skill resolution.
+ * Build a doc map (id → Doc) from index files for ID→Doc resolution.
  *
  * The map is cached per set of libraries; when called with the same
  * library list it returns the cached version.
  *
  * @param libs Libraries to include in the map.
  */
-export function buildSkillMap(libs: string[]): Map<string, Skill> {
+export function buildDocMap(libs: string[]): Map<string, Doc> {
   // Cache key: sorted, comma-separated library list
   const cacheKey = libs.sort().join(',');
-  if (skillMapCache.has(cacheKey)) return skillMapCache.get(cacheKey)!;
+  if (docMapCache.has(cacheKey)) return docMapCache.get(cacheKey)!;
 
-  const map = new Map<string, Skill>();
+  const map = new Map<string, Doc>();
   for (const lib of libs) {
-    for (const skill of loadIndex(lib).skills) {
-      map.set(skill.id, skill);
+    for (const doc of loadIndex(lib).docs) {
+      map.set(doc.id, doc);
     }
   }
-  skillMapCache.set(cacheKey, map);
+  docMapCache.set(cacheKey, map);
   return map;
 }
 
 /**
- * Get skill info embedded in the library index.
+ * Get doc info embedded in the library index.
  *
  * @param library The library name (default: 'g2').
- * @returns The skill info, or undefined if not available.
+ * @returns The doc info, or undefined if not available.
  */
-export function getSkillInfo(library = DEFAULT_LIBRARY): SkillIndex['info'] {
+export function getDocInfo(library = DEFAULT_LIBRARY): DocIndex['info'] {
   return loadIndex(library).info;
 }
 
 /**
- * Get a single skill by its exact ID, searching across all available libraries
+ * Get a single doc by its exact ID, searching across all available libraries
  * unless a specific library is provided.
  *
- * @param id      The skill ID.
+ * @param id      The doc ID.
  * @param library Optional library to restrict the search.
- * @returns The skill (with content), or undefined if not found.
+ * @returns The doc (with content), or undefined if not found.
  */
-export function getSkillById(id: string, library?: string): Skill | undefined {
+export function getDocById(id: string, library?: string): Doc | undefined {
   const libs = library ? [library] : availableLibraries();
   for (const lib of libs) {
-    const { skills } = loadIndex(lib);
-    const found = skills.find((s) => s.id === id);
+    const { docs } = loadIndex(lib);
+    const found = docs.find((s) => s.id === id);
     if (found) return found;
   }
   return undefined;
 }
 
 /**
- * List all the skills, optionally filtered by library, category or tags.
+ * List all the docs, optionally filtered by library, category or tags.
  *
  * @param options Filter options.
- * @returns An array of skills matching the filters.
+ * @returns An array of docs matching the filters.
  */
-export function listSkills(options: { library?: string; category?: string | null; tags?: string[] } = {}): Skill[] {
+export function listDocs(options: { library?: string; category?: string | null; tags?: string[] } = {}): Doc[] {
   const { library, category = null, tags = [] } = options;
 
   const libs = library ? [library] : availableLibraries();
-  const allSkills = libs.flatMap((lib) => loadIndex(lib).skills);
+  const allDocs = libs.flatMap((lib) => loadIndex(lib).docs);
 
-  return allSkills.filter((skill) => {
-    if (category && skill.category !== category) return false;
-    if (tags.length > 0 && !tags.some((t) => skill.tags.includes(t)))
+  return allDocs.filter((doc) => {
+    if (category && doc.category !== category) return false;
+    if (tags.length > 0 && !tags.some((t) => doc.tags.includes(t)))
       return false;
     return true;
   });

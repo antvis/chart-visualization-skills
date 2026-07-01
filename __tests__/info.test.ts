@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { info } from '../src/api';
 
 describe('info API', () => {
-  it('should return skill info for default library', () => {
+  it('should return doc info for default library', () => {
     const result = info();
     expect(result).toBeDefined();
     expect(result!.name).toBe('antv-g2-chart');
@@ -10,7 +10,7 @@ describe('info API', () => {
     expect(result!.content.length).toBeGreaterThan(0);
   });
 
-  it('should return skill info for g2 library', () => {
+  it('should return doc info for g2 library', () => {
     const result = info('g2');
     expect(result).toBeDefined();
     expect(result).toHaveProperty('name');
@@ -18,7 +18,7 @@ describe('info API', () => {
     expect(result).toHaveProperty('content');
   });
 
-  it('should return undefined for library without SKILL.md', () => {
+  it('should return undefined for library without DOC.md', () => {
     const result = info('g6');
     // g6 may or may not have a SKILL.md
     expect(result === undefined || typeof result.name === 'string').toBe(true);

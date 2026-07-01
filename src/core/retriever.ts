@@ -9,16 +9,15 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { Skill, SkillIndex, RetrieveOptions, ListOptions } from './types';
+import type { Doc, RetrieveOptions } from './types';
 import { expandQuery } from './synonyms';
 import { applyTokenBudget } from './token-budget';
 import {
-  loadIndex,
   availableLibraries,
-  buildSkillMap,
-  getSkillInfo as _getSkillInfo,
-  getSkillById as _getSkillById,
-  listSkills as _listSkills,
+  buildDocMap,
+  getDocInfo as _getDocInfo,
+  getDocById as _getDocById,
+  listDocs as _listDocs
 } from './index-loader';
 import { getEmbedder, SimpleEmbedder } from './retrieval/embedder';
 import { openZvecStoreSync } from './retrieval/zvec-store';
@@ -28,7 +27,13 @@ import type { IZvecStore, ZvecQueryResult } from './retrieval/zvec-store';
 // Exports for backward compatibility — redirect to index-loader
 // ---------------------------------------------------------------------------
 
-export { availableLibraries, loadIndex, getSkillInfo, getSkillById, listSkills } from './index-loader';
+export {
+  availableLibraries,
+  loadIndex,
+  getDocInfo,
+  getDocById,
+  listDocs
+} from './index-loader';
 export { expandQuery } from './synonyms';
 export { applyTokenBudget, estimateTokens } from './token-budget';
 
@@ -52,7 +57,10 @@ const ZVEC_INDEX_DIRS = [
 
 const zvecCache = new Map<string, IZvecStore>();
 
-function resolveZvecPath(library: string, fallback = false): string | undefined {
+function resolveZvecPath(
+  library: string,
+  fallback = false
+): string | undefined {
   const bases = fallback
     ? [`${library}.zvec.simple`, `${library}.zvec`]
     : [`${library}.zvec`];
@@ -65,7 +73,10 @@ function resolveZvecPath(library: string, fallback = false): string | undefined 
   return undefined;
 }
 
-function getZvecStoreSync(library: string, fallback = false): IZvecStore | undefined {
+function getZvecStoreSync(
+  library: string,
+  fallback = false
+): IZvecStore | undefined {
   const cacheKey = fallback ? `${library}__fallback` : library;
   if (zvecCache.has(cacheKey)) return zvecCache.get(cacheKey)!;
 
@@ -108,11 +119,14 @@ function hasZvecCollections(libs: string[], fallback = false): boolean {
   return libs.some((lib) => resolveZvecPath(lib, fallback) !== undefined);
 }
 
-async function retrieveVector(query: string, params: StrategyParams): Promise<Skill[]> {
+async function retrieveVector(
+  query: string,
+  params: StrategyParams
+): Promise<Doc[]> {
   const { library, topK } = params;
   const libs = library ? [library] : availableLibraries();
 
-  const skillMap = buildSkillMap(libs);
+  const docMap = buildDocMap(libs);
   const expandedQuery = expandQuery(query);
   const embedder = await getEmbedder();
   const useFallback = embedder instanceof SimpleEmbedder;
@@ -140,15 +154,18 @@ async function retrieveVector(query: string, params: StrategyParams): Promise<Sk
   allResults.sort((a, b) => b.score - a.score);
   return allResults
     .slice(0, topK)
-    .map((r) => skillMap.get(r.id))
-    .filter((s): s is Skill => s !== undefined);
+    .map((r) => docMap.get(r.id))
+    .filter((d): d is Doc => d !== undefined);
 }
 
-async function retrieveHybrid(query: string, params: StrategyParams): Promise<Skill[]> {
+async function retrieveHybrid(
+  query: string,
+  params: StrategyParams
+): Promise<Doc[]> {
   const { library, topK } = params;
   const libs = library ? [library] : availableLibraries();
 
-  const skillMap = buildSkillMap(libs);
+  const docMap = buildDocMap(libs);
   const expandedQuery = expandQuery(query);
   const embedder = await getEmbedder();
   const useFallback = embedder instanceof SimpleEmbedder;
@@ -177,8 +194,8 @@ async function retrieveHybrid(query: string, params: StrategyParams): Promise<Sk
   allResults.sort((a, b) => b.score - a.score);
   return allResults
     .slice(0, topK)
-    .map((r) => skillMap.get(r.id))
-    .filter((s): s is Skill => s !== undefined);
+    .map((r) => docMap.get(r.id))
+    .filter((d): d is Doc => d !== undefined);
 }
 
 // ---------------------------------------------------------------------------
@@ -188,7 +205,7 @@ async function retrieveHybrid(query: string, params: StrategyParams): Promise<Sk
 export async function retrieve(
   query: string,
   options: RetrieveOptions = {}
-): Promise<Skill[]> {
+): Promise<Doc[]> {
   const {
     library,
     topK = 7,
@@ -199,28 +216,25 @@ export async function retrieve(
     progressiveLevel = 1
   } = options;
 
-  let skills: Skill[] =
+  let docs: Doc[] =
     strategy === 'vector'
       ? await retrieveVector(query, { library, topK })
       : await retrieveHybrid(query, { library, topK });
 
   if (!content) {
-    skills = skills.map(({ content, ...skill }) => skill);
+    docs = docs.map(({ content, ...doc }) => doc);
   }
 
   if (includeConstraints) {
-    const libs = library
-      ? [library]
-      : [...new Set(skills.map((s) => s.library))];
-    const infoSkills: Skill[] = libs.flatMap((lib) => {
-      const skillInfo = _getSkillInfo(lib);
-      if (!skillInfo) return [];
+    const libs = library ? [library] : [...new Set(docs.map((d) => d.library))];
+    const infoDocs: Doc[] = libs.flatMap((lib) => {
+      const docInfo = _getDocInfo(lib);
+      if (!docInfo) return [];
       return [
         {
           id: `__info__${lib}`,
-          title: skillInfo.name,
-          title_en: skillInfo.name,
-          description: skillInfo.description,
+          title: docInfo.name,
+          description: docInfo.description,
           library: lib,
           version: '',
           category: '__info__',
@@ -229,16 +243,16 @@ export async function retrieve(
           use_cases: [],
           anti_patterns: [],
           related: [],
-          content: skillInfo.constraintsContent
+          content: docInfo.constraintsContent
         }
       ];
     });
-    skills = [...infoSkills, ...skills];
+    docs = [...infoDocs, ...docs];
   }
 
   if (maxTokens && content) {
-    skills = applyTokenBudget(skills, maxTokens, progressiveLevel);
+    docs = applyTokenBudget(docs, maxTokens, progressiveLevel);
   }
 
-  return skills;
+  return docs;
 }

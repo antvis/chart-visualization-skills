@@ -1,11 +1,11 @@
 /**
- * Token budget helpers — trim skill content to fit within a max-token budget
+ * Token budget helpers — trim doc content to fit within a max-token budget
  * for LLM context windows, respecting progressive disclosure levels.
  *
  * Extracted from retriever.ts for independent testing and reuse.
  */
 
-import type { Skill } from './types';
+import type { Doc } from './types';
 import { isCJK } from './retrieval/embedder';
 
 // ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export function truncateContent(content: string, maxTokens: number): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Format a single skill's content for a given progressive level and token
+ * Format a single doc's content for a given progressive level and token
  * budget.
  *
  * Levels:
@@ -69,15 +69,15 @@ export function truncateContent(content: string, maxTokens: number): string {
  * - 1 = summary + code blocks only (default)
  * - 2 = summary only
  *
- * @param skill  The skill to format.
+ * @param doc  The doc to format.
  * @param level  Progressive disclosure level (0, 1, or 2).
- * @param budget Maximum token budget for this skill's content.
+ * @param budget Maximum token budget for this doc's content.
  */
-export function formatForBudget(skill: Skill, level: number, budget: number): string {
+export function formatForBudget(doc: Doc, level: number, budget: number): string {
   const parts: string[] = [];
-  parts.push(`## ${skill.title}\n`);
-  if (skill.description) parts.push(`${skill.description}\n`);
-  const body = skill.content || '';
+  parts.push(`## ${doc.title}\n`);
+  if (doc.description) parts.push(`${doc.description}\n`);
+  const body = doc.content || '';
 
   if (level === 2) return parts.join('\n'); // summary only
   if (level === 0) return parts.join('\n') + '\n' + body; // full
@@ -93,40 +93,40 @@ export function formatForBudget(skill: Skill, level: number, budget: number): st
 }
 
 // ---------------------------------------------------------------------------
-// Token budget application across a skill array
+// Token budget application across a doc array
 // ---------------------------------------------------------------------------
 
 /**
- * Trim skill content to fit within maxTokens budget, respecting progressiveLevel.
+ * Trim doc content to fit within maxTokens budget, respecting progressiveLevel.
  *
- * The `__info__` skill (library constraints) is given full budget first,
- * then remaining budget is distributed across reference skills.
+ * The `__info__` doc (library constraints) is given full budget first,
+ * then remaining budget is distributed across reference docs.
  *
- * @param skills          Array of skills (may include __info__ prefix).
+ * @param docs          Array of docs (may include __info__ prefix).
  * @param maxTokens       Total token budget.
  * @param progressiveLevel Progressive disclosure level (0, 1, or 2).
  */
 export function applyTokenBudget(
-  skills: Skill[],
+  docs: Doc[],
   maxTokens: number,
   level: 0 | 1 | 2
-): Skill[] {
-  const infoIdx = skills.findIndex((s) => s.id.startsWith('__info__'));
-  const constraints = infoIdx >= 0 ? skills[infoIdx].content || '' : '';
+): Doc[] {
+  const infoIdx = docs.findIndex((d) => d.id.startsWith('__info__'));
+  const constraints = infoIdx >= 0 ? docs[infoIdx].content || '' : '';
   let budget = maxTokens - estimateTokens(constraints);
 
-  for (let i = 0; i < skills.length; i++) {
-    const skill = skills[i];
-    if (skill.id.startsWith('__info__')) continue;
+  for (let i = 0; i < docs.length; i++) {
+    const doc = docs[i];
+    if (doc.id.startsWith('__info__')) continue;
     if (budget <= 0) {
-      skill.content = undefined;
+      doc.content = undefined;
       continue;
     }
 
-    const formatted = formatForBudget(skill, level, budget);
-    skill.content = formatted;
+    const formatted = formatForBudget(doc, level, budget);
+    doc.content = formatted;
     budget -= Math.min(estimateTokens(formatted), budget);
   }
 
-  return skills;
+  return docs;
 }

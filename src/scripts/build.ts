@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Build script: generates JSON index files from skill markdown files.
+ * Build script: generates JSON index files from doc markdown files.
  * Run independently before publishing: `node dist/scripts/build.js`
  */
 
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import type { Skill, SkillIndex } from '../core/types';
+import type { Doc, DocIndex } from '../core/types';
 
 // Allow overriding the project root via --root=<dir> (used by harness when running inside a worktree)
 const rootArg = process.argv.find((a) => a.startsWith('--root='));
@@ -51,9 +51,9 @@ function walkDir(
   dir: string,
   library: string,
   skipNames?: Set<string>
-): Skill[] {
-  const skills: Skill[] = [];
-  if (!fs.existsSync(dir)) return skills;
+): Doc[] {
+  const docs: Doc[] = [];
+  if (!fs.existsSync(dir)) return docs;
 
   // Keep deterministic output across environments to avoid index diff noise.
   const entries = fs
@@ -64,7 +64,7 @@ function walkDir(
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      skills.push(...walkDir(fullPath, library, skipNames));
+      docs.push(...walkDir(fullPath, library, skipNames));
     } else if (
       entry.isFile() &&
       entry.name.endsWith('.md') &&
@@ -83,10 +83,9 @@ function walkDir(
 
       const relativePath = path.relative(PKG_ROOT, fullPath);
 
-      skills.push({
+      docs.push({
         id: meta.id,
         title: meta.title || '',
-        title_en: meta.title_en || '',
         description: (meta.description || '').replace(/\n\s*/g, ' ').trim(),
         library: meta.library || '',
         version: meta.version || '',
@@ -104,11 +103,11 @@ function walkDir(
     }
   }
 
-  return skills;
+  return docs;
 }
 
 function build(): void {
-  console.log('Building AntV Skills indexes...\n');
+  console.log('Building AntV docs indexes...\n');
 
   if (!fs.existsSync(INDEX_DIR)) {
     fs.mkdirSync(INDEX_DIR, { recursive: true });
@@ -132,17 +131,17 @@ function build(): void {
   for (const lib of libraries) {
     const libDir = path.join(CONTENT_DIR, lib);
 
-    // Exclude special files (constraints, mistakes) from the skills array —
+    // Exclude special files (constraints, mistakes) from the docs array —
     // they have no frontmatter and serve as the info source instead.
     const skipNames = new Set(['constraints.md', 'mistakes.md']);
 
-    const skills = walkDir(libDir, lib, skipNames);
+    const docs = walkDir(libDir, lib, skipNames);
 
-    console.log(`${lib.toUpperCase()}: Found ${skills.length} documents.`);
+    console.log(`${lib.toUpperCase()}: Found ${docs.length} documents.`);
 
     // Build info section from {lib}-constraints.md
     const defaults = LIBRARY_INFO_DEFAULTS[lib];
-    let info: SkillIndex['info'];
+    let info: DocIndex['info'];
     let version = LIBRARY_VERSIONS[lib] || '';
     const constraintsPath = path.join(libDir, 'constraints.md');
 
@@ -180,12 +179,12 @@ function build(): void {
       };
     }
 
-    const indexData: SkillIndex = {
+    const indexData: DocIndex = {
       library: lib,
       version,
       generated: new Date().toISOString().split('T')[0],
-      total: skills.length,
-      skills,
+      total: docs.length,
+      docs,
       info: info!
     };
 

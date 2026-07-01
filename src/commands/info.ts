@@ -1,25 +1,25 @@
 import { Command } from 'commander';
-import { getSkillInfo } from '../core/retriever';
+import { getDocInfo } from '../core/retriever';
 
 export function registerInfoCommand(program: Command): void {
   program
     .command('info')
-    .description('Show skill info from SKILL.md')
+    .description('Show doc info from DOC.md')
     .option('--library <lib>', 'Library to show info for (g2 or g6)', 'g2')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action((opts: { library: string; output: string }) => {
-      const skill = getSkillInfo(opts.library);
+      const doc = getDocInfo(opts.library);
 
-      if (!skill) {
-        console.error(`No skill info found for library: ${opts.library}`);
+      if (!doc) {
+        console.error(`No doc info found for library: ${opts.library}`);
         process.exit(1);
       }
 
       if (opts.output === 'json') {
-        console.log(JSON.stringify(skill, null, 2));
+        console.log(JSON.stringify(doc, null, 2));
         return;
       }
 
-      console.log(`${skill.name}: ${skill.description}\n\n${skill.content}`);
+      console.log(`${doc.name}: ${doc.description}\n\n${doc.content}`);
     });
 }

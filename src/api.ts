@@ -1,21 +1,21 @@
 import {
   retrieve as _retrieve,
-  getSkillById as _getSkillById,
-  getSkillInfo,
+  getDocById as _getDocById,
+  getDocInfo,
   availableLibraries,
-  listSkills as _listSkills
+  listDocs as _listDocs
 } from './core/retriever';
 import type {
-  Skill,
-  SkillInfo,
+  Doc,
+  DocInfo,
   RetrieveOptions,
   ListOptions
 } from './core/types';
 
-export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
+export type { Doc, DocInfo, RetrieveOptions, ListOptions };
 
 /**
- * Retrieve skills based on a query. Returns skill content by default.
+ * Retrieve docs based on a query. Returns doc content by default.
  *
  * @example retrieve('bar chart', { library: 'g2', topK: 5 })
  * @example retrieve('bar chart', { library: 'g2', content: false })  // metadata only
@@ -23,20 +23,20 @@ export type { Skill, SkillInfo, RetrieveOptions, ListOptions };
  * Legacy positional signature still supported for backwards compatibility.
  * @example retrieve('bar chart', 'g2', 5, true)
  */
-export function retrieve(query: string, options?: RetrieveOptions): Promise<Skill[]>;
+export function retrieve(query: string, options?: RetrieveOptions): Promise<Doc[]>;
 /** @deprecated Use the options-object overload instead. */
 export function retrieve(
   query: string,
   library?: string,
   topk?: number,
   content?: boolean
-): Promise<Skill[]>;
+): Promise<Doc[]>;
 export async function retrieve(
   query: string,
   libraryOrOpts?: string | RetrieveOptions,
   topk = 7,
   content = true
-): Promise<Skill[]> {
+): Promise<Doc[]> {
   if (typeof libraryOrOpts === 'string' || libraryOrOpts === undefined) {
     return await _retrieve(query, { library: libraryOrOpts, topK: topk, content });
   }
@@ -44,26 +44,26 @@ export async function retrieve(
 }
 
 /**
- * Get a single skill by its exact ID.
+ * Get a single doc by its exact ID.
  *
- * @param id      The skill ID (e.g. 'g2-mark-bar').
+ * @param id      The doc ID (e.g. 'g2-mark-bar').
  * @param library Optional: restrict the search to a specific library.
- * @returns The skill with full content, or undefined if not found.
- * @example getSkillById('g2-mark-bar')
+ * @returns The doc with full content, or undefined if not found.
+ * @example getDocById('g2-mark-bar')
  */
-export function getSkillById(id: string, library?: string): Skill | undefined {
-  return _getSkillById(id, library);
+export function getDocById(id: string, library?: string): Doc | undefined {
+  return _getDocById(id, library);
 }
 
 /**
- * Get skill info embedded in the library index.
+ * Get doc info embedded in the library index.
  *
  * @param library The library to get info for (default: 'g2').
  * @example info('g2')
- * @returns The skill info, or undefined if not available.
+ * @returns The doc info, or undefined if not available.
  */
-export function info(library = 'g2'): SkillInfo | undefined {
-  return getSkillInfo(library);
+export function info(library = 'g2'): DocInfo | undefined {
+  return getDocInfo(library);
 }
 
 /**
@@ -75,10 +75,10 @@ export function libraries(): string[] {
 }
 
 /**
- * List available skills, optionally filtered by library, category or tags.
+ * List available docs, optionally filtered by library, category or tags.
  * @param options Filter options.
- * @example listSkills({ library: 'g2', tags: ['bar'] })
+ * @example listDocs({ library: 'g2', tags: ['bar'] })
  */
-export function listSkills(options: ListOptions = {}): Skill[] {
-  return _listSkills(options);
+export function listDocs(options: ListOptions = {}): Doc[] {
+  return _listDocs(options);
 }

@@ -13,7 +13,7 @@ const program = new Command();
 
 program
   .name('antv')
-  .description('CLI tool for AntV chart visualization skills retrieval')
+  .description('CLI tool for AntV chart visualization docs retrieval')
   .version(pkg.version)
   .option('--debug', 'Show full stack trace on error');
 

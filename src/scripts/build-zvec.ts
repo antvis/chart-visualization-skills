@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Build script: generates zvec vector index from skill index JSON files.
+ * Build script: generates zvec vector index from doc index JSON files.
  *
  * Run this after `build:index:json` (or rely on `build:index` which chains both).
  *
@@ -13,7 +13,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import type { Skill, SkillIndex } from '../core/types';
+import type { Doc, DocIndex } from '../core/types';
 import { getEmbedder, SimpleEmbedder } from '../core/retrieval/embedder';
 import type { Embedder } from '../core/retrieval/embedder';
 import { createZvecStore, isZvecAvailable } from '../core/retrieval/zvec-store';
@@ -47,31 +47,31 @@ function hashContent(text: string): string {
 // Title is repeated 5x to amplify its signal in the embedding.
 // Code blocks are excluded to focus the vector on conceptual content.
 // ---------------------------------------------------------------------------
-function buildEmbeddingText(skill: Skill): string {
+function buildEmbeddingText(doc: Doc): string {
   const parts: string[] = [];
 
   // Title x5 — strongest signal, title carries the most discriminative tokens
-  const title = skill.title || '';
+  const title = doc.title || '';
   if (title) parts.push(title, title, title, title, title);
 
-  if (skill.description) parts.push(skill.description);
+  if (doc.description) parts.push(doc.description);
 
-  if (skill.tags && skill.tags.length > 0) {
-    parts.push(skill.tags.join(' '));
+  if (doc.tags && doc.tags.length > 0) {
+    parts.push(doc.tags.join(' '));
   }
 
   // Use cases and anti-patterns carry high-signal domain vocabulary
-  if (skill.use_cases && skill.use_cases.length > 0) {
-    parts.push(skill.use_cases.join(' '));
+  if (doc.use_cases && doc.use_cases.length > 0) {
+    parts.push(doc.use_cases.join(' '));
   }
-  if (skill.anti_patterns && skill.anti_patterns.length > 0) {
-    parts.push(skill.anti_patterns.join(' '));
+  if (doc.anti_patterns && doc.anti_patterns.length > 0) {
+    parts.push(doc.anti_patterns.join(' '));
   }
 
-  if (skill.content) {
+  if (doc.content) {
     // Strip code blocks and table rows — keep section headings,
     // which carry conceptual framing ("核心概念", "常见错误与修正", etc.)
-    const cleanText = skill.content
+    const cleanText = doc.content
       .replace(/```[\s\S]*?```/g, ' ')        // remove all fenced code blocks
       .replace(/\|.+\|/g, ' ')                  // remove table rows (keep heading text short)
       .replace(/\n{2,}/g, '\n')                 // collapse whitespace
@@ -96,23 +96,23 @@ function buildEmbeddingText(skill: Skill): string {
 //   plus bookkeeping: library, category, path, content_hash, source,
 //   expires_at.
 // ---------------------------------------------------------------------------
-function buildZvecFields(skill: Skill): Record<string, string | number> {
+function buildZvecFields(doc: Doc): Record<string, string | number> {
   const content =
-    (skill.content || '').length > MAX_FIELD_CONTENT_CHARS
-      ? skill.content!.slice(0, MAX_FIELD_CONTENT_CHARS)
-      : skill.content || '';
+    (doc.content || '').length > MAX_FIELD_CONTENT_CHARS
+      ? doc.content!.slice(0, MAX_FIELD_CONTENT_CHARS)
+      : doc.content || '';
 
   return {
-    title: skill.title || '',
-    description: skill.description || '',
-    library: skill.library || '',
-    category: skill.category || '',
-    tags: (skill.tags || []).join(' '),
+    title: doc.title || '',
+    description: doc.description || '',
+    library: doc.library || '',
+    category: doc.category || '',
+    tags: (doc.tags || []).join(' '),
     content,
-    use_cases: (skill.use_cases || []).join(' '),
-    anti_patterns: (skill.anti_patterns || []).join(' '),
-    path: skill.path || '',
-    content_hash: hashContent(skill.content || ''),
+    use_cases: (doc.use_cases || []).join(' '),
+    anti_patterns: (doc.anti_patterns || []).join(' '),
+    path: doc.path || '',
+    content_hash: hashContent(doc.content || ''),
     source: 'static',
     expires_at: 0
   };
@@ -170,10 +170,10 @@ async function build(): Promise<void> {
       const indexPath = path.join(INDEX_DIR, indexFile);
 
       console.log(`  ${library.toUpperCase()}: Loading index...`);
-      const index: SkillIndex = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
-      const { skills } = index;
+      const index: DocIndex = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+      const { docs } = index;
 
-      const texts = skills.map(buildEmbeddingText);
+      const texts = docs.map(buildEmbeddingText);
       const vectors = embedder.constructor.name === 'SimpleEmbedder'
         ? texts.map((t) => (embedder as SimpleEmbedder).embedSync(t))
         : await embedder.embedBatch(texts);
@@ -193,15 +193,15 @@ async function build(): Promise<void> {
       );
 
       const batchSize = 100;
-      for (let i = 0; i < skills.length; i += batchSize) {
-        const batch = skills.slice(i, i + batchSize);
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = docs.slice(i, i + batchSize);
         const batchVectors = vectors.slice(i, i + batchSize);
-        const docs = batch.map((skill, idx) => ({
-          id: skill.id,
+        const items = batch.map((doc, idx) => ({
+          id: doc.id,
           vector: batchVectors[idx],
-          fields: buildZvecFields(skill)
+          fields: buildZvecFields(doc)
         }));
-        await store.insert(docs);
+        await store.insert(items);
       }
 
       await store.close();
