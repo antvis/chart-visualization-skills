@@ -39,7 +39,7 @@ Eval + Harness 通过自动化评测发现问题，再由 LLM 优化 Skill 文�
 
 ### 1. Skill Authoring (`skills/`)
 
-Skills are markdown files with YAML frontmatter, organized by library. Each skill documents a chart type or visualization pattern with metadata (category, tags, difficulty, use cases) and content (best practices, API usage, code examples).
+Skills are markdown files with YAML frontmatter, organized by library. Each skill documents a chart type or visualization pattern with metadata (category, tags, use cases) and content (best practices, API usage, code examples).
 
 ```
 skills/
@@ -69,15 +69,28 @@ The CLI (`antv` command) provides four commands:
 - `antv info <library>` - Show library core constraints (SKILL.md Section 1-2)
 
 The retrieval engine uses **zvec** (in-process vector database) with two strategies:
-- **`hybrid`** (default): zvec native multiQuery — FTS (jieba tokenizer, raw text) + Vector (HNSW ANN, 384d) + RRF fusion
+- **`hybrid`** (default): zvec native multiQuery — FTS (jieba tokenizer, raw text) + Vector (HNSW ANN, 512d) + RRF fusion
 - **`vector`**: Pure ANN vector similarity search
 
-Embedding is handled by `SimpleEmbedder` (tokenizer + multi-hash, 384d, synchronous). No model download required.
+Embedding is handled by `SimpleEmbedder` (tokenizer + multi-hash, 512d, synchronous). No model download required.
 
 Public API (`src/api.ts`) exports `retrieve()`, `info()`, `getSkillById()`, `libraries()`, and `listSkills()` for programmatic use.
 
-Additional components:
-- **HTTP Server** (`http-server/`): Standalone REST API deployment package
+### HTTP Server (`http-server/`)
+
+Standalone REST API server (Express) providing POST endpoints for skill retrieval. Used by SKILL.md files for content retrieval via HTTP calls.
+
+```bash
+cd http-server && npm run dev    # starts on http://localhost:3100 (configurable via PORT env)
+```
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, includeConstraints, strategy, maxTokens, progressiveLevel}` |
+| `/info` | POST | Get library core constraints. Body: `{library}` |
+| `/get` | POST | Get single skill by exact ID. Body: `{id, library}` |
+| `/list` | POST | List/filter skills. Body: `{library, category, tags}` |
+| `/libraries` | GET | List available library names |
 
 ### 3. Evaluation (`eval/`)
 

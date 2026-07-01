@@ -6,4 +6,6 @@ packages:
 allowBuilds:
   '@zvec/zvec': true
   esbuild: true
+  onnxruntime-node: true
+  protobufjs: true
   sharp: true

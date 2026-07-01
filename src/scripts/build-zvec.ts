@@ -14,11 +14,9 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import type { Skill, SkillIndex } from '../core/types';
-import { getEmbedder, resetEmbedder } from '../core/retrieval/embedder';
-import {
-  createZvecStore,
-  isZvecAvailable,
-} from '../core/retrieval/zvec-store';
+import { getEmbedder, SimpleEmbedder } from '../core/retrieval/embedder';
+import type { Embedder } from '../core/retrieval/embedder';
+import { createZvecStore, isZvecAvailable } from '../core/retrieval/zvec-store';
 import type { IZvecStore } from '../core/retrieval/zvec-store';
 
 // ---------------------------------------------------------------------------
@@ -46,14 +44,15 @@ function hashContent(text: string): string {
 
 // ---------------------------------------------------------------------------
 // Build embedding text for a single skill document.
-// Title is repeated 3x to amplify its signal in the embedding.
+// Title is repeated 5x to amplify its signal in the embedding.
+// Code blocks are excluded to focus the vector on conceptual content.
 // ---------------------------------------------------------------------------
 function buildEmbeddingText(skill: Skill): string {
   const parts: string[] = [];
 
-  // Title x3
+  // Title x5 — strongest signal, title carries the most discriminative tokens
   const title = skill.title || '';
-  if (title) parts.push(title, title, title);
+  if (title) parts.push(title, title, title, title, title);
 
   if (skill.description) parts.push(skill.description);
 
@@ -61,11 +60,28 @@ function buildEmbeddingText(skill: Skill): string {
     parts.push(skill.tags.join(' '));
   }
 
+  // Use cases and anti-patterns carry high-signal domain vocabulary
+  if (skill.use_cases && skill.use_cases.length > 0) {
+    parts.push(skill.use_cases.join(' '));
+  }
+  if (skill.anti_patterns && skill.anti_patterns.length > 0) {
+    parts.push(skill.anti_patterns.join(' '));
+  }
+
   if (skill.content) {
+    // Strip code blocks and table rows — keep section headings,
+    // which carry conceptual framing ("核心概念", "常见错误与修正", etc.)
+    const cleanText = skill.content
+      .replace(/```[\s\S]*?```/g, ' ')        // remove all fenced code blocks
+      .replace(/\|.+\|/g, ' ')                  // remove table rows (keep heading text short)
+      .replace(/\n{2,}/g, '\n')                 // collapse whitespace
+      .replace(/[ \t]{2,}/g, ' ')
+      .replace(/^#{1,6}\s+/gm, '')             // strip markdown heading markers (##) but keep text
+      .trim();
     const snippet =
-      skill.content.length > MAX_EMBED_CHARS
-        ? skill.content.slice(0, MAX_EMBED_CHARS)
-        : skill.content;
+      cleanText.length > MAX_EMBED_CHARS
+        ? cleanText.slice(0, MAX_EMBED_CHARS)
+        : cleanText;
     parts.push(snippet);
   }
 
@@ -77,7 +93,7 @@ function buildEmbeddingText(skill: Skill): string {
 // Mirrors the design doc schema (Section 3.1.4):
 //   title*, description*, tags*, content*, use_cases*, anti_patterns*
 //   (starred = searchable via FTS when zvec native FTS is available)
-//   plus bookkeeping: library, category, difficulty, path, content_hash, source,
+//   plus bookkeeping: library, category, path, content_hash, source,
 //   expires_at.
 // ---------------------------------------------------------------------------
 function buildZvecFields(skill: Skill): Record<string, string | number> {
@@ -92,14 +108,13 @@ function buildZvecFields(skill: Skill): Record<string, string | number> {
     library: skill.library || '',
     category: skill.category || '',
     tags: (skill.tags || []).join(' '),
-    difficulty: skill.difficulty || '',
     content,
     use_cases: (skill.use_cases || []).join(' '),
     anti_patterns: (skill.anti_patterns || []).join(' '),
     path: skill.path || '',
     content_hash: hashContent(skill.content || ''),
     source: 'static',
-    expires_at: 0,
+    expires_at: 0
   };
 }
 
@@ -114,15 +129,19 @@ async function build(): Promise<void> {
   if (!zvecNativeAvailable) {
     console.log(
       '⚠️  @zvec/zvec native bindings are NOT available on this platform.\n' +
-      '   The zvec index will be built in-memory only and will NOT be\n' +
-      '   included in the dist/ package.\n' +
-      '\n' +
-      '   Supported platforms: darwin-arm64 (Apple Silicon), linux-x64, win32-x64.\n' +
-      '   Current platform:     ' + process.platform + '-' + process.arch + '\n' +
-      '\n' +
-      '   To publish a package with zvec indexes, run this build on one of\n' +
-      '   the supported platforms above. On unsupported platforms the runtime\n' +
-      '   will automatically fall back to BM25 keyword search.\n'
+        '   The zvec index will be built in-memory only and will NOT be\n' +
+        '   included in the dist/ package.\n' +
+        '\n' +
+        '   Supported platforms: darwin-arm64 (Apple Silicon), linux-x64, win32-x64.\n' +
+        '   Current platform:     ' +
+        process.platform +
+        '-' +
+        process.arch +
+        '\n' +
+        '\n' +
+        '   To publish a package with zvec indexes, run this build on one of\n' +
+        '   the supported platforms above. On unsupported platforms the runtime\n' +
+        '   will automatically fall back to BM25 keyword search.\n'
     );
     return;
   }
@@ -141,73 +160,77 @@ async function build(): Promise<void> {
     return;
   }
 
-  // Initialise embedder (auto-selects best available)
-  const embedder = await getEmbedder();
-  console.log(`Embedder: ${embedder.constructor.name} (${embedder.dimensions}d)\n`);
+  // ── Build helper ──────────────────────────────────────────────────────────
+  async function buildIndex(
+    embedder: Embedder,
+    suffix: string,
+  ): Promise<void> {
+    for (const indexFile of indexFiles) {
+      const library = indexFile.replace('.index.json', '');
+      const indexPath = path.join(INDEX_DIR, indexFile);
 
-  for (const indexFile of indexFiles) {
-    const library = indexFile.replace('.index.json', '');
-    const indexPath = path.join(INDEX_DIR, indexFile);
+      console.log(`  ${library.toUpperCase()}: Loading index...`);
+      const index: SkillIndex = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+      const { skills } = index;
 
-    console.log(`${library.toUpperCase()}: Loading index...`);
-    const index: SkillIndex = JSON.parse(
-      fs.readFileSync(indexPath, 'utf-8')
-    );
+      const texts = skills.map(buildEmbeddingText);
+      const vectors = embedder.constructor.name === 'SimpleEmbedder'
+        ? texts.map((t) => (embedder as SimpleEmbedder).embedSync(t))
+        : await embedder.embedBatch(texts);
 
-    const { skills } = index;
-    console.log(`  ${skills.length} documents found.`);
-
-    // Build embedding texts
-    console.log(`  Building embedding texts...`);
-    const texts = skills.map(buildEmbeddingText);
-
-    // Embed all in batch
-    console.log(`  Embedding (${texts.length} texts)...`);
-    const vectors = await embedder.embedBatch(texts);
-    console.log(`  Got ${vectors.length} vectors (${vectors[0]?.length ?? 0}d).`);
-
-    // Build zvec docs
-    const zvecPath = path.join(INDEX_DIR, `${library}.zvec`);
-    console.log(`  Writing zvec collection to ${library}.zvec/ ...`);
-
-    // Remove old collection if present
-    if (fs.existsSync(zvecPath)) {
-      fs.rmSync(zvecPath, { recursive: true, force: true });
-    }
-
-    const store: IZvecStore = await createZvecStore(
-      zvecPath,
-      embedder.dimensions
-    );
-
-    const batchSize = 100;
-    for (let i = 0; i < skills.length; i += batchSize) {
-      const batch = skills.slice(i, i + batchSize);
-      const batchVectors = vectors.slice(i, i + batchSize);
-      const docs = batch.map((skill, idx) => ({
-        id: skill.id,
-        vector: batchVectors[idx],
-        fields: buildZvecFields(skill),
-      }));
-      await store.insert(docs);
       console.log(
-        `    Inserted ${Math.min(i + batchSize, skills.length)}/${skills.length}`
+        `    Embedded ${vectors.length} texts → ${vectors[0]?.length ?? 0}d`
       );
-    }
 
-    await store.close();
+      const zvecPath = path.join(INDEX_DIR, `${library}.zvec${suffix}`);
+      if (fs.existsSync(zvecPath)) {
+        fs.rmSync(zvecPath, { recursive: true, force: true });
+      }
 
-    // Verify on disk
-    if (fs.existsSync(zvecPath)) {
-      const files = fs.readdirSync(zvecPath).length;
-      console.log(`  Collection written (${files} files).\n`);
-    } else {
-      console.error(`  ERROR: zvec collection was not persisted to disk.\n`);
-      process.exit(1);
+      const store: IZvecStore = await createZvecStore(
+        zvecPath,
+        embedder.dimensions
+      );
+
+      const batchSize = 100;
+      for (let i = 0; i < skills.length; i += batchSize) {
+        const batch = skills.slice(i, i + batchSize);
+        const batchVectors = vectors.slice(i, i + batchSize);
+        const docs = batch.map((skill, idx) => ({
+          id: skill.id,
+          vector: batchVectors[idx],
+          fields: buildZvecFields(skill)
+        }));
+        await store.insert(docs);
+      }
+
+      await store.close();
+
+      if (fs.existsSync(zvecPath)) {
+        const files = fs.readdirSync(zvecPath).length;
+        console.log(`    ${library}.zvec${suffix} written (${files} files).`);
+      } else {
+        console.error(`    ERROR: ${library}.zvec${suffix} not persisted.`);
+        process.exit(1);
+      }
     }
   }
 
-  console.log('Done.');
+  // ── Pass 1: primary embedder (TransformersEmbedder or SimpleEmbedder) ─────
+  const embedder = await getEmbedder();
+  console.log(
+    `Pass 1: ${embedder.constructor.name} (${embedder.dimensions}d)\n`
+  );
+  await buildIndex(embedder, '');
+
+  // ── Pass 2: SimpleEmbedder fallback (only when Pass 1 used Transformers) ──
+  if (embedder.constructor.name === 'TransformersEmbedder') {
+    const simpleEmbedder = new SimpleEmbedder();
+    console.log(`\nPass 2: SimpleEmbedder (${simpleEmbedder.dimensions}d) fallback index\n`);
+    await buildIndex(simpleEmbedder, '.simple');
+  }
+
+  console.log('\nDone.');
 }
 
 build().catch((err) => {

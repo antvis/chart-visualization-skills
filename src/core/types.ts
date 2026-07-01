@@ -1,13 +1,13 @@
 export interface Skill {
   id: string;
   title: string;
+  title_en: string;
   description: string;
   library: string;
   version: string;
   category: string;
   subcategory: string;
   tags: string[];
-  difficulty: string;
   use_cases: string[];
   anti_patterns: string[];
   related: string[];
@@ -28,13 +28,13 @@ export interface SkillIndex {
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
+  /** Include markdown content body (default: true). */
   content?: boolean;
   /**
-   * When true, prepend the library's SKILL.md core constraints as the first
-   * result. Callers should set this whenever `content` is true so the model
-   * always receives constraints alongside reference docs.
+   * When true, prepend the library's constraints as the first result
+   * (id prefixed with `__info__`). Default: same as `content`.
    */
-  includeInfo?: boolean;
+  includeConstraints?: boolean;
   /**
    * Retrieval strategy:
    * - 'vector'  dense vector similarity via zvec index
@@ -56,7 +56,6 @@ export interface ListOptions {
   library?: string;
   category?: string | null;
   tags?: string[];
-  difficulty?: string | null;
 }
 
 export interface SkillInfo {
@@ -72,4 +71,3 @@ export interface SkillInfo {
    */
   constraintsContent: string;
 }
-

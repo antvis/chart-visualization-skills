@@ -38,11 +38,9 @@ export function createRetrieveTool(
         .describe("检索策略: vector=语义向量, hybrid=混合检索(默认, 推荐)"),
     }),
     execute: async ({ query, library, topk, strategy }) => {
-      const retrievedSkills = retrieve(query, {
+      const retrievedSkills = await retrieve(query, {
         library: library ?? defaultLibrary,
         topK: topk ?? 5,
-        content: true,
-        includeInfo: true,
         strategy: strategy ?? defaultStrategy,
       });
       console.log(

@@ -9,24 +9,18 @@ export function registerListCommand(program: Command): void {
     .option('--library <lib>', 'Filter by library (g2 or g6)')
     .option('--category <cat>', 'Filter by category')
     .option('--tags <tags>', 'Filter by tags (comma-separated)')
-    .option(
-      '--difficulty <level>',
-      'Filter by difficulty (beginner|intermediate|advanced)'
-    )
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       (opts: {
         library?: string;
         category?: string;
         tags?: string;
-        difficulty?: string;
         output: string;
       }) => {
         const skills = listSkills({
           library: opts.library,
           category: opts.category || null,
-          tags: opts.tags ? opts.tags.split(',').map((t) => t.trim()) : [],
-          difficulty: opts.difficulty || null
+          tags: opts.tags ? opts.tags.split(',').map((t) => t.trim()) : []
         });
 
         if (opts.output === 'json') {

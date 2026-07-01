@@ -2,7 +2,7 @@
  * Embedder: text-to-vector conversion.
  *
  * Two implementations are provided:
- * - TransformersEmbedder: uses @xenova/transformers (all-MiniLM-L6-v2, 384 dims)
+ * - TransformersEmbedder: uses @huggingface/transformers (bge-small-zh-v1.5, 512 dims, bilingual)
  * - SimpleEmbedder:    lightweight TF-IDF-style pseudo-embedding (no model download)
  *
  * Selection logic:
@@ -20,14 +20,19 @@ export interface Embedder {
 // SimpleEmbedder – lightweight pseudo-embedding, no external dependencies
 // ---------------------------------------------------------------------------
 
-const SIMPLE_DIMS = 384;
+const SIMPLE_DIMS = 512;
 
 /**
- * Lightweight pseudo-embedder: character n-grams hashed with multiple
- * hash functions into a fixed-size vector, then L2-normalised.
+ * Lightweight pseudo-embedder with weighted CJK n-grams, synonym expansion,
+ * and log-scale count compression.
  *
- * This is NOT a semantic embedder – it produces a bag-of-subword-tokens
- * fingerprint. Use TransformersEmbedder for production workloads.
+ * CJK n-grams are weighted by length (trigram > bigram > unigram) because
+ * longer n-grams are more discriminative ("矩形树图" >> "图").
+ * Chart-type synonyms bridge the Chinese-English gap that pure character
+ * hashing cannot cross ("树图" ⇔ "treemap").
+ *
+ * Still NOT a semantic embedder — it's a tuned bag-of-tokens fingerprint.
+ * TransformersEmbedder is the production-quality path.
  */
 export class SimpleEmbedder implements Embedder {
   readonly dimensions = SIMPLE_DIMS;
@@ -43,23 +48,20 @@ export class SimpleEmbedder implements Embedder {
   /** Synchronous embedding – no async overhead, usable in sync code paths. */
   embedSync(text: string): number[] {
     const vec = new Array<number>(SIMPLE_DIMS).fill(0);
-    const tokens = tokenize(text);
-    if (tokens.length === 0) {
-      // Fallback: use raw character n-grams on lowercased input
-      const raw = text.toLowerCase().replace(/\s+/g, ' ');
-      for (let i = 0; i + 2 <= raw.length; i++) {
-        const bigram = raw.slice(i, i + 2);
-        for (let h = 0; h < 3; h++) {
-          vec[hashToken(bigram, h) % SIMPLE_DIMS] += 1;
-        }
+    const tokens = tokenizeWeighted(text);
+
+    for (const { token, weight } of tokens) {
+      // 3 hash functions per token for collision resistance
+      for (let h = 0; h < 3; h++) {
+        vec[hashToken(token, h) % SIMPLE_DIMS] += weight;
       }
     }
 
-    for (const token of tokens) {
-      // Multiple hash functions per token for better coverage
-      for (let h = 0; h < 3; h++) {
-        vec[hashToken(token, h) % SIMPLE_DIMS] += 1;
-      }
+    // Log-scale compression: prevents dimension saturation from
+    // high-frequency terms (a term appearing 50× contributes log(51) ≈ 3.93
+    // instead of 50, giving rare terms proportionally more influence).
+    for (let i = 0; i < SIMPLE_DIMS; i++) {
+      if (vec[i] > 0) vec[i] = Math.log(1 + vec[i]);
     }
 
     // L2-normalise
@@ -74,11 +76,11 @@ export class SimpleEmbedder implements Embedder {
 }
 
 // ---------------------------------------------------------------------------
-// TransformersEmbedder – local sentence-transformers model via Xenova
+// TransformersEmbedder – local sentence-transformers model via @huggingface/transformers
 // ---------------------------------------------------------------------------
 
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2';
-const TRANSFORMERS_DIMS = 384;
+const MODEL_ID = 'onnx-community/bge-small-zh-v1.5-ONNX';
+const TRANSFORMERS_DIMS = 512;
 
 let _transformersModule: any = undefined;
 let _transformersLoadFailed = false;
@@ -86,19 +88,32 @@ let _transformersLoadFailed = false;
 async function loadTransformers(): Promise<any> {
   if (_transformersModule) return _transformersModule;
   if (_transformersLoadFailed) return undefined;
+
   try {
-    // Dynamic require – @xenova/transformers is an optional dependency.
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _transformersModule = require('@xenova/transformers');
+    // @huggingface/transformers v4 is an ESM-first package (type: "module").
+    // Dynamic import() loads the proper ESM bundle where `pipeline` is a
+    // real async function.  The CJS bundle (transformers.node.cjs) may not
+    // expose `pipeline` correctly on some platforms due to native-binding
+    // side-effects during require().
+    _transformersModule = await import('@huggingface/transformers');
   } catch {
     _transformersLoadFailed = true;
     return undefined;
   }
+
+  // Apply HF_ENDPOINT mirror if set (e.g. https://hf-mirror.com for China).
+  // @huggingface/transformers v4 does NOT read HF_ENDPOINT automatically;
+  // it hardcodes "https://huggingface.co/" as env.remoteHost.
+  const hfEndpoint = process.env.HF_ENDPOINT;
+  if (hfEndpoint && _transformersModule?.env) {
+    _transformersModule.env.remoteHost = hfEndpoint;
+  }
+
   return _transformersModule;
 }
 
 /**
- * Embedder backed by Xenova/all-MiniLM-L6-v2 (384-dims).
+ * Embedder backed by onnx-community/all-MiniLM-L6-v2-ONNX (384-dims).
  *
  * Constructor is cheap – the model is loaded lazily on the first embed() call.
  * When the optional dependency is not installed the embed()/embedBatch() calls
@@ -110,20 +125,21 @@ export class TransformersEmbedder implements Embedder {
   private _loadPromise: Promise<any> | null = null;
 
   private async _getPipeline(): Promise<any> {
-    if (this._pipeline) return this._pipeline;
+    if (this._pipeline) {
+      return this._pipeline;
+    }
+
     if (!this._loadPromise) {
       this._loadPromise = (async () => {
         const t = await loadTransformers();
-        if (!t) {
-          throw new Error(
-            '@xenova/transformers is not installed. Install it with:\n' +
-              '  pnpm add @xenova/transformers'
-          );
-        }
         this._pipeline = await t.pipeline('feature-extraction', MODEL_ID);
+        return this._pipeline;
       })();
     }
-    return this._loadPromise;
+
+    const result = await this._loadPromise;
+
+    return result;
   }
 
   async embed(text: string): Promise<number[]> {
@@ -132,11 +148,14 @@ export class TransformersEmbedder implements Embedder {
 
   async embedBatch(texts: string[]): Promise<number[][]> {
     const pipe = await this._getPipeline();
-    const outputs = await pipe(texts, {
-      pooling: 'mean',
-      normalize: true,
-    });
-    return Array.from(outputs.tolist()) as number[][];
+    const outputs = await Reflect.apply(pipe, null, [
+      texts,
+      {
+        pooling: 'mean',
+        normalize: true
+      }
+    ]);
+    return Array.from((outputs as any).tolist());
   }
 }
 
@@ -150,16 +169,40 @@ let _syncEmbedder: SimpleEmbedder | null = null;
 /**
  * Return a shared Embedder instance (async).
  *
- * Tries TransformersEmbedder first (needs @xenova/transformers installed),
- * then falls back to SimpleEmbedder.
+ * Tries TransformersEmbedder first (needs @huggingface/transformers installed
+ * AND the model downloadable from HuggingFace Hub). If either fails, falls
+ * back to SimpleEmbedder gracefully.
  */
 export async function getEmbedder(): Promise<Embedder> {
   if (_defaultEmbedder) return _defaultEmbedder;
 
   const t = await loadTransformers();
   if (t) {
-    _defaultEmbedder = new TransformersEmbedder();
+    try {
+      // Probe: attempt to load the model pipeline. If network is unavailable
+      // or the model can't be fetched, fall back to SimpleEmbedder instead
+      // of crashing the entire process.
+      const probe = new TransformersEmbedder();
+      await probe.embed('probe'); // triggers lazy model download
+      _defaultEmbedder = probe;
+    } catch (err) {
+      console.warn(
+        `[embedder] 双语模型 (bge-small-zh-v1.5) 加载失败，降级为 SimpleEmbedder。\n` +
+        `  错误: ${(err as Error).message?.split('\n')[0]}\n` +
+        `\n` +
+        `  SimpleEmbedder 的召回质量较低，建议修复模型下载：\n` +
+        `    1. 设置镜像: export HF_ENDPOINT=https://hf-mirror.com\n` +
+        `    2. 手动下载: node scripts/download-model.mjs\n`
+      );
+      _defaultEmbedder = new SimpleEmbedder();
+    }
   } else {
+    console.warn(
+      '[embedder] @huggingface/transformers 未安装，使用 SimpleEmbedder。\n' +
+      '  安装后可使用双语模型提升召回质量:\n' +
+      '    npm install @huggingface/transformers\n' +
+      '    node scripts/download-model.mjs\n'
+    );
     _defaultEmbedder = new SimpleEmbedder();
   }
   return _defaultEmbedder;
@@ -189,29 +232,91 @@ export function resetEmbedder(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Internal helpers
+// Internal helpers — weighted tokenization
 // ---------------------------------------------------------------------------
 
-function tokenize(text: string): string[] {
-  const tokens: string[] = [];
+interface WeightedToken {
+  token: string;
+  weight: number;
+}
 
-  // Split mixed CJK / ASCII into chunks
-  const segments = splitMixed(text.toLowerCase());
+// ── CJK n-gram weights ──────────────────────────────────────────────────────
+// Trigram: "矩形树图" — highly discriminative          → weight 2.0
+// Bigram:  "树图", "柱状" — moderately discriminative  → weight 1.0
+// Unigram: "图", "型" — mostly noise                    → weight 0.15
+// ────────────────────────────────────────────────────────────────────────────
+const CJK_UNIGRAM_WEIGHT = 0.15;
+const CJK_BIGRAM_WEIGHT  = 1.0;
+const CJK_TRIGRAM_WEIGHT = 2.0;
+
+// ── English word weights ────────────────────────────────────────────────────
+const EN_WORD_WEIGHT        = 1.5;  // "treemap", "sankey" — discriminative
+const EN_SINGLE_CHAR_WEIGHT = 0.1;  // "x", "y" — axis labels, noise
+
+// ── Chart-type synonym map ──────────────────────────────────────────────────
+// Now uses the shared synonyms.ts module instead of a local copy.
+// This ensures FTS query expansion and embedding token expansion use
+// the SAME mapping, eliminating the drift between retriever.ts and
+// embedder.ts that existed before.
+// ────────────────────────────────────────────────────────────────────────────
+import { getSynonymMap } from '../synonyms';
+
+function tokenizeWeighted(text: string): WeightedToken[] {
+  const synonymMap = getSynonymMap();
+  const tokens: WeightedToken[] = [];
+  const seen = new Set<string>(); // deduplicate — each token once per doc
+  const lower = text.toLowerCase();
+  const segments = splitMixed(lower);
 
   for (const seg of segments) {
     if (isCJK(seg)) {
-      // Character n-grams (1..3) for Chinese / Japanese / Korean
-      for (let n = 1; n <= 3; n++) {
-        for (let i = 0; i + n <= seg.length; i++) {
-          tokens.push(seg.slice(i, i + n));
+      // CJK: weighted n-grams 1..3
+      // Trigrams first (highest weight)
+      for (let i = 0; i + 3 <= seg.length; i++) {
+        const t = seg.slice(i, i + 3);
+        if (!seen.has(t)) { seen.add(t); tokens.push({ token: t, weight: CJK_TRIGRAM_WEIGHT }); }
+      }
+      // Bigrams
+      for (let i = 0; i + 2 <= seg.length; i++) {
+        const t = seg.slice(i, i + 2);
+        if (!seen.has(t)) { seen.add(t); tokens.push({ token: t, weight: CJK_BIGRAM_WEIGHT }); }
+      }
+      // Unigrams (lowest weight, may be stopped)
+      for (const ch of seg) {
+        if (seen.has(ch) || CJK_UNIGRAM_STOP.has(ch)) continue;
+        seen.add(ch);
+        tokens.push({ token: ch, weight: CJK_UNIGRAM_WEIGHT });
+      }
+
+      // Synonym expansion: add English equivalents for known chart types
+      for (const [term, synonyms] of synonymMap) {
+        if (seg.includes(term)) {
+          for (const syn of synonyms) {
+            if (seen.has(syn)) continue;
+            seen.add(syn);
+            tokens.push({ token: syn, weight: 1.0 });
+          }
         }
       }
     } else {
-      // Whitespace-split for alphabetic segments
+      // Non-CJK: whitespace-split, weight by word length
       for (const w of seg.split(/\s+/)) {
         const trimmed = w.trim();
-        if (trimmed.length >= 1 && !STOP_WORDS.has(trimmed)) {
-          tokens.push(trimmed);
+        if (!trimmed || STOP_WORDS.has(trimmed) || seen.has(trimmed)) continue;
+        seen.add(trimmed);
+        const weight = trimmed.length === 1
+          ? EN_SINGLE_CHAR_WEIGHT
+          : EN_WORD_WEIGHT;
+        tokens.push({ token: trimmed, weight });
+
+        // Synonym expansion for English terms
+        const syns = synonymMap.get(trimmed);
+        if (syns) {
+          for (const syn of syns) {
+            if (seen.has(syn)) continue;
+            seen.add(syn);
+            tokens.push({ token: syn, weight: 1.0 });
+          }
         }
       }
     }
@@ -226,7 +331,7 @@ export function isCJK(ch: string): boolean {
     (cp >= 0x4e00 && cp <= 0x9fff) || // CJK Unified
     (cp >= 0x3400 && cp <= 0x4dbf) || // CJK Ext-A
     (cp >= 0x3040 && cp <= 0x30ff) || // Hiragana + Katakana
-    (cp >= 0xac00 && cp <= 0xd7af)    // Hangul
+    (cp >= 0xac00 && cp <= 0xd7af) // Hangul
   );
 }
 
@@ -261,15 +366,32 @@ function hashToken(token: string, seed = 0): number {
   return hash >>> 0;
 }
 
-// Embedding stop words — minimal set, keep most tokens for vector coverage.
-// Unlike BM25 stop words, we want maximum signal in the embedding vector.
+// ── Stop words ──────────────────────────────────────────────────────────────
+// Extended from the original minimal set to include high-frequency
+// chart-document CJK terms that appear in nearly every skill doc.
+// ────────────────────────────────────────────────────────────────────────────
 const STOP_WORDS = new Set([
-  '的', '了', '在', '是', '我', '有', '和', '就', '不',
-  'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-  'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
-  'i', 'me', 'my', 'we', 'our', 'he', 'him', 'his', 'she', 'her', 'it', 'its',
-  'and', 'but', 'or', 'if',
-  'this', 'that', 'these', 'those',
-  'not', 'no', 'nor', 'only',
-  'chart', 'using', 'use',
+  // Original
+  '的','了','在','是','我','有','和','就','不',
+  'the','a','an','is','are','was','were','be','been','being',
+  'to','of','in','for','on','with','at','by','from','as',
+  'i','me','my','we','our','he','him','his','she','her','it','its',
+  'and','but','or','if','this','that','these','those',
+  'not','no','nor','only',
+  'chart','using','use',
+  // Extended: high-frequency chart-document CJK
+  '图表','数据','配置','展示','需要','支持','进行','通过',
+  '绘制','实现','基于','根据','使用','方式','效果','功能',
+  '用于','可以','一个','表示','如下','参考',
+]);
+
+// Single CJK characters that carry almost no discriminative signal.
+// Stopped at the unigram level (bigrams/trigrams containing these are kept).
+const CJK_UNIGRAM_STOP = new Set([
+  '的','了','在','是','和','就','不','也','都','很','到','要','会','着',
+  '能','可','以','对','与','或','而','且','但','则','因','所','被','把',
+  '从','由','向','往','用','为','让','使','给','将','比','更','最','只',
+  '这','那','其','各','某','每','任','何','另','别','全','整','些','几',
+  '上','下','中','内','外','前','后','左','右','大','小','多','少','高',
+  '一','二','三','两','个','次','种','项','批','组','类','型',
 ]);

@@ -15,23 +15,43 @@ const rootArg = process.argv.find((a) => a.startsWith('--root='));
 const PKG_ROOT = rootArg
   ? path.resolve(rootArg.slice('--root='.length))
   : path.resolve(__dirname, '../..');
-const SKILLS_DIR = path.join(PKG_ROOT, 'skills');
+const CONTENT_DIR = path.join(PKG_ROOT, 'src', 'content');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
 
-const LIBRARY_PATHS: Record<string, string> = {
-  g2: 'antv-g2-chart',
-  g6: 'antv-g6-graph',
-  x6: 'antv-x6-editor',
-};
-
-// Default major version per library (used for index header if SKILL.md doesn't override)
+// Default major version per library (used for index header if no version is specified)
 const LIBRARY_VERSIONS: Record<string, string> = {
   g2: '5.x',
   g6: '5.x',
-  x6: '3.x',
+  x6: '3.x'
 };
 
-function walkDir(dir: string, library: string): Skill[] {
+// Default info metadata per library (used when constraints.md has no frontmatter)
+const LIBRARY_INFO_DEFAULTS: Record<
+  string,
+  { name: string; description: string }
+> = {
+  g2: {
+    name: 'antv-g2-chart',
+    description:
+      'Generate G2 v5 chart code. Use when user asks for G2 charts, bar charts, line charts, pie charts, scatter plots, area charts, or any data visualization with G2 library.'
+  },
+  g6: {
+    name: 'antv-g6-graph',
+    description:
+      'Generate G6 v5 graph/network visualization code. Use when user asks for G6 graphs, network diagrams, tree graphs, flow charts, or any graph visualization with G6 library.'
+  },
+  x6: {
+    name: 'antv-x6-editor',
+    description:
+      'Generate X6 v3 diagram/editor code. Use when user asks for X6 diagrams, flowcharts, DAGs, ER diagrams, org charts, or any node-edge editor with X6 library.'
+  }
+};
+
+function walkDir(
+  dir: string,
+  library: string,
+  skipNames?: Set<string>
+): Skill[] {
   const skills: Skill[] = [];
   if (!fs.existsSync(dir)) return skills;
 
@@ -44,11 +64,12 @@ function walkDir(dir: string, library: string): Skill[] {
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      skills.push(...walkDir(fullPath, library));
+      skills.push(...walkDir(fullPath, library, skipNames));
     } else if (
       entry.isFile() &&
       entry.name.endsWith('.md') &&
-      !['README.md', 'CONTRIBUTING.md'].includes(entry.name)
+      !['README.md', 'CONTRIBUTING.md'].includes(entry.name) &&
+      !skipNames?.has(entry.name)
     ) {
       const content = fs.readFileSync(fullPath, 'utf-8');
       const parsed = matter(content);
@@ -65,20 +86,20 @@ function walkDir(dir: string, library: string): Skill[] {
       skills.push({
         id: meta.id,
         title: meta.title || '',
+        title_en: meta.title_en || '',
         description: (meta.description || '').replace(/\n\s*/g, ' ').trim(),
         library: meta.library || '',
         version: meta.version || '',
         category: meta.category || '',
         subcategory: meta.subcategory || '',
         tags: Array.isArray(meta.tags) ? meta.tags : [],
-        difficulty: meta.difficulty || 'beginner',
         use_cases: Array.isArray(meta.use_cases) ? meta.use_cases : [],
         anti_patterns: Array.isArray(meta.anti_patterns)
           ? meta.anti_patterns
           : [],
         related: Array.isArray(meta.related) ? meta.related : [],
         path: relativePath,
-        content: parsed.content,
+        content: parsed.content
       });
     }
   }
@@ -93,41 +114,79 @@ function build(): void {
     fs.mkdirSync(INDEX_DIR, { recursive: true });
   }
 
-  for (const [lib, libPath] of Object.entries(LIBRARY_PATHS)) {
-    const libReferenceDir = path.join(SKILLS_DIR, libPath, 'references');
-    const skills = walkDir(libReferenceDir, lib);
+  // Discover libraries from content directory subdirectories
+  const libEntries = fs.existsSync(CONTENT_DIR)
+    ? fs
+        .readdirSync(CONTENT_DIR, { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
+
+  if (libEntries.length === 0) {
+    console.warn(`No library directories found in ${CONTENT_DIR}`);
+    return;
+  }
+
+  const libraries = libEntries.map((e) => e.name);
+
+  for (const lib of libraries) {
+    const libDir = path.join(CONTENT_DIR, lib);
+
+    // Exclude special files (constraints, mistakes) from the skills array —
+    // they have no frontmatter and serve as the info source instead.
+    const skipNames = new Set(['constraints.md', 'mistakes.md']);
+
+    const skills = walkDir(libDir, lib, skipNames);
 
     console.log(`${lib.toUpperCase()}: Found ${skills.length} documents.`);
 
-    const skillMd = path.join(SKILLS_DIR, libPath, 'SKILL.md');
+    // Build info section from {lib}-constraints.md
+    const defaults = LIBRARY_INFO_DEFAULTS[lib];
     let info: SkillIndex['info'];
-    let skillMetaVersion = '';
-    if (fs.existsSync(skillMd)) {
-      const parsed = matter(fs.readFileSync(skillMd, 'utf-8'));
-      const meta = parsed.data as Record<string, any>;
-      skillMetaVersion = meta.version || '';
-      const fullContent = parsed.content;
-      const marker = '<!-- CONSTRAINTS:END -->';
-      const markerIdx = fullContent.indexOf(marker);
-      const constraintsContent =
-        markerIdx !== -1
-          ? fullContent.slice(0, markerIdx + marker.length)
-          : fullContent;
+    let version = LIBRARY_VERSIONS[lib] || '';
+    const constraintsPath = path.join(libDir, 'constraints.md');
+
+    if (fs.existsSync(constraintsPath)) {
+      const constraintsContent = fs.readFileSync(constraintsPath, 'utf-8');
+
+      // Extract the section between CONSTRAINTS markers if present
+      let coreConstraints: string;
+      const startMarker = '<!-- CONSTRAINTS:START -->';
+      const endMarker = '<!-- CONSTRAINTS:END -->';
+      const startIdx = constraintsContent.indexOf(startMarker);
+      const endIdx = constraintsContent.indexOf(endMarker);
+
+      if (startIdx !== -1 && endIdx !== -1) {
+        coreConstraints = constraintsContent.slice(
+          startIdx,
+          endIdx + endMarker.length
+        );
+      } else {
+        coreConstraints = constraintsContent;
+      }
+
       info = {
-        name: meta.name || libPath,
-        description: (meta.description || '').replace(/\n\s*/g, ' ').trim(),
-        content: fullContent,
-        constraintsContent,
+        name: defaults?.name || `antv-${lib}`,
+        description: defaults?.description || '',
+        content: constraintsContent,
+        constraintsContent: coreConstraints
+      };
+    } else if (defaults) {
+      info = {
+        name: defaults.name,
+        description: defaults.description,
+        content: '',
+        constraintsContent: ''
       };
     }
 
     const indexData: SkillIndex = {
       library: lib,
-      version: skillMetaVersion || LIBRARY_VERSIONS[lib] || '',
+      version,
       generated: new Date().toISOString().split('T')[0],
       total: skills.length,
       skills,
-      info,
+      info: info!
     };
 
     const indexPath = path.join(INDEX_DIR, `${lib}.index.json`);
