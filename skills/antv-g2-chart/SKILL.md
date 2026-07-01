@@ -21,31 +21,42 @@ chart.options({
 chart.render();
 ```
 
-## Quick Reference
+### CDN Usage
 
-| User Intent | Retrieve Query |
-|---|---|
-| Chart initialization, container, autoFit | `POST /api/v1/context {"query":"chart init","library":"g2","topK":3,"content":true}` |
-| Bar / column chart | `POST /api/v1/context {"query":"bar chart interval","library":"g2","topK":5,"content":true}` |
-| Line / area chart | `POST /api/v1/context {"query":"line area chart","library":"g2","topK":5,"content":true}` |
-| Pie / donut / rose chart | `POST /api/v1/context {"query":"pie chart theta","library":"g2","topK":5,"content":true}` |
-| Scatter / bubble | `POST /api/v1/context {"query":"scatter point bubble","library":"g2","topK":5,"content":true}` |
-| Treemap / sunburst / pack | `POST /api/v1/context {"query":"treemap sunburst pack","library":"g2","topK":5,"content":true}` |
-| Heatmap / density / boxplot | `POST /api/v1/context {"query":"heatmap density boxplot","library":"g2","topK":5,"content":true}` |
-| Funnel / gauge / wordcloud | `POST /api/v1/context {"query":"funnel gauge wordcloud","library":"g2","topK":5,"content":true}` |
-| Encode channels (x, y, color, size) | `POST /api/v1/context {"query":"encode channel","library":"g2","topK":3,"content":true}` |
-| Scale / palette / color range | `POST /api/v1/context {"query":"scale palette color","library":"g2","topK":3,"content":true}` |
-| Coordinate (polar, theta, transpose) | `POST /api/v1/context {"query":"coordinate polar theta transpose","library":"g2","topK":5,"content":true}` |
-| Transform (stack, normalize, sort) | `POST /api/v1/context {"query":"transform stack normalize","library":"g2","topK":5,"content":true}` |
-| Axis / legend / tooltip / labels | `POST /api/v1/context {"query":"axis legend tooltip label","library":"g2","topK":5,"content":true}` |
-| Interaction (brush, highlight, drilldown) | `POST /api/v1/context {"query":"interaction brush highlight","library":"g2","topK":5,"content":true}` |
-| Theme / dark mode | `POST /api/v1/context {"query":"theme dark classicDark","library":"g2","topK":3,"content":true}` |
-| Animation | `POST /api/v1/context {"query":"animation animate","library":"g2","topK":3,"content":true}` |
-| Data fetch / filter / sort | `POST /api/v1/context {"query":"data fetch filter sort","library":"g2","topK":3,"content":true}` |
-| Facet / view composition | `POST /api/v1/context {"query":"facet view composition","library":"g2","topK":3,"content":true}` |
-| Chart type selection guide | `POST /api/v1/context {"query":"chart type selection","library":"g2","topK":3,"content":true}` |
-| Rendering troubleshoot | `POST /api/v1/context {"query":"rendering troubleshoot debug","library":"g2","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /api/v1/info {"library":"g2"}` |
+```html
+<script src="https://unpkg.com/@antv/g2@5/dist/g2.min.js"></script>
+<script>
+  const chart = new G2.Chart({ container: 'container', autoFit: true });
+  chart.options({
+    type: 'interval',
+    data: [{ genre: 'Sports', sold: 275 }],
+    encode: { x: 'genre', y: 'sold' },
+  });
+  chart.render();
+</script>
+```
+
+## Content Retrieval
+
+Skill content is retrieved via an antv HTTP API server using GET requests.
+
+### `GET /api/v1/context/retrieve`
+
+Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `includeConstraints=true` will auto-prepend the library core constraints as the first result.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | ✅ | Search keywords, e.g. `bar chart interval` |
+| `library` | string | ✅ | Library name: `g2`, `g6`, `x6` |
+| `topK` | number | | Number of results to return (default: 5) |
+| `content` | boolean | | Return full reference doc markdown (default: true) |
+| `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
+| `maxTokens` | number | | Max tokens per result (default: unlimited) |
+| `progressiveLevel` | string | | Progressive loading level: `brief`, `normal`, `detailed` |
+
+```bash
+curl "https://antv.antgroup.com/api/v1/context/retrieve?query=bar+chart+stacked&library=g2&includeConstraints=true"
+```
 
 ## Critical Rules
 
@@ -169,45 +180,30 @@ coordinate: { type: 'transpose' }
 coordinate: { transform: [{ type: 'transpose' }] }
 ```
 
-## Content Retrieval
+## Quick Reference
 
-Skill content is retrieved via an antv HTTP API server.
-
-Then use POST requests to retrieve relevant reference docs:
-
-```bash
-# Retrieve skills by query (hybrid search = FTS + vector + RRF)
-curl -X POST https://antv.antgroup.com/api/v1/context \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"bar chart stacked","library":"g2","topK":5,"content":true,"includeInfo":true}'
-
-# Get core constraints (always read first before generating code)
-curl -X POST https://antv.antgroup.com/api/v1/info \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"g2"}'
-
-# Get a specific skill by exact ID
-curl -X POST https://antv.antgroup.com/api/v1/get \
-  -H 'Content-Type: application/json' \
-  -d '{"id":"g2-comp-axis-config"}'
-
-# List all available skills
-curl -X POST https://antv.antgroup.com/api/v1/list \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"g2"}'
-```
-
-**Important**: Always call `/api/v1/info` first to load the core constraints, then `/api/v1/context` for specific topic docs. The `includeInfo: true` option in `/api/v1/context` automatically prepends constraints as the first result.
-
-## How to Use
-
-When a user asks about G2 chart development:
-
-1. Call `POST /api/v1/info {"library":"g2"}` to load the core constraints
-2. Identify the user's intent from the Quick Reference table above
-3. Call `POST /api/v1/context` with the matching query, `content: true`, `includeInfo: true`
-4. Generate code following the Critical Rules and retrieved reference docs
-5. Always provide complete, runnable code examples
+| User Intent | Retrieve Query |
+|---|---|
+| Chart initialization, container, autoFit | `GET /api/v1/context/retrieve?query=chart+init&library=g2` |
+| Bar / column chart | `GET /api/v1/context/retrieve?query=bar+chart+interval&library=g2` |
+| Line / area chart | `GET /api/v1/context/retrieve?query=line+area+chart&library=g2` |
+| Pie / donut / rose chart | `GET /api/v1/context/retrieve?query=pie+chart+theta&library=g2` |
+| Scatter / bubble | `GET /api/v1/context/retrieve?query=scatter+point+bubble&library=g2` |
+| Treemap / sunburst / pack | `GET /api/v1/context/retrieve?query=treemap+sunburst+pack&library=g2` |
+| Heatmap / density / boxplot | `GET /api/v1/context/retrieve?query=heatmap+density+boxplot&library=g2` |
+| Funnel / gauge / wordcloud | `GET /api/v1/context/retrieve?query=funnel+gauge+wordcloud&library=g2` |
+| Encode channels (x, y, color, size) | `GET /api/v1/context/retrieve?query=encode+channel&library=g2` |
+| Scale / palette / color range | `GET /api/v1/context/retrieve?query=scale+palette+color&library=g2` |
+| Coordinate (polar, theta, transpose) | `GET /api/v1/context/retrieve?query=coordinate+polar+theta+transpose&library=g2` |
+| Transform (stack, normalize, sort) | `GET /api/v1/context/retrieve?query=transform+stack+normalize&library=g2` |
+| Axis / legend / tooltip / labels | `GET /api/v1/context/retrieve?query=axis+legend+tooltip+label&library=g2` |
+| Interaction (brush, highlight, drilldown) | `GET /api/v1/context/retrieve?query=interaction+brush+highlight&library=g2` |
+| Theme / dark mode | `GET /api/v1/context/retrieve?query=theme+dark+classicDark&library=g2` |
+| Animation | `GET /api/v1/context/retrieve?query=animation+animate&library=g2` |
+| Data fetch / filter / sort | `GET /api/v1/context/retrieve?query=data+fetch+filter+sort&library=g2` |
+| Facet / view composition | `GET /api/v1/context/retrieve?query=facet+view+composition&library=g2` |
+| Chart type selection guide | `GET /api/v1/context/retrieve?query=chart+type+selection&library=g2` |
+| Rendering troubleshoot | `GET /api/v1/context/retrieve?query=rendering+troubleshoot+debug&library=g2` |
 
 ## Dependencies
 

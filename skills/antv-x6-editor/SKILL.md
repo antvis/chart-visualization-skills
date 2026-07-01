@@ -35,32 +35,53 @@ graph.addEdge({ source, target, attrs: { line: { stroke: '#8f8f8f', strokeWidth:
 graph.centerContent();
 ```
 
-## Quick Reference
+### CDN Usage
 
-| User Intent | Retrieve Query |
-|---|---|
-| Graph init, container, background | `POST /api/v1/context {"query":"graph init container background","library":"x6","topK":3,"content":true}` |
-| Flowchart / approval flow | `POST /api/v1/context {"query":"flowchart approval","library":"x6","topK":5,"content":true}` |
-| DAG / data pipeline | `POST /api/v1/context {"query":"DAG pipeline port","library":"x6","topK":5,"content":true}` |
-| ER diagram / entity relationship | `POST /api/v1/context {"query":"ER diagram entity relationship","library":"x6","topK":5,"content":true}` |
-| Lineage / data lineage graph | `POST /api/v1/context {"query":"lineage data lineage","library":"x6","topK":5,"content":true}` |
-| Org chart / hierarchy | `POST /api/v1/context {"query":"org chart hierarchy","library":"x6","topK":5,"content":true}` |
-| UML class diagram | `POST /api/v1/context {"query":"UML class diagram","library":"x6","topK":5,"content":true}` |
-| Node config / custom node | `POST /api/v1/context {"query":"node custom shape rect circle","library":"x6","topK":5,"content":true}` |
-| Edge config / router / connector | `POST /api/v1/context {"query":"edge router connector orth smooth","library":"x6","topK":5,"content":true}` |
-| Ports / connection桩 | `POST /api/v1/context {"query":"ports connection layout","library":"x6","topK":5,"content":true}` |
-| HTML shape node | `POST /api/v1/context {"query":"html shape register","library":"x6","topK":3,"content":true}` |
-| Stencil / drag-and-drop panel | `POST /api/v1/context {"query":"stencil drag drop panel","library":"x6","topK":3,"content":true}` |
-| Plugin: Selection, History, Clipboard | `POST /api/v1/context {"query":"Selection History Clipboard plugin","library":"x6","topK":3,"content":true}` |
-| Plugin: MiniMap, Scroller, Snapline | `POST /api/v1/context {"query":"MiniMap Scroller Snapline plugin","library":"x6","topK":3,"content":true}` |
-| Plugin: Keyboard, Export, Transform | `POST /api/v1/context {"query":"Keyboard Export Transform plugin","library":"x6","topK":3,"content":true}` |
-| Panning / mousewheel / embedding | `POST /api/v1/context {"query":"panning mousewheel embedding","library":"x6","topK":3,"content":true}` |
-| Tools (button-remove, etc.) | `POST /api/v1/context {"query":"tools button-remove hover","library":"x6","topK":3,"content":true}` |
-| Events (click,mouseenter,moved) | `POST /api/v1/context {"query":"events node click mouse","library":"x6","topK":3,"content":true}` |
-| Serialization (toJSON, fromJSON) | `POST /api/v1/context {"query":"serialization toJSON fromJSON","library":"x6","topK":3,"content":true}` |
-| Animation / gradient | `POST /api/v1/context {"query":"animation gradient defs marker","library":"x6","topK":3,"content":true}` |
-| Group / nesting / embedding | `POST /api/v1/context {"query":"group nesting embedding parent child","library":"x6","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /api/v1/info {"library":"x6"}` |
+```html
+<script src="https://unpkg.com/@antv/x6@2/dist/x6.js"></script>
+<script>
+  const graph = new X6.Graph({
+    container: 'container',
+    background: { color: '#F2F7FA' },
+  });
+  const source = graph.addNode({
+    shape: 'rect',
+    x: 40, y: 40, width: 100, height: 40,
+    label: 'Source',
+    attrs: { body: { stroke: '#8f8f8f', strokeWidth: 1, fill: '#fff', rx: 6, ry: 6 } },
+  });
+  const target = graph.addNode({
+    shape: 'rect',
+    x: 300, y: 200, width: 100, height: 40,
+    label: 'Target',
+    attrs: { body: { stroke: '#8f8f8f', strokeWidth: 1, fill: '#fff', rx: 6, ry: 6 } },
+  });
+  graph.addEdge({ source, target, attrs: { line: { stroke: '#8f8f8f', strokeWidth: 1 } } });
+  graph.centerContent();
+</script>
+```
+
+## Content Retrieval
+
+Skill content is retrieved via an antv HTTP API server using GET requests.
+
+### `GET /api/v1/context/retrieve`
+
+Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `includeConstraints=true` will auto-prepend the library core constraints as the first result.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | ✅ | Search keywords, e.g. `flowchart stencil port` |
+| `library` | string | ✅ | Library name: `g2`, `g6`, `x6` |
+| `topK` | number | | Number of results to return (default: 5) |
+| `content` | boolean | | Return full reference doc markdown (default: true) |
+| `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
+| `maxTokens` | number | | Max tokens per result (default: unlimited) |
+| `progressiveLevel` | string | | Progressive loading level: `brief`, `normal`, `detailed` |
+
+```bash
+curl "https://antv.antgroup.com/api/v1/context/retrieve?query=flowchart+stencil+port&library=x6&includeConstraints=true"
+```
 
 ## Critical Rules
 
@@ -218,49 +239,31 @@ Shape.HTML.register({
 });
 ```
 
-## Content Retrieval
+## Quick Reference
 
-Skill content is retrieved via a local HTTP API server. Start the server first:
-
-```bash
-cd http-server && npm run dev    # starts on http://localhost:3100
-```
-
-Then use POST requests to retrieve relevant reference docs:
-
-```bash
-# Retrieve skills by query (hybrid search = FTS + vector + RRF)
-curl -X POST https://antv.antgroup.com/api/v1/context \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"flowchart stencil port","library":"x6","topK":5,"content":true,"includeInfo":true}'
-
-# Get core constraints (always read first before generating code)
-curl -X POST https://antv.antgroup.com/api/v1/info \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"x6"}'
-
-# Get a specific skill by exact ID
-curl -X POST https://antv.antgroup.com/api/v1/get \
-  -H 'Content-Type: application/json' \
-  -d '{"id":"x6-core-graph-init"}'
-
-# List all available skills
-curl -X POST https://antv.antgroup.com/api/v1/list \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"x6"}'
-```
-
-**Important**: Always call `/api/v1/info` first to load the core constraints, then `/api/v1/context` for specific topic docs. The `includeInfo: true` option in `/api/v1/context` automatically prepends constraints as the first result.
-
-## How to Use
-
-When a user asks about X6 diagram editor development:
-
-1. Call `POST /api/v1/info {"library":"x6"}` to load the core constraints
-2. Identify the user's intent from the Quick Reference table above
-3. Call `POST /api/v1/context` with the matching query, `content: true`, `includeInfo: true`
-4. Generate code following the Critical Rules and retrieved reference docs
-5. Always provide complete, runnable code examples
+| User Intent | Retrieve Query |
+|---|---|
+| Graph init, container, background | `GET /api/v1/context/retrieve?query=graph+init+container+background&library=x6` |
+| Flowchart / approval flow | `GET /api/v1/context/retrieve?query=flowchart+approval&library=x6` |
+| DAG / data pipeline | `GET /api/v1/context/retrieve?query=DAG+pipeline+port&library=x6` |
+| ER diagram / entity relationship | `GET /api/v1/context/retrieve?query=ER+diagram+entity+relationship&library=x6` |
+| Lineage / data lineage graph | `GET /api/v1/context/retrieve?query=lineage+data+lineage&library=x6` |
+| Org chart / hierarchy | `GET /api/v1/context/retrieve?query=org+chart+hierarchy&library=x6` |
+| UML class diagram | `GET /api/v1/context/retrieve?query=UML+class+diagram&library=x6` |
+| Node config / custom node | `GET /api/v1/context/retrieve?query=node+custom+shape+rect+circle&library=x6` |
+| Edge config / router / connector | `GET /api/v1/context/retrieve?query=edge+router+connector+orth+smooth&library=x6` |
+| Ports / connection桩 | `GET /api/v1/context/retrieve?query=ports+connection+layout&library=x6` |
+| HTML shape node | `GET /api/v1/context/retrieve?query=html+shape+register&library=x6` |
+| Stencil / drag-and-drop panel | `GET /api/v1/context/retrieve?query=stencil+drag+drop+panel&library=x6` |
+| Plugin: Selection, History, Clipboard | `GET /api/v1/context/retrieve?query=Selection+History+Clipboard+plugin&library=x6` |
+| Plugin: MiniMap, Scroller, Snapline | `GET /api/v1/context/retrieve?query=MiniMap+Scroller+Snapline+plugin&library=x6` |
+| Plugin: Keyboard, Export, Transform | `GET /api/v1/context/retrieve?query=Keyboard+Export+Transform+plugin&library=x6` |
+| Panning / mousewheel / embedding | `GET /api/v1/context/retrieve?query=panning+mousewheel+embedding&library=x6` |
+| Tools (button-remove, etc.) | `GET /api/v1/context/retrieve?query=tools+button-remove+hover&library=x6` |
+| Events (click,mouseenter,moved) | `GET /api/v1/context/retrieve?query=events+node+click+mouse&library=x6` |
+| Serialization (toJSON, fromJSON) | `GET /api/v1/context/retrieve?query=serialization+toJSON+fromJSON&library=x6` |
+| Animation / gradient | `GET /api/v1/context/retrieve?query=animation+gradient+defs+marker&library=x6` |
+| Group / nesting / embedding | `GET /api/v1/context/retrieve?query=group+nesting+embedding+parent+child&library=x6` |
 
 ## Dependencies
 

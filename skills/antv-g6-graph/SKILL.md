@@ -25,27 +25,45 @@ const graph = new Graph({
 await graph.render();
 ```
 
-## Quick Reference
+### CDN Usage
 
-| User Intent | Retrieve Query |
-|---|---|
-| Graph initialization, container, render | `POST /api/v1/context {"query":"graph init render","library":"g6","topK":3,"content":true}` |
-| Network / force graph | `POST /api/v1/context {"query":"network force layout","library":"g6","topK":5,"content":true}` |
-| Tree / mindmap / fishbone | `POST /api/v1/context {"query":"tree mindmap fishbone layout","library":"g6","topK":5,"content":true}` |
-| Dagre / hierarchy / flow chart | `POST /api/v1/context {"query":"dagre hierarchy flow chart","library":"g6","topK":5,"content":true}` |
-| Circular / radial / grid layout | `POST /api/v1/context {"query":"circular radial grid layout","library":"g6","topK":5,"content":true}` |
-| Node styles (rect, circle, diamond, html) | `POST /api/v1/context {"query":"node style rect circle diamond html","library":"g6","topK":5,"content":true}` |
-| Edge types (line, cubic, polyline, loop) | `POST /api/v1/context {"query":"edge line cubic polyline loop","library":"g6","topK":5,"content":true}` |
-| Combo / group nodes | `POST /api/v1/context {"query":"combo group node","library":"g6","topK":3,"content":true}` |
-| Custom node / edge | `POST /api/v1/context {"query":"custom node edge element","library":"g6","topK":3,"content":true}` |
-| Behaviors (drag, zoom, click-select, hover) | `POST /api/v1/context {"query":"behavior drag zoom click-select hover","library":"g6","topK":5,"content":true}` |
-| Plugins (minimap, tooltip, toolbar, legend) | `POST /api/v1/context {"query":"plugin minimap tooltip toolbar legend","library":"g6","topK":5,"content":true}` |
-| Events system | `POST /api/v1/context {"query":"events system click mouse","library":"g6","topK":3,"content":true}` |
-| State / style animation | `POST /api/v1/context {"query":"state animation transform","library":"g6","topK":3,"content":true}` |
-| Data structure / transforms | `POST /api/v1/context {"query":"data structure transforms","library":"g6","topK":3,"content":true}` |
-| Theme / background | `POST /api/v1/context {"query":"theme background style","library":"g6","topK":3,"content":true}` |
-| Lasso select / collapse-expand | `POST /api/v1/context {"query":"lasso collapse expand select","library":"g6","topK":3,"content":true}` |
-| Library constraints (MUST read first) | `POST /api/v1/info {"library":"g6"}` |
+```html
+<script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
+<script>
+  const graph = new G6.Graph({
+    container: 'container',
+    data: {
+      nodes: [{ id: 'node-1', style: { labelText: 'Node 1' } }],
+      edges: [{ source: 'node-1', target: 'node-2' }],
+    },
+    layout: { type: 'force' },
+    behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
+  });
+  graph.render();
+</script>
+```
+
+## Content Retrieval
+
+Skill content is retrieved via an antv HTTP API server using GET requests.
+
+### `GET /api/v1/context/retrieve`
+
+Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `includeConstraints=true` will auto-prepend the library core constraints as the first result.
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | ✅ | Search keywords, e.g. `force layout node` |
+| `library` | string | ✅ | Library name: `g2`, `g6`, `x6` |
+| `topK` | number | | Number of results to return (default: 5) |
+| `content` | boolean | | Return full reference doc markdown (default: true) |
+| `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
+| `maxTokens` | number | | Max tokens per result (default: unlimited) |
+| `progressiveLevel` | string | | Progressive loading level: `brief`, `normal`, `detailed` |
+
+```bash
+curl "https://antv.antgroup.com/api/v1/context/retrieve?query=force+layout+node+style&library=g6&includeConstraints=true"
+```
 
 ## Critical Rules
 
@@ -140,45 +158,26 @@ const graph = new Graph({ data });
 const graph = new Graph({ container: 'container', data, ... });
 ```
 
-## Content Retrieval
+## Quick Reference
 
-Skill content is retrieved via a local HTTP API server.
-
-Then use POST requests to retrieve relevant reference docs:
-
-```bash
-# Retrieve skills by query (hybrid search = FTS + vector + RRF)
-curl -X POST https://antv.antgroup.com/api/v1/context \
-  -H 'Content-Type: application/json' \
-  -d '{"query":"force layout node style","library":"g6","topK":5,"content":true,"includeInfo":true}'
-
-# Get core constraints (always read first before generating code)
-curl -X POST https://antv.antgroup.com/api/v1/info \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"g6"}'
-
-# Get a specific skill by exact ID
-curl -X POST https://antv.antgroup.com/api/v1/get \
-  -H 'Content-Type: application/json' \
-  -d '{"id":"g6-core-graph-init"}'
-
-# List all available skills
-curl -X POST https://antv.antgroup.com/api/v1/list \
-  -H 'Content-Type: application/json' \
-  -d '{"library":"g6"}'
-```
-
-**Important**: Always call `/api/v1/info` first to load the core constraints, then `/api/v1/context` for specific topic docs. The `includeInfo: true` option in `/api/v1/context` automatically prepends constraints as the first result.
-
-## How to Use
-
-When a user asks about G6 graph development:
-
-1. Call `POST /api/v1/info {"library":"g6"}` to load the core constraints
-2. Identify the user's intent from the Quick Reference table above
-3. Call `POST /api/v1/context` with the matching query, `content: true`, `includeInfo: true`
-4. Generate code following the Critical Rules and retrieved reference docs
-5. Always provide complete, runnable code examples
+| User Intent | Retrieve Query |
+|---|---|
+| Graph initialization, container, render | `GET /api/v1/context/retrieve?query=graph+init+render&library=g6` |
+| Network / force graph | `GET /api/v1/context/retrieve?query=network+force+layout&library=g6` |
+| Tree / mindmap / fishbone | `GET /api/v1/context/retrieve?query=tree+mindmap+fishbone+layout&library=g6` |
+| Dagre / hierarchy / flow chart | `GET /api/v1/context/retrieve?query=dagre+hierarchy+flow+chart&library=g6` |
+| Circular / radial / grid layout | `GET /api/v1/context/retrieve?query=circular+radial+grid+layout&library=g6` |
+| Node styles (rect, circle, diamond, html) | `GET /api/v1/context/retrieve?query=node+style+rect+circle+diamond+html&library=g6` |
+| Edge types (line, cubic, polyline, loop) | `GET /api/v1/context/retrieve?query=edge+line+cubic+polyline+loop&library=g6` |
+| Combo / group nodes | `GET /api/v1/context/retrieve?query=combo+group+node&library=g6` |
+| Custom node / edge | `GET /api/v1/context/retrieve?query=custom+node+edge+element&library=g6` |
+| Behaviors (drag, zoom, click-select, hover) | `GET /api/v1/context/retrieve?query=behavior+drag+zoom+click-select+hover&library=g6` |
+| Plugins (minimap, tooltip, toolbar, legend) | `GET /api/v1/context/retrieve?query=plugin+minimap+tooltip+toolbar+legend&library=g6` |
+| Events system | `GET /api/v1/context/retrieve?query=events+system+click+mouse&library=g6` |
+| State / style animation | `GET /api/v1/context/retrieve?query=state+animation+transform&library=g6` |
+| Data structure / transforms | `GET /api/v1/context/retrieve?query=data+structure+transforms&library=g6` |
+| Theme / background | `GET /api/v1/context/retrieve?query=theme+background+style&library=g6` |
+| Lasso select / collapse-expand | `GET /api/v1/context/retrieve?query=lasso+collapse+expand+select&library=g6` |
 
 ## Dependencies
 
