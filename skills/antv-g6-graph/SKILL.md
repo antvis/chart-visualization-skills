@@ -59,7 +59,7 @@ Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `i
 | `content` | boolean | | Return full reference doc markdown (default: true) |
 | `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
 | `maxTokens` | number | | Max tokens per result (default: unlimited) |
-| `progressiveLevel` | string | | Progressive loading level: `brief`, `normal`, `detailed` |
+| `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
 curl "https://antv.antgroup.com/api/v1/context/retrieve?query=force+layout+node+style&library=g6&includeConstraints=true"

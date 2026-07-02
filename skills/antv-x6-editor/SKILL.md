@@ -38,7 +38,7 @@ graph.centerContent();
 ### CDN Usage
 
 ```html
-<script src="https://unpkg.com/@antv/x6@2/dist/x6.js"></script>
+<script src="https://unpkg.com/@antv/x6@3/dist/x6.js"></script>
 <script>
   const graph = new X6.Graph({
     container: 'container',
@@ -77,7 +77,7 @@ Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `i
 | `content` | boolean | | Return full reference doc markdown (default: true) |
 | `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
 | `maxTokens` | number | | Max tokens per result (default: unlimited) |
-| `progressiveLevel` | string | | Progressive loading level: `brief`, `normal`, `detailed` |
+| `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
 curl "https://antv.antgroup.com/api/v1/context/retrieve?query=flowchart+stencil+port&library=x6&includeConstraints=true"
