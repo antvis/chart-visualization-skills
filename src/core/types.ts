@@ -1,7 +1,6 @@
-export interface Skill {
+export interface Doc {
   id: string;
   title: string;
-  title_en: string;
   description: string;
   library: string;
   version: string;
@@ -16,13 +15,13 @@ export interface Skill {
   content?: string;
 }
 
-export interface SkillIndex {
+export interface DocIndex {
   library: string;
   version: string;
   generated: string;
   total: number;
-  skills: Skill[];
-  info?: SkillInfo;
+  docs: Doc[];
+  info?: DocInfo;
 }
 
 export interface RetrieveOptions {
@@ -41,7 +40,7 @@ export interface RetrieveOptions {
    * - 'hybrid'  FTS + vector via zvec native multiQuery, RRF-fused (default)
    */
   strategy?: 'vector' | 'hybrid';
-  /** Maximum token budget for skill content. When set, content is trimmed to fit. */
+  /** Maximum token budget for doc content. When set, content is trimmed to fit. */
   maxTokens?: number;
   /**
    * Progressive disclosure level (only applies when maxTokens is set):
@@ -58,10 +57,10 @@ export interface ListOptions {
   tags?: string[];
 }
 
-export interface SkillInfo {
+export interface DocInfo {
   name: string;
   description: string;
-  /** Full SKILL.md body (after frontmatter). */
+  /** Full DOC.md body (after frontmatter). */
   content: string;
   /**
    * Content up to and including the `<!-- CONSTRAINTS:END -->` marker.

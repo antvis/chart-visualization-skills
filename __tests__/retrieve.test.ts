@@ -16,7 +16,7 @@ describe('retrieve API', () => {
     }
   };
 
-  it('should retrieve skills with default parameters', async () => {
+  it('should retrieve docs with default parameters', async () => {
     const results = await retrieve('折线图');
     // Defaults: content=true, includeConstraints=true
     if (zvecReady) {

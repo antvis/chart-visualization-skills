@@ -50,10 +50,10 @@ export interface IZvecStore {
 }
 
 // ---------------------------------------------------------------------------
-// Skill document field names (shared between both implementations)
+// Doc document field names (shared between both implementations)
 // ---------------------------------------------------------------------------
 
-export const SKILL_SCALAR_FIELDS = [
+export const DOC_SCALAR_FIELDS = [
   'title',
   'description',
   'library',
@@ -316,7 +316,7 @@ export class ActualZvecStore implements IZvecStore {
    */
   static async create(path: string, dims: number): Promise<ActualZvecStore> {
     const z = requireZvecSync();
-    const schema = buildSkillSchema(z, dims);
+    const schema = buildDocSchema(z, dims);
     const collection = z.ZVecCreateAndOpen(path, schema);
     return new ActualZvecStore(collection);
   }
@@ -324,7 +324,7 @@ export class ActualZvecStore implements IZvecStore {
   /** Synchronous version of `create`. */
   static createSync(path: string, dims: number): ActualZvecStore {
     const z = requireZvecSync();
-    const schema = buildSkillSchema(z, dims);
+    const schema = buildDocSchema(z, dims);
     const collection = z.ZVecCreateAndOpen(path, schema);
     return new ActualZvecStore(collection);
   }
@@ -480,10 +480,10 @@ function requireZvecSync(): any {
 /**
  * Build the full ZVecCollectionSchema with:
  * - Vector field (HNSW index, cosine similarity)
- * - Scalar fields matching the Skill type
+ * - Scalar fields matching the Doc type
  * - FTS indexes on title, description, tags, content, use_cases, anti_patterns
  */
-function buildSkillSchema(z: any, dims: number): any {
+function buildDocSchema(z: any, dims: number): any {
   const { ZVecCollectionSchema, ZVecDataType, ZVecIndexType, ZVecMetricType } =
     z;
 
@@ -555,7 +555,7 @@ function buildSkillSchema(z: any, dims: number): any {
   ];
 
   return new ZVecCollectionSchema({
-    name: 'skills',
+    name: 'docs',
     vectors: vectorSchema,
     fields: fieldSchemas
   });

@@ -6,7 +6,7 @@ import {
   formatForBudget,
   applyTokenBudget
 } from '../src/core/token-budget';
-import type { Skill } from '../src/core/types';
+import type { Doc } from '../src/core/types';
 
 describe('token-budget', () => {
   describe('estimateTokens', () => {
@@ -34,7 +34,8 @@ describe('token-budget', () => {
 
   describe('extractCodeBlocks', () => {
     it('should extract fenced code blocks from markdown', () => {
-      const content = 'Some text\n```js\nconst x = 1;\n```\nMore text\n```ts\nconst y = 2;\n```';
+      const content =
+        'Some text\n```js\nconst x = 1;\n```\nMore text\n```ts\nconst y = 2;\n```';
       const blocks = extractCodeBlocks(content);
       expect(blocks).toHaveLength(2);
       expect(blocks[0]).toContain('const x = 1');
@@ -70,10 +71,9 @@ describe('token-budget', () => {
   });
 
   describe('formatForBudget', () => {
-    const baseSkill: Skill = {
-      id: 'test-skill',
-      title: 'Test Skill',
-      title_en: 'Test Skill',
+    const baseDoc: Doc = {
+      id: 'test-doc',
+      title: 'Test Doc',
       description: 'A test description',
       library: 'g2',
       version: '5.x',
@@ -83,20 +83,21 @@ describe('token-budget', () => {
       use_cases: [],
       anti_patterns: [],
       related: [],
-      content: '## Intro\nSome text\n```js\nconst x = 1;\n```\nMore details here.'
+      content:
+        '## Intro\nSome text\n```js\nconst x = 1;\n```\nMore details here.'
     };
 
     it('level 0: should return full content', () => {
-      const result = formatForBudget(baseSkill, 0, 500);
-      expect(result).toContain('Test Skill');
+      const result = formatForBudget(baseDoc, 0, 500);
+      expect(result).toContain('Test Doc');
       expect(result).toContain('Some text');
       expect(result).toContain('const x = 1');
       expect(result).toContain('More details');
     });
 
     it('level 1: should return summary + code blocks only', () => {
-      const result = formatForBudget(baseSkill, 1, 500);
-      expect(result).toContain('Test Skill');
+      const result = formatForBudget(baseDoc, 1, 500);
+      expect(result).toContain('Test Doc');
       expect(result).toContain('A test description');
       expect(result).toContain('const x = 1');
       // Should NOT contain the prose "More details" (it's not in a code block)
@@ -104,8 +105,8 @@ describe('token-budget', () => {
     });
 
     it('level 2: should return summary only', () => {
-      const result = formatForBudget(baseSkill, 2, 500);
-      expect(result).toContain('Test Skill');
+      const result = formatForBudget(baseDoc, 2, 500);
+      expect(result).toContain('Test Doc');
       expect(result).toContain('A test description');
       // Should NOT contain any body content
       expect(result).not.toContain('Some text');
@@ -113,17 +114,16 @@ describe('token-budget', () => {
     });
 
     it('should truncate when budget is too small for code blocks', () => {
-      const result = formatForBudget(baseSkill, 1, 5);
+      const result = formatForBudget(baseDoc, 1, 5);
       // Very small budget — should fallback to truncateContent
       expect(result.length).toBeGreaterThan(0);
     });
   });
 
   describe('applyTokenBudget', () => {
-    const makeSkill = (id: string, content: string): Skill => ({
+    const makeDoc = (id: string, content: string): Doc => ({
       id,
-      title: `Skill ${id}`,
-      title_en: `Skill ${id}`,
+      title: `Doc ${id}`,
       description: '',
       library: 'g2',
       version: '',
@@ -136,44 +136,45 @@ describe('token-budget', () => {
       content
     });
 
-    it('should give full budget to __info__ and trim remaining skills', () => {
-      const skills: Skill[] = [
+    it('should give full budget to __info__ and trim remaining docs', () => {
+      const docs: Doc[] = [
         {
-          ...makeSkill('__info__g2', 'Core constraints text that is important'),
+          ...makeDoc('__info__g2', 'Core constraints text that is important'),
           category: '__info__'
         },
-        makeSkill('skill-1', 'Content for skill one'),
-        makeSkill('skill-2', 'Content for skill two'),
+        makeDoc('doc-1', 'Content for doc one'),
+        makeDoc('doc-2', 'Content for doc two')
       ];
 
-      const result = applyTokenBudget(skills, 20, 1);
+      const result = applyTokenBudget(docs, 20, 1);
       // __info__ should keep its content
       expect(result[0].content).toBeDefined();
     });
 
     it('should set content to undefined when budget exhausted', () => {
-      const skills: Skill[] = [
+      const docs: Doc[] = [
         {
-          ...makeSkill('__info__g2', 'Very long constraints content eating all budget'),
+          ...makeDoc(
+            '__info__g2',
+            'Very long constraints content eating all budget'
+          ),
           category: '__info__'
         },
-        makeSkill('skill-1', 'Short content'),
-        makeSkill('skill-2', 'Another content'),
+        makeDoc('doc-1', 'Short content'),
+        makeDoc('doc-2', 'Another content')
       ];
 
       // Very small budget — info consumes it all
-      const result = applyTokenBudget(skills, 5, 1);
-      // Skills after info should have no content
+      const result = applyTokenBudget(docs, 5, 1);
+      // Docs after info should have no content
       expect(result[1].content).toBeUndefined();
       expect(result[2].content).toBeUndefined();
     });
 
-    it('should handle no __info__ skill gracefully', () => {
-      const skills: Skill[] = [
-        makeSkill('skill-1', 'Content for skill one'),
-      ];
+    it('should handle no __info__ doc gracefully', () => {
+      const docs: Doc[] = [makeDoc('doc-1', 'Content for doc one')];
 
-      const result = applyTokenBudget(skills, 50, 0);
+      const result = applyTokenBudget(docs, 50, 0);
       expect(result[0].content).toBeDefined();
     });
   });
