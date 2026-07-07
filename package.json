@@ -33,12 +33,9 @@
     "postinstall": "node scripts/download-model.mjs"
   },
   "dependencies": {
-    "@huggingface/transformers": "^4.2.0",
+    "@antv/context": "^0.0.1",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3"
-  },
-  "optionalDependencies": {
-    "@zvec/zvec": "^0.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

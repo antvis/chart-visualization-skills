@@ -3,7 +3,8 @@ import {
   getDocById as _getDocById,
   getDocInfo,
   availableLibraries,
-  listDocs as _listDocs
+  listDocs as _listDocs,
+  invalidateCaches as _invalidateCaches,
 } from './core/retriever';
 import type {
   Doc,
@@ -81,4 +82,12 @@ export function libraries(): string[] {
  */
 export function listDocs(options: ListOptions = {}): Doc[] {
   return _listDocs(options);
+}
+
+/**
+ * Invalidate all caches (index cache + Context instance).
+ * Useful when indexes are rebuilt at runtime.
+ */
+export async function invalidateCaches(): Promise<void> {
+  return _invalidateCaches();
 }

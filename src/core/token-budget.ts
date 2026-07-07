@@ -6,7 +6,7 @@
  */
 
 import type { Doc } from './types';
-import { isCJK } from './retrieval/embedder';
+import { isCJK } from '@antv/context';
 
 // ---------------------------------------------------------------------------
 // Token estimation

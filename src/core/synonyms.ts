@@ -1,22 +1,17 @@
 /**
- * Shared chart-type synonym map — single source of truth for both
- * FTS query expansion (retriever) and embedding token expansion (embedder).
+ * Synonym expansion for chart visualization queries.
  *
- * Rules for adding entries:
- * 1. Only add distinctive chart-type terms (not common English words).
- *    "饼图" → "pie" hurts more than helps ("pie" is ambiguous outside chart context).
- * 2. Only expand to unambiguous chart-type names (treemap, sankey, etc.).
- * 3. Keep bidirectional: Chinese → English AND English → Chinese.
+ * Delegates to @antv/context's SynonymExpander for the expansion logic,
+ * while keeping the domain-specific synonym map as chart-visualization data.
  */
+
+import { SynonymExpander } from '@antv/context';
 
 // ---------------------------------------------------------------------------
 // Bidirectional synonym pairs: [term, synonyms[]]
-// Each pair is listed once in one direction; the reverse direction is
-// generated automatically by initSynonyms().
 // ---------------------------------------------------------------------------
 
 const SYNONYM_PAIRS: [string, string[]][] = [
-  // ── G2 chart types: Chinese → English ──────────────────────────────────
   ['矩形树图', ['treemap']],
   ['树图', ['treemap']],
   ['旭日图', ['sunburst']],
@@ -50,91 +45,54 @@ const SYNONYM_PAIRS: [string, string[]][] = [
   ['面积图', ['area']],
   ['环形图', ['donut']],
   ['气泡图', ['bubble']],
-
-  // ── G2 transforms ──────────────────────────────────────────────────────
   ['归一化', ['normalizey']],
   ['堆叠', ['stacky']],
-
-  // ── G6 distinctive ─────────────────────────────────────────────────────
   ['思维导图', ['mindmap']],
   ['鱼骨图', ['fishbone']],
   ['dagre', ['流程图']],
 ];
 
 // ---------------------------------------------------------------------------
-// Initialized synonym map (bidirectional, lazily built on first access)
+// Build bidirectional synonym record from pairs
 // ---------------------------------------------------------------------------
 
-let _synonymMap: Map<string, string[]> | null = null;
-
-function initSynonymMap(): Map<string, string[]> {
-  if (_synonymMap) return _synonymMap;
-
-  const map = new Map<string, string[]>();
-
+function buildSynonymRecord(): Record<string, string[]> {
+  const map: Record<string, string[]> = {};
   for (const [term, synonyms] of SYNONYM_PAIRS) {
-    // Forward direction
-    map.set(term, synonyms);
-
-    // Reverse direction: each synonym → [term]
+    map[term] = synonyms;
     for (const syn of synonyms) {
-      const existing = map.get(syn);
+      const existing = map[syn];
       if (existing) {
-        // Avoid duplicate reverse entries
         if (!existing.includes(term)) existing.push(term);
       } else {
-        map.set(syn, [term]);
+        map[syn] = [term];
       }
     }
   }
-
-  _synonymMap = map;
   return map;
 }
 
-/**
- * Get the full bidirectional synonym map.
- * Used by embedder for token-level synonym expansion.
- */
+export const synonymRecord = buildSynonymRecord();
+const expander = new SynonymExpander(synonymRecord);
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/** Get the full bidirectional synonym map. */
 export function getSynonymMap(): Map<string, string[]> {
-  return initSynonymMap();
+  return new Map(Object.entries(synonymRecord));
 }
 
 /**
- * Expand a query string with known chart-type synonyms to boost
- * cross-language FTS recall.
- *
- * For each term in the query that appears in the synonym map, all
- * associated synonyms are appended (if not already present).
- *
+ * Expand a query with chart-type synonyms.
  * @example expandQuery('桑基图') → '桑基图 sankey'
- * @example expandQuery('treemap') → 'treemap 矩形树图 树图'
  */
 export function expandQuery(query: string): string {
-  const map = initSynonymMap();
-  let expanded = query;
-
-  for (const [term, synonyms] of map) {
-    if (query.includes(term)) {
-      for (const syn of synonyms) {
-        if (!query.includes(syn)) {
-          expanded += ` ${syn}`;
-        }
-      }
-    }
-  }
-
-  return expanded;
+  return expander.expand(query);
 }
 
-/**
- * Return all synonym expansions for a given token.
- * Used by embedder for per-token synonym injection during embedding.
- *
- * @param token A single token (e.g. '树图' or 'treemap')
- * @returns Array of synonym tokens, or empty array if none found.
- */
+/** Return synonym expansions for a single token. */
 export function getSynonymsForToken(token: string): string[] {
-  const map = initSynonymMap();
-  return map.get(token) ?? [];
+  return synonymRecord[token] ?? [];
 }
