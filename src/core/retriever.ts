@@ -17,14 +17,20 @@ import {
   buildDocMap,
   getDocInfo as _getDocInfo,
   getDocById as _getDocById,
-  listDocs as _listDocs,
+  listDocs as _listDocs
 } from './index-loader';
 
 // ---------------------------------------------------------------------------
 // Exports for backward compatibility — redirect to index-loader
 // ---------------------------------------------------------------------------
 
-export { availableLibraries, loadIndex, getDocInfo, getDocById, listDocs } from './index-loader';
+export {
+  availableLibraries,
+  loadIndex,
+  getDocInfo,
+  getDocById,
+  listDocs
+} from './index-loader';
 export { synonymRecord } from './synonyms';
 export { applyTokenBudget, estimateTokens } from './token-budget';
 
@@ -48,7 +54,7 @@ async function tryInitContext(): Promise<void> {
         basePath: path.resolve(__dirname, '..'),
         queryExpansion: { synonyms: synonymRecord },
         ftsFields: ['content'],
-        ftsFieldWeights: { content: 1 },
+        ftsFieldWeights: { content: 1 }
       };
 
       _contextInstance = await Context.create(options);
@@ -58,8 +64,8 @@ async function tryInitContext(): Promise<void> {
       _contextInstance = null;
       console.warn(
         `[retrieve] @antv/context unavailable — semantic search disabled.\n` +
-        `  Error: ${(err as Error).message?.split('\n')[0]}\n` +
-        `  Install model: export HF_ENDPOINT=https://hf-mirror.com && node scripts/download-model.mjs`
+          `  Error: ${(err as Error).message?.split('\n')[0]}\n` +
+          `  Install model: export HF_ENDPOINT=https://hf-mirror.com && node scripts/download-model.mjs`
       );
     }
   })();
@@ -69,11 +75,15 @@ async function tryInitContext(): Promise<void> {
 
 export async function invalidateCaches(): Promise<void> {
   if (_contextInstance) {
-    try { await _contextInstance.close(); } catch { /* best-effort */ }
-    _contextInstance = null;
-    _contextAvailable = false;
-    _contextInitPromise = null;
+    try {
+      await _contextInstance.close();
+    } catch {
+      /* best-effort */
+    }
   }
+  _contextInstance = null;
+  _contextAvailable = false;
+  _contextInitPromise = null;
   const mod = require('./index-loader') as typeof import('./index-loader');
   mod.invalidateCache();
 }
@@ -104,12 +114,14 @@ export async function retrieve(
   if (_contextAvailable && _contextInstance) {
     const mode = strategy === 'vector' ? 'vector' : 'hybrid';
     const docMap = buildDocMap(libs);
-    const allResults: Doc[] = [];
+    const allResults: { doc: Doc; score: number }[] = [];
 
     for (const lib of libs) {
       const zvecPath = path.join(DEFAULT_INDEX_DIR, `${lib}.zvec`);
       if (!fs.existsSync(zvecPath)) {
-        console.error(`[retrieve] zvec index not found for "${lib}". Run "build:index:zvec" first.`);
+        console.error(
+          `[retrieve] zvec index not found for "${lib}". Run "build:index:zvec" first.`
+        );
         continue;
       }
 
@@ -117,16 +129,19 @@ export async function retrieve(
         library: lib,
         topK,
         mode,
-        rerank: false,
+        rerank: false
       });
 
       for (const result of results) {
         const doc = docMap.get(result.id);
-        if (doc) allResults.push(doc);
+        if (doc) {
+          allResults.push({ doc, score: result.score ?? 0 });
+        }
       }
     }
 
-    docs = allResults.slice(0, topK);
+    allResults.sort((a, b) => b.score - a.score);
+    docs = allResults.slice(0, topK).map((item) => item.doc);
   } else {
     // Context unavailable — no independent retrieval logic.
     // User must install model for semantic search.
@@ -138,7 +153,9 @@ export async function retrieve(
   }
 
   if (includeConstraints) {
-    const constraintLibs = library ? [library] : [...new Set(docs.map((d) => d.library))];
+    const constraintLibs = library
+      ? [library]
+      : [...new Set(docs.map((d) => d.library))];
     const infoDocs: Doc[] = constraintLibs.flatMap((lib) => {
       const docInfo = _getDocInfo(lib);
       if (!docInfo) return [];
