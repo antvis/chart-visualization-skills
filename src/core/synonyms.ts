@@ -1,11 +1,12 @@
 /**
  * Synonym expansion for chart visualization queries.
  *
- * Delegates to @antv/context's SynonymExpander for the expansion logic,
- * while keeping the domain-specific synonym map as chart-visualization data.
+ * The synonym map is the single source of truth for chart-type term bridges.
+ * At runtime, context's query() uses this map via queryExpansion option,
+ * so expandQuery() is only needed for standalone / testing use.
  */
 
-import { SynonymExpander } from '@antv/context';
+import { expand } from '@antv/context';
 
 // ---------------------------------------------------------------------------
 // Bidirectional synonym pairs: [term, synonyms[]]
@@ -73,7 +74,6 @@ function buildSynonymRecord(): Record<string, string[]> {
 }
 
 export const synonymRecord = buildSynonymRecord();
-const expander = new SynonymExpander(synonymRecord);
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -86,10 +86,11 @@ export function getSynonymMap(): Map<string, string[]> {
 
 /**
  * Expand a query with chart-type synonyms.
+ * Delegates to @antv/context's expand() function.
  * @example expandQuery('桑基图') → '桑基图 sankey'
  */
 export function expandQuery(query: string): string {
-  return expander.expand(query);
+  return expand(query, { synonyms: synonymRecord });
 }
 
 /** Return synonym expansions for a single token. */

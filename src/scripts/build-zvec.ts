@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Build script: generates zvec vector index from doc index JSON files
+ * Build script: generates zvec vector index directly from content markdown files
  * using @antv/context for embedding and store management.
+ *
+ * No index.json intermediate step required — context.load() reads markdown
+ * frontmatter directly and stores all metadata in zvec fields.
  */
 
 import fs from 'fs';
@@ -16,27 +19,28 @@ const PKG_ROOT = rootArg
   ? path.resolve(rootArg.slice('--root='.length))
   : path.resolve(__dirname, '../..');
 const INDEX_DIR = path.join(PKG_ROOT, 'src', 'index');
+const CONTENT_DIR = path.join(PKG_ROOT, 'src', 'content');
 
 async function build(): Promise<void> {
   console.log('Building zvec vector indexes...\n');
 
-  const indexFiles = fs.existsSync(INDEX_DIR)
+  // Discover libraries from content directory subdirectories
+  const libEntries = fs.existsSync(CONTENT_DIR)
     ? fs
-        .readdirSync(INDEX_DIR)
-        .filter((f) => f.endsWith('.index.json'))
-        .sort()
+        .readdirSync(CONTENT_DIR, { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
-  if (indexFiles.length === 0) {
-    console.log('No index JSON files found. Run "build:index:json" first.');
+  if (libEntries.length === 0) {
+    console.log(`No library directories found in ${CONTENT_DIR}`);
     return;
   }
 
   // Delete existing zvec files
-  for (const indexFile of indexFiles) {
-    const library = indexFile.replace('.index.json', '');
+  for (const entry of libEntries) {
     for (const suffix of ['', '.simple']) {
-      const zvecPath = path.join(INDEX_DIR, `${library}.zvec${suffix}`);
+      const zvecPath = path.join(INDEX_DIR, `${entry.name}.zvec${suffix}`);
       if (fs.existsSync(zvecPath)) {
         fs.rmSync(zvecPath, { recursive: true, force: true });
       }
@@ -52,18 +56,12 @@ async function build(): Promise<void> {
 
   const ctx = await Context.create(options);
   console.log(
-    `Embedder: ${ctx.embedderInfo.kind} (${ctx.embedderInfo.dimensions}d)\n`
+    `Embedder: @antv/context (${ctx.embedderInfo.dimensions}d)\n`
   );
 
-  for (const indexFile of indexFiles) {
-    const library = indexFile.replace('.index.json', '');
-    const contentPattern = path.join(
-      PKG_ROOT,
-      'src',
-      'content',
-      library,
-      '**/*.md'
-    );
+  for (const entry of libEntries) {
+    const library = entry.name;
+    const contentPattern = path.join(CONTENT_DIR, library, '**/*.md');
     console.log(`  ${library.toUpperCase()}: Loading via context...`);
     await ctx.load(library, contentPattern);
     console.log(`  ${library.toUpperCase()}: Done.\n`);

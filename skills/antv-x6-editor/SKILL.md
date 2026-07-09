@@ -67,7 +67,7 @@ Skill content is retrieved via an antv HTTP API server using GET requests.
 
 ### `GET /api/v1/context/retrieve`
 
-Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `includeConstraints=true` will auto-prepend the library core constraints as the first result.
+Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Constraints docs are indexed as regular skill documents and will appear in search results naturally.
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
@@ -75,12 +75,11 @@ Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Setting `i
 | `library` | string | ✅ | Library name: `g2`, `g6`, `x6` |
 | `topK` | number | | Number of results to return (default: 5) |
 | `content` | boolean | | Return full reference doc markdown (default: true) |
-| `includeConstraints` | boolean | | Prepend core constraints as the first result (default: true) |
 | `maxTokens` | number | | Max tokens per result (default: unlimited) |
 | `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
-curl "https://antv.antgroup.com/api/v1/context/retrieve?query=flowchart+stencil+port&library=x6&includeConstraints=true"
+curl "https://antv.antgroup.com/api/v1/context/retrieve?query=flowchart+stencil+port&library=x6"
 ```
 
 ## Critical Rules

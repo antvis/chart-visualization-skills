@@ -57,24 +57,19 @@ Skills are the **single source of truth** for chart generation knowledge.
 
 ### 2. CLI Tool (`src/`)
 
-The build script (`src/scripts/build.ts`) parses all skill markdown files and generates JSON index files (`src/index/*.index.json`). Each index stores two things: the `skills[]` array (reference docs) and `info` (SKILL.md metadata including `constraintsContent` — the core constraints section up to `<!-- CONSTRAINTS:END -->`).
+The build script (`src/scripts/build-zvec.ts`) reads all skill markdown files directly from `src/content/` and generates zvec vector collections (`src/index/*.zvec/`) with full FTS indexes on title, description, tags, content, use_cases, and anti_patterns. All metadata (including frontmatter `id`, `category`, `tags`, etc.) is stored in zvec fields via `@antv/context`, so no intermediate JSON index is needed.
 
-A second build step (`src/scripts/build-zvec.ts`) embeds all skill texts and writes them into zvec vector collections (`src/index/*.zvec/`) with full FTS indexes on title, description, tags, content, use_cases, and anti_patterns.
+The CLI (`antv` command) provides one command:
 
-The CLI (`antv` command) provides four commands:
-
-- `antv retrieve <query>` - zvec hybrid search (FTS + vector + RRF fusion); `--content` returns reference doc markdown and auto-prepends the core constraints block as the first result
-- `antv get <id>` - Get a single skill by exact ID
-- `antv list` - List/filter available skills
-- `antv info <library>` - Show library core constraints (SKILL.md Section 1-2)
+- `antv retrieve <query>` - zvec hybrid search (FTS + vector + RRF fusion); `--content` returns reference doc markdown; constraints docs are indexed as regular skill documents and appear naturally in search results
 
 The retrieval engine uses **zvec** (in-process vector database) with two strategies:
 - **`hybrid`** (default): zvec native multiQuery — FTS (jieba tokenizer, raw text) + Vector (HNSW ANN, 512d) + RRF fusion
 - **`vector`**: Pure ANN vector similarity search
 
-Embedding is handled by `SimpleEmbedder` (tokenizer + multi-hash, 512d, synchronous). No model download required.
+Embedding is handled by `@antv/context`'s built-in embedder (tokenizer + multi-hash, 512d, synchronous).
 
-Public API (`src/api.ts`) exports `retrieve()`, `info()`, `getSkillById()`, `libraries()`, and `listSkills()` for programmatic use.
+Public API (`src/api.ts`) exports `retrieve()` and `libraries()` for programmatic use.
 
 ### HTTP Server (`http-server/`)
 
@@ -86,10 +81,7 @@ cd http-server && npm run dev    # starts on http://localhost:3100 (configurable
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, includeConstraints, strategy, maxTokens, progressiveLevel}` |
-| `/info` | POST | Get library core constraints. Body: `{library}` |
-| `/get` | POST | Get single skill by exact ID. Body: `{id, library}` |
-| `/list` | POST | List/filter skills. Body: `{library, category, tags}` |
+| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, strategy, maxTokens, progressiveLevel}` |
 | `/libraries` | GET | List available library names |
 
 ### 3. Evaluation (`eval/`)
@@ -136,11 +128,11 @@ Two retrieval modes:
 ├── src/                  # Core library: CLI, API, zvec retriever, build scripts
 │   ├── index.ts          # CLI entry point (Commander.js)
 │   ├── api.ts            # Public Node.js API
-│   ├── commands/         # CLI commands (retrieve, list, info, get)
-│   ├── core/             # Types, zvec retriever, embedder
-│   │   └── retrieval/    # zvec-store, embedder
-│   ├── scripts/          # Build scripts (markdown → JSON index + zvec index)
-│   └── index/            # Generated JSON + zvec index files
+│   ├── commands/         # CLI commands (retrieve)
+│   ├── core/             # Types, zvec retriever, synonyms, token-budget
+│   ├── scripts/          # Build script (build-zvec.ts only)
+│   ├── content/          # Skill markdown source files (with frontmatter)
+│   └── index/            # Generated zvec index files only
 ├── http-server/           # Standalone HTTP API deployment
 ├── skills/               # Skill definitions (markdown + YAML frontmatter)
 ├── eval/                 # Evaluation framework and test datasets
@@ -153,12 +145,11 @@ Two retrieval modes:
 ## Key Commands
 
 ```bash
-# Build: parse skills → generate JSON index → build zvec index → compile TS
+# Build: build zvec index → compile TS → copy index
 pnpm build
 
-# Build individual steps
-pnpm build:index:json     # JSON index only
-pnpm build:index:zvec     # zvec vector index only
+# Build individual step
+pnpm build:index         # zvec vector index only
 
 # Test
 pnpm test

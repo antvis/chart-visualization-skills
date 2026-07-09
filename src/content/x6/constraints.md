@@ -1,3 +1,19 @@
+---
+id: "x6-constraints"
+title: "X6 3.x 核心约束（必须遵守）"
+description: "X6 3.x 必须遵守的核心约束规则，包括初始化、节点操作、边操作、插件注册、DOM/CSS、序列化、事件、自定义shape等强制规范"
+library: "x6"
+version: "3.x"
+category: "__constraints__"
+tags:
+  - "constraints"
+  - "核心约束"
+  - "MUST"
+  - "禁止模式"
+use_cases: []
+anti_patterns: []
+---
+
 ## 核心约束（必须遵守）
 
 <!-- CONSTRAINTS:START -->
