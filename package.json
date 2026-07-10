@@ -31,7 +31,7 @@
     "postinstall": "node scripts/download-model.mjs"
   },
   "dependencies": {
-    "@antv/context": "^0.0.1-beta",
+    "@antv/context": "^0.1.0",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3"
   },
