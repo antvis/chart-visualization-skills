@@ -10,4 +10,4 @@ allowBuilds:
   protobufjs: true
   sharp: true
 minimumReleaseAgeExclude:
-  - '@antv/context@0.0.1-beta'
+  - '@antv/context@0.1.0'
