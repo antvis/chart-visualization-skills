@@ -6,7 +6,7 @@
  */
 
 import type { Doc } from './types';
-import { isCJK } from '@antv/context';
+import { isCJK } from '../utils/isCJK';
 
 // ---------------------------------------------------------------------------
 // Token estimation
@@ -53,7 +53,9 @@ export function truncateContent(content: string, maxTokens: number): string {
     tokens += isCJK(content[i]) ? 0.67 : 0.25;
     if (tokens >= maxTokens) break;
   }
-  return content.slice(0, i) + (i < content.length ? '\n<!-- truncated -->' : '');
+  return (
+    content.slice(0, i) + (i < content.length ? '\n<!-- truncated -->' : '')
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -73,7 +75,11 @@ export function truncateContent(content: string, maxTokens: number): string {
  * @param level  Progressive disclosure level (0, 1, or 2).
  * @param budget Maximum token budget for this doc's content.
  */
-export function formatForBudget(doc: Doc, level: number, budget: number): string {
+export function formatForBudget(
+  doc: Doc,
+  level: number,
+  budget: number
+): string {
   const parts: string[] = [];
   parts.push(`## ${doc.title}\n`);
   if (doc.description) parts.push(`${doc.description}\n`);

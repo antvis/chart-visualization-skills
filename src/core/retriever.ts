@@ -39,14 +39,18 @@ export function availableLibraries(): string[] {
 
   return fs
     .readdirSync(DEFAULT_INDEX_DIR)
-    .filter((f) => f.endsWith('.zvec') && fs.statSync(path.join(DEFAULT_INDEX_DIR, f)).isDirectory())
+    .filter(
+      (f) =>
+        f.endsWith('.zvec') &&
+        fs.statSync(path.join(DEFAULT_INDEX_DIR, f)).isDirectory()
+    )
     .map((f) => f.replace('.zvec', ''))
     .sort();
 }
 
 /**
  * Return the list of libraries that have content directories on disk.
- * Used by build-zvec to discover which libraries to build.
+ * Used by build to discover which libraries to build.
  */
 export function contentLibraries(): string[] {
   if (!fs.existsSync(DEFAULT_CONTENT_DIR)) return [];
@@ -76,12 +80,16 @@ function resultToDoc(result: QueryResult): Doc {
     version: typeof meta.version === 'string' ? meta.version : '',
     category: typeof meta.category === 'string' ? meta.category : '',
     subcategory: typeof meta.subcategory === 'string' ? meta.subcategory : '',
-    tags: Array.isArray(meta.tags) ? meta.tags as string[] : [],
-    use_cases: Array.isArray(meta.use_cases) ? meta.use_cases as string[] : [],
-    anti_patterns: Array.isArray(meta.anti_patterns) ? meta.anti_patterns as string[] : [],
-    related: Array.isArray(meta.related) ? meta.related as string[] : [],
+    tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
+    use_cases: Array.isArray(meta.use_cases)
+      ? (meta.use_cases as string[])
+      : [],
+    anti_patterns: Array.isArray(meta.anti_patterns)
+      ? (meta.anti_patterns as string[])
+      : [],
+    related: Array.isArray(meta.related) ? (meta.related as string[]) : [],
     path: result.path,
-    content: result.content,
+    content: result.content
   };
 }
 

@@ -23,7 +23,7 @@
   ],
   "scripts": {
     "build": "npm run build:index && tsc && npm run copy:index",
-    "build:index": "tsx src/scripts/build-zvec.ts",
+    "build:index": "tsx src/scripts/build.ts",
     "copy:index": "rm -rf dist/index && cp -R src/index dist/",
     "test": "vitest run",
     "test:watch": "vitest",

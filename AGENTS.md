@@ -57,7 +57,7 @@ Skills are the **single source of truth** for chart generation knowledge.
 
 ### 2. CLI Tool (`src/`)
 
-The build script (`src/scripts/build-zvec.ts`) reads all skill markdown files directly from `src/content/` and generates zvec vector collections (`src/index/*.zvec/`) with full FTS indexes on title, description, tags, content, use_cases, and anti_patterns. All metadata (including frontmatter `id`, `category`, `tags`, etc.) is stored in zvec fields via `@antv/context`, so no intermediate JSON index is needed.
+The build script (`src/scripts/build.ts`) reads all skill markdown files directly from `src/content/` and generates zvec vector collections (`src/index/*.zvec/`) with full FTS indexes on title, description, tags, content, use_cases, and anti_patterns. All metadata (including frontmatter `id`, `category`, `tags`, etc.) is stored in zvec fields via `@antv/context`, so no intermediate JSON index is needed.
 
 The CLI (`antv` command) provides one command:
 
@@ -130,7 +130,7 @@ Two retrieval modes:
 │   ├── api.ts            # Public Node.js API
 │   ├── commands/         # CLI commands (retrieve)
 │   ├── core/             # Types, zvec retriever, synonyms, token-budget
-│   ├── scripts/          # Build script (build-zvec.ts only)
+│   ├── scripts/          # Build script (build.ts only)
 │   ├── content/          # Skill markdown source files (with frontmatter)
 │   └── index/            # Generated zvec index files only
 ├── http-server/           # Standalone HTTP API deployment
