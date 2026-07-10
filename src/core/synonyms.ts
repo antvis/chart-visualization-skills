@@ -6,7 +6,7 @@
  * so expandQuery() is only needed for standalone / testing use.
  */
 
-import { expand } from '@antv/context';
+import { expand } from '../utils/expand';
 
 // ---------------------------------------------------------------------------
 // Bidirectional synonym pairs: [term, synonyms[]]
@@ -50,7 +50,7 @@ const SYNONYM_PAIRS: [string, string[]][] = [
   ['堆叠', ['stacky']],
   ['思维导图', ['mindmap']],
   ['鱼骨图', ['fishbone']],
-  ['dagre', ['流程图']],
+  ['dagre', ['流程图']]
 ];
 
 // ---------------------------------------------------------------------------
