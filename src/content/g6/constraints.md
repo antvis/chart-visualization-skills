@@ -1,3 +1,18 @@
+---
+id: "g6-constraints"
+title: "G6 v5 核心约束（必须遵守）"
+description: "G6 v5 必须遵守的核心约束规则，包括初始化规范、数据结构、节点/边样式、布局、交互行为、插件等强制规范"
+library: "g6"
+version: "5.x"
+category: "__constraints__"
+tags:
+  - "constraints"
+  - "核心约束"
+  - "MUST"
+use_cases: []
+anti_patterns: []
+---
+
 ## 核心约束（必须遵守）
 
 ### 初始化规范

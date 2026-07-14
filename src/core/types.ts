@@ -15,25 +15,11 @@ export interface Doc {
   content?: string;
 }
 
-export interface DocIndex {
-  library: string;
-  version: string;
-  generated: string;
-  total: number;
-  docs: Doc[];
-  info?: DocInfo;
-}
-
 export interface RetrieveOptions {
   library?: string;
   topK?: number;
   /** Include markdown content body (default: true). */
   content?: boolean;
-  /**
-   * When true, prepend the library's constraints as the first result
-   * (id prefixed with `__info__`). Default: same as `content`.
-   */
-  includeConstraints?: boolean;
   /**
    * Retrieval strategy:
    * - 'vector'  dense vector similarity via zvec index
@@ -49,24 +35,4 @@ export interface RetrieveOptions {
    * - 2 = summary only
    */
   progressiveLevel?: 0 | 1 | 2;
-}
-
-export interface ListOptions {
-  library?: string;
-  category?: string | null;
-  tags?: string[];
-}
-
-export interface DocInfo {
-  name: string;
-  description: string;
-  /** Full DOC.md body (after frontmatter). */
-  content: string;
-  /**
-   * Content up to and including the `<!-- CONSTRAINTS:END -->` marker.
-   * Used by `retrieve --content` to inject only the core constraints section
-   * instead of the full document, avoiding context-window bloat.
-   * Falls back to `content` when the marker is absent.
-   */
-  constraintsContent: string;
 }

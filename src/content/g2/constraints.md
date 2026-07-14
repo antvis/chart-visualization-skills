@@ -1,3 +1,19 @@
+---
+id: "g2-constraints"
+title: "G2 v5 Core Constraints / 核心约束"
+description: "G2 v5 必须遵守的核心约束规则，包括 Spec Mode、encode、transform、coordinate、scale.color.palette 等强制规范和禁止模式"
+library: "g2"
+version: "5.x"
+category: "__constraints__"
+tags:
+  - "constraints"
+  - "核心约束"
+  - "MUST"
+  - "禁止模式"
+use_cases: []
+anti_patterns: []
+---
+
 ## Core Constraints / 核心约束 (MUST follow)
 
 1. **`container` is mandatory**: `new Chart({ container: 'container', ... })`

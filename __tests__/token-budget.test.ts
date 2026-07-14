@@ -136,42 +136,17 @@ describe('token-budget', () => {
       content
     });
 
-    it('should give full budget to __info__ and trim remaining docs', () => {
+    it('should distribute budget evenly across all docs', () => {
       const docs: Doc[] = [
-        {
-          ...makeDoc('__info__g2', 'Core constraints text that is important'),
-          category: '__info__'
-        },
         makeDoc('doc-1', 'Content for doc one'),
         makeDoc('doc-2', 'Content for doc two')
       ];
 
       const result = applyTokenBudget(docs, 20, 1);
-      // __info__ should keep its content
       expect(result[0].content).toBeDefined();
     });
 
-    it('should set content to undefined when budget exhausted', () => {
-      const docs: Doc[] = [
-        {
-          ...makeDoc(
-            '__info__g2',
-            'Very long constraints content eating all budget'
-          ),
-          category: '__info__'
-        },
-        makeDoc('doc-1', 'Short content'),
-        makeDoc('doc-2', 'Another content')
-      ];
-
-      // Very small budget — info consumes it all
-      const result = applyTokenBudget(docs, 5, 1);
-      // Docs after info should have no content
-      expect(result[1].content).toBeUndefined();
-      expect(result[2].content).toBeUndefined();
-    });
-
-    it('should handle no __info__ doc gracefully', () => {
+    it('should handle single doc gracefully', () => {
       const docs: Doc[] = [makeDoc('doc-1', 'Content for doc one')];
 
       const result = applyTokenBudget(docs, 50, 0);

@@ -6,7 +6,7 @@
  */
 
 import type { Doc } from './types';
-import { isCJK } from './retrieval/embedder';
+import { isCJK } from '../utils/isCJK';
 
 // ---------------------------------------------------------------------------
 // Token estimation
@@ -53,7 +53,9 @@ export function truncateContent(content: string, maxTokens: number): string {
     tokens += isCJK(content[i]) ? 0.67 : 0.25;
     if (tokens >= maxTokens) break;
   }
-  return content.slice(0, i) + (i < content.length ? '\n<!-- truncated -->' : '');
+  return (
+    content.slice(0, i) + (i < content.length ? '\n<!-- truncated -->' : '')
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -73,7 +75,11 @@ export function truncateContent(content: string, maxTokens: number): string {
  * @param level  Progressive disclosure level (0, 1, or 2).
  * @param budget Maximum token budget for this doc's content.
  */
-export function formatForBudget(doc: Doc, level: number, budget: number): string {
+export function formatForBudget(
+  doc: Doc,
+  level: number,
+  budget: number
+): string {
   const parts: string[] = [];
   parts.push(`## ${doc.title}\n`);
   if (doc.description) parts.push(`${doc.description}\n`);
@@ -99,10 +105,10 @@ export function formatForBudget(doc: Doc, level: number, budget: number): string
 /**
  * Trim doc content to fit within maxTokens budget, respecting progressiveLevel.
  *
- * The `__info__` doc (library constraints) is given full budget first,
- * then remaining budget is distributed across reference docs.
+ * Budget is distributed evenly across all docs — no special treatment
+ * for any doc type (constraints docs are now regular search results).
  *
- * @param docs          Array of docs (may include __info__ prefix).
+ * @param docs            Array of docs.
  * @param maxTokens       Total token budget.
  * @param progressiveLevel Progressive disclosure level (0, 1, or 2).
  */
@@ -111,20 +117,13 @@ export function applyTokenBudget(
   maxTokens: number,
   level: 0 | 1 | 2
 ): Doc[] {
-  // Shallow-copy each doc to avoid mutating cached objects from
-  // indexCache / docMapCache.  Without this, setting doc.content = undefined
-  // or doc.content = formatted would permanently pollute the cache,
-  // causing subsequent retrieve() calls (even without maxTokens) to
-  // return corrupted data.
+  // Shallow-copy each doc to avoid mutating cached objects.
   const result: Doc[] = docs.map((d) => ({ ...d }));
 
-  const infoIdx = result.findIndex((d) => d.id.startsWith('__info__'));
-  const constraints = infoIdx >= 0 ? result[infoIdx].content || '' : '';
-  let budget = maxTokens - estimateTokens(constraints);
+  let budget = maxTokens;
 
   for (let i = 0; i < result.length; i++) {
     const doc = result[i];
-    if (doc.id.startsWith('__info__')) continue;
     if (budget <= 0) {
       doc.content = undefined;
       continue;

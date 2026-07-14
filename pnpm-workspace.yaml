@@ -9,3 +9,5 @@ allowBuilds:
   onnxruntime-node: true
   protobufjs: true
   sharp: true
+minimumReleaseAgeExclude:
+  - '@antv/context@0.1.0'

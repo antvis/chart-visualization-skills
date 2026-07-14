@@ -1,18 +1,14 @@
 import {
   retrieve as _retrieve,
-  getDocById as _getDocById,
-  getDocInfo,
   availableLibraries,
-  listDocs as _listDocs
+  invalidateCaches as _invalidateCaches,
 } from './core/retriever';
 import type {
   Doc,
-  DocInfo,
   RetrieveOptions,
-  ListOptions
 } from './core/types';
 
-export type { Doc, DocInfo, RetrieveOptions, ListOptions };
+export type { Doc, RetrieveOptions };
 
 /**
  * Retrieve docs based on a query. Returns doc content by default.
@@ -44,29 +40,6 @@ export async function retrieve(
 }
 
 /**
- * Get a single doc by its exact ID.
- *
- * @param id      The doc ID (e.g. 'g2-mark-bar').
- * @param library Optional: restrict the search to a specific library.
- * @returns The doc with full content, or undefined if not found.
- * @example getDocById('g2-mark-bar')
- */
-export function getDocById(id: string, library?: string): Doc | undefined {
-  return _getDocById(id, library);
-}
-
-/**
- * Get doc info embedded in the library index.
- *
- * @param library The library to get info for (default: 'g2').
- * @example info('g2')
- * @returns The doc info, or undefined if not available.
- */
-export function info(library = 'g2'): DocInfo | undefined {
-  return getDocInfo(library);
-}
-
-/**
  * Return the list of libraries that have a built index on disk.
  * @example libraries() // ['g2', 'g6']
  */
@@ -75,10 +48,9 @@ export function libraries(): string[] {
 }
 
 /**
- * List available docs, optionally filtered by library, category or tags.
- * @param options Filter options.
- * @example listDocs({ library: 'g2', tags: ['bar'] })
+ * Invalidate all caches (Context instance).
+ * Useful when indexes are rebuilt at runtime.
  */
-export function listDocs(options: ListOptions = {}): Doc[] {
-  return _listDocs(options);
+export async function invalidateCaches(): Promise<void> {
+  return _invalidateCaches();
 }

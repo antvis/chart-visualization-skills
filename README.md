@@ -90,32 +90,17 @@ We also provide a CLI tool named `antv` for easy usage in your terminal, Install
 npm install -g @antv/chart-visualization-skills
 ```
 
-**Retrieve or list skills by query**:
+**Retrieve skills by query**:
 
 ```bash
 # Retrieve skills by query (metadata only)
 antv retrieve "bar chart" --library g2 --topk 10
 
-# Retrieve skills with full markdown content (core constraints auto-prepended)
+# Retrieve skills with full markdown content
 antv retrieve "bar chart" --library g2 --content
 
 # Retrieve skills and output as JSON
 antv retrieve "bar chart" --library g2 --output json
-
-# Get a skill by its exact ID
-antv get g2-mark-interval-basic --library g2
-
-# List all available skills
-antv list --library g2 --category core
-
-# List skills and output as JSON
-antv list --output json
-
-# Show skill info (core constraints from SKILL.md)
-antv info --library g2
-
-# Show skill info as JSON
-antv info --library g2 --output json
 ```
 
 **Usage for the command**:
@@ -131,34 +116,28 @@ Options:
 
 Commands:
   retrieve [options] <query>  Search for skills matching a query
-  get [options] <id>          Get a skill by its exact ID
-  list [options]              List all available skills
-  info [options]              Show skill info from SKILL.md
   help [command]              display help for command
 
 Options for retrieve:
   --library <lib>             Filter by library (e.g. g2, g6, x6)
   --topk <n>                  Number of results to return (default: 7)
   --strategy <s>              Retrieval strategy: hybrid | vector (default: hybrid)
-  --content                   Include markdown content body in results; core constraints (SKILL.md Section 1-2) are always prepended as the first result
+  --content                   Include markdown content body in results
   --output <format>           Output format: json | text (default: "text")
 ```
 
-> Note: `--content` always prepends the library's core constraints (Section 1 & 2 of SKILL.md, up to the `<!-- CONSTRAINTS:END -->` marker) as the first result, ensuring the model receives essential rules alongside the reference documents.
+> Note: Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results when the query matches their content.
 
 ### API Usage
 
 ```typescript
 import { retrieve } from '@antv/chart-visualization-skills';
 
-// With full markdown content and constraints (defaults)
+// With full markdown content (defaults)
 const skills = retrieve('bar chart', { library: 'g2', topK: 5 });
 
-// Metadata only (no content body or constraints)
+// Metadata only (no content body)
 const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: false });
-
-// Explicit constraints control
-const skills = retrieve('bar chart', { library: 'g2', content: true, includeConstraints: false });
 
 // With token budget — content trimmed to fit 4000 tokens, summary + code only
 const skills = retrieve('bar chart', {
@@ -169,13 +148,12 @@ const skills = retrieve('bar chart', {
 ```
 
 ```typescript
-retrieve(query: string, options?: RetrieveOptions): Promise<Skill[]>
+retrieve(query: string, options?: RetrieveOptions): Promise<Doc[]>
 
 interface RetrieveOptions {
   library?: string;    // Library filter, e.g. 'g2' or 'g6'
   topK?: number;       // Number of results (default: 7)
   content?: boolean;   // Include markdown content body (default: true)
-  includeConstraints?: boolean; // Prepend constraints as first result (default: same as content)
   strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
   maxTokens?: number;  // Token budget — content trimmed to fit when set
   progressiveLevel?: 0 | 1 | 2;  // 0=full, 1=summary+code, 2=summary (default: 1)
@@ -187,7 +165,6 @@ interface RetrieveOptions {
 | `library` | `string` | all | Library filter (`g2` / `g6` / `x6`) |
 | `topK` | `number` | `7` | Number of results |
 | `content` | `boolean` | `true` | Include markdown content body |
-| `includeConstraints` | `boolean` | same as `content` | Prepend constraints as first result |
 | `strategy` | `'hybrid' \| 'vector'` | `'hybrid'` | Retrieval strategy |
 | `maxTokens` | `number` | — | Token budget; content trimmed to fit when set |
 | `progressiveLevel` | `0 \| 1 \| 2` | `1` | 0=full, 1=summary+code, 2=summary only |
@@ -196,30 +173,8 @@ interface RetrieveOptions {
 > - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
 > - `strategy: 'vector'` uses pure ANN vector similarity search.
 > - `content: true` returns markdown content body (frontmatter metadata is excluded).
-> - When `includeConstraints` is true, the core constraints block is injected as the first element (id prefixed with `__info__`).
+> - Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results.
 > - When `maxTokens` is set, skill content is formatted and trimmed to fit the budget according to `progressiveLevel`.
-
-```typescript
-import { info } from '@antv/chart-visualization-skills';
-
-const skillInfo = info('g2');
-// => { name: 'antv-g2-chart', description: '...', content: '...', constraintsContent: '...' }
-```
-
-```typescript
-info(library?: string): SkillInfo | undefined
-
-interface SkillInfo {
-  name: string;
-  description: string;
-  content: string;            // Full SKILL.md body (after frontmatter)
-  constraintsContent: string; // SKILL.md body up to <!-- CONSTRAINTS:END --> marker; injected by retrieve when includeConstraints: true
-}
-```
-
-| Parameter | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `library` | `string` | `'g2'` | Library to get info for (`g2` or `g6`) |
 
 ## License
 

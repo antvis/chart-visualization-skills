@@ -8,7 +8,7 @@ export function registerRetrieveCommand(program: Command): void {
     .option('--library <lib>', 'Filter by library (g2, g6, x6)')
     .option('--topk <n>', 'Number of results to return', '7')
     .option('--strategy <s>', 'Retrieval strategy: hybrid | vector', 'hybrid')
-    .option('--content', 'Include markdown content of matched reference docs (constraints are always prepended when content is shown)')
+    .option('--content', 'Include markdown content of matched reference docs')
     .option('--output <format>', 'Output format: json | text', 'text')
     .action(
       async (
@@ -29,7 +29,6 @@ export function registerRetrieveCommand(program: Command): void {
           library: opts.library,
           topK,
           content: withContent,
-          includeConstraints: withContent,
           strategy,
         });
 
@@ -38,26 +37,13 @@ export function registerRetrieveCommand(program: Command): void {
           return;
         }
 
-        const refDocs = docs.filter((d) => !d.id.startsWith('__info__'));
-        const infoDocs = docs.filter((d) => d.id.startsWith('__info__'));
-
-        if (infoDocs.length > 0) {
-          for (const infoDoc of infoDocs) {
-            console.log(`${'═'.repeat(60)}`);
-            console.log(`  DOC CONSTRAINTS: ${infoDoc.title}`);
-            console.log(`${'═'.repeat(60)}`);
-            if (infoDoc.content) console.log(infoDoc.content);
-            console.log();
-          }
-        }
-
-        if (refDocs.length === 0) {
-          console.log('No reference documents found.');
+        if (docs.length === 0) {
+          console.log('No documents found.');
           return;
         }
 
-        console.log(`Total ${refDocs.length} documents found:`);
-        for (const [i, doc] of refDocs.entries()) {
+        console.log(`Total ${docs.length} documents found:`);
+        for (const [i, doc] of docs.entries()) {
           console.log(`\n${'─'.repeat(50)}`);
           console.log(`[${i + 1}] ${doc.title}  (${doc.id})`);
           console.log(

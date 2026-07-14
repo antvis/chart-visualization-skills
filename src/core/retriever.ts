@@ -1,201 +1,146 @@
 /**
- * Retriever — thin coordination layer that delegates to:
- *   - index-loader.ts  (index loading + caching)
- *   - synonyms.ts      (query expansion)
- *   - token-budget.ts  (progressive disclosure + token trimming)
- *   - zvec-store.ts    (vector / hybrid search)
- *   - embedder.ts      (text → vector)
+ * Retriever — thin coordination layer that delegates to @antv/context.
+ *
+ * When context is unavailable (model not downloaded), returns empty results
+ * with a clear install hint — no independent retrieval logic here.
+ *
+ * Doc metadata (title, tags, category, etc.) is read directly from
+ * QueryResult.meta (populated from markdown frontmatter by context),
+ * so no index.json intermediate layer is needed.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { Context } from '@antv/context';
+import type { ContextOptions, QueryResult } from '@antv/context';
 import type { Doc, RetrieveOptions } from './types';
-import { expandQuery } from './synonyms';
+import { synonymRecord } from './synonyms';
 import { applyTokenBudget } from './token-budget';
-import {
-  availableLibraries,
-  buildDocMap,
-  getDocInfo as _getDocInfo,
-  getDocById as _getDocById,
-  listDocs as _listDocs
-} from './index-loader';
-import { getEmbedder, SimpleEmbedder } from './retrieval/embedder';
-import { openZvecStoreSync } from './retrieval/zvec-store';
-import type { IZvecStore, ZvecQueryResult } from './retrieval/zvec-store';
 
 // ---------------------------------------------------------------------------
-// Exports for backward compatibility — redirect to index-loader
+// Exports
 // ---------------------------------------------------------------------------
 
-export {
-  availableLibraries,
-  loadIndex,
-  getDocInfo,
-  getDocById,
-  listDocs
-} from './index-loader';
-export { expandQuery } from './synonyms';
+export { synonymRecord } from './synonyms';
 export { applyTokenBudget, estimateTokens } from './token-budget';
 
 // ---------------------------------------------------------------------------
-// zvec path resolution & store management
+// Available libraries — scan content directories on disk
 // ---------------------------------------------------------------------------
 
 const DEFAULT_INDEX_DIR = path.resolve(__dirname, '../index');
+const DEFAULT_CONTENT_DIR = path.resolve(__dirname, '../content');
 
-const ZVEC_INDEX_DIRS = [
-  DEFAULT_INDEX_DIR,
-  ...(DEFAULT_INDEX_DIR.endsWith(`${path.sep}dist${path.sep}index`)
-    ? [
-        DEFAULT_INDEX_DIR.replace(
-          `${path.sep}dist${path.sep}index`,
-          `${path.sep}src${path.sep}index`
-        )
-      ]
-    : [])
-];
+/**
+ * Return the list of libraries that have a built zvec index on disk.
+ */
+export function availableLibraries(): string[] {
+  if (!fs.existsSync(DEFAULT_INDEX_DIR)) return [];
 
-const zvecCache = new Map<string, IZvecStore>();
-
-function resolveZvecPath(
-  library: string,
-  fallback = false
-): string | undefined {
-  const bases = fallback
-    ? [`${library}.zvec.simple`, `${library}.zvec`]
-    : [`${library}.zvec`];
-  for (const dir of ZVEC_INDEX_DIRS) {
-    for (const base of bases) {
-      const p = path.join(dir, base);
-      if (fs.existsSync(p)) return p;
-    }
-  }
-  return undefined;
-}
-
-function getZvecStoreSync(
-  library: string,
-  fallback = false
-): IZvecStore | undefined {
-  const cacheKey = fallback ? `${library}__fallback` : library;
-  if (zvecCache.has(cacheKey)) return zvecCache.get(cacheKey)!;
-
-  const zvecPath = resolveZvecPath(library, fallback);
-  if (!zvecPath) return undefined;
-
-  try {
-    const store = openZvecStoreSync(zvecPath);
-    zvecCache.set(cacheKey, store);
-    return store;
-  } catch {
-    return undefined;
-  }
+  return fs
+    .readdirSync(DEFAULT_INDEX_DIR)
+    .filter(
+      (f) =>
+        f.endsWith('.zvec') &&
+        fs.statSync(path.join(DEFAULT_INDEX_DIR, f)).isDirectory()
+    )
+    .map((f) => f.replace('.zvec', ''))
+    .sort();
 }
 
 /**
- * Invalidate all caches (index cache + zvec store cache).
- * Useful when indexes are rebuilt at runtime (harness IndexAgent).
+ * Return the list of libraries that have content directories on disk.
+ * Used by build to discover which libraries to build.
  */
-export function invalidateCaches(): void {
-  zvecCache.clear();
-  const mod = require('./index-loader') as typeof import('./index-loader');
-  mod.invalidateCache();
+export function contentLibraries(): string[] {
+  if (!fs.existsSync(DEFAULT_CONTENT_DIR)) return [];
+
+  return fs
+    .readdirSync(DEFAULT_CONTENT_DIR, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
 }
 
 // ---------------------------------------------------------------------------
-// Strategy helpers
+// QueryResult → Doc mapping
 // ---------------------------------------------------------------------------
 
-interface StrategyParams {
-  library?: string;
-  topK: number;
+/**
+ * Convert a context QueryResult into a Doc object.
+ * All metadata comes from the frontmatter stored in QueryResult.meta.
+ */
+function resultToDoc(result: QueryResult): Doc {
+  const meta = (result.meta ?? {}) as Record<string, unknown>;
+  return {
+    id: result.id,
+    title: typeof meta.title === 'string' ? meta.title : '',
+    description: typeof meta.description === 'string' ? meta.description : '',
+    library: typeof meta.library === 'string' ? meta.library : '',
+    version: typeof meta.version === 'string' ? meta.version : '',
+    category: typeof meta.category === 'string' ? meta.category : '',
+    subcategory: typeof meta.subcategory === 'string' ? meta.subcategory : '',
+    tags: Array.isArray(meta.tags) ? (meta.tags as string[]) : [],
+    use_cases: Array.isArray(meta.use_cases)
+      ? (meta.use_cases as string[])
+      : [],
+    anti_patterns: Array.isArray(meta.anti_patterns)
+      ? (meta.anti_patterns as string[])
+      : [],
+    related: Array.isArray(meta.related) ? (meta.related as string[]) : [],
+    path: result.path,
+    content: result.content
+  };
 }
 
-function buildLibraryFilter(library: string): string {
-  return `library = '${library}'`;
+// ---------------------------------------------------------------------------
+// Context instance management (lazy init)
+// ---------------------------------------------------------------------------
+
+let _contextInstance: Context | null = null;
+let _contextAvailable: boolean = false;
+let _contextInitPromise: Promise<void> | null = null;
+
+async function tryInitContext(): Promise<void> {
+  if (_contextInitPromise) return _contextInitPromise;
+
+  _contextInitPromise = (async () => {
+    try {
+      const options: ContextOptions = {
+        vectorsDir: DEFAULT_INDEX_DIR,
+        basePath: path.resolve(__dirname, '..'),
+        queryExpansion: { synonyms: synonymRecord },
+        ftsFields: ['content'],
+        ftsFieldWeights: { content: 1 }
+      };
+
+      _contextInstance = await Context.create(options);
+      _contextAvailable = true;
+    } catch (err) {
+      _contextAvailable = false;
+      _contextInstance = null;
+      console.warn(
+        `[retrieve] @antv/context unavailable — semantic search disabled.\n` +
+          `  Error: ${(err as Error).message?.split('\n')[0]}\n` +
+          `  Install model: export HF_ENDPOINT=https://hf-mirror.com && node scripts/download-model.mjs`
+      );
+    }
+  })();
+
+  return _contextInitPromise;
 }
 
-function hasZvecCollections(libs: string[], fallback = false): boolean {
-  return libs.some((lib) => resolveZvecPath(lib, fallback) !== undefined);
-}
-
-async function retrieveVector(
-  query: string,
-  params: StrategyParams
-): Promise<Doc[]> {
-  const { library, topK } = params;
-  const libs = library ? [library] : availableLibraries();
-
-  const docMap = buildDocMap(libs);
-  const expandedQuery = expandQuery(query);
-  const embedder = await getEmbedder();
-  const useFallback = embedder instanceof SimpleEmbedder;
-
-  if (!hasZvecCollections(libs, useFallback)) {
-    console.error(
-      '[retrieve] zvec index not found. Run "build:index:zvec" to generate vector indexes.'
-    );
-    return [];
+export async function invalidateCaches(): Promise<void> {
+  if (_contextInstance) {
+    try {
+      await _contextInstance.close();
+    } catch {
+      /* best-effort */
+    }
   }
-  const queryVec = await embedder.embed(expandedQuery);
-
-  const allResults: ZvecQueryResult[] = [];
-  for (const lib of libs) {
-    const store = getZvecStoreSync(lib, useFallback);
-    if (!store) continue;
-    const results = store.searchSync({
-      vector: queryVec,
-      topK,
-      filter: buildLibraryFilter(lib)
-    });
-    allResults.push(...results);
-  }
-
-  allResults.sort((a, b) => b.score - a.score);
-  return allResults
-    .slice(0, topK)
-    .map((r) => docMap.get(r.id))
-    .filter((d): d is Doc => d !== undefined);
-}
-
-async function retrieveHybrid(
-  query: string,
-  params: StrategyParams
-): Promise<Doc[]> {
-  const { library, topK } = params;
-  const libs = library ? [library] : availableLibraries();
-
-  const docMap = buildDocMap(libs);
-  const expandedQuery = expandQuery(query);
-  const embedder = await getEmbedder();
-  const useFallback = embedder instanceof SimpleEmbedder;
-
-  if (!hasZvecCollections(libs, useFallback)) {
-    console.error(
-      '[retrieve] zvec index not found. Run "build:index:zvec" to enable hybrid search.'
-    );
-    return [];
-  }
-  const queryVec = await embedder.embed(expandedQuery);
-
-  const allResults: ZvecQueryResult[] = [];
-  for (const lib of libs) {
-    const store = getZvecStoreSync(lib, useFallback);
-    if (!store) continue;
-    const results = store.searchHybridSync({
-      queryText: expandedQuery,
-      queryVector: queryVec,
-      topK,
-      filter: buildLibraryFilter(lib)
-    });
-    allResults.push(...results);
-  }
-
-  allResults.sort((a, b) => b.score - a.score);
-  return allResults
-    .slice(0, topK)
-    .map((r) => docMap.get(r.id))
-    .filter((d): d is Doc => d !== undefined);
+  _contextInstance = null;
+  _contextAvailable = false;
+  _contextInitPromise = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,44 +155,51 @@ export async function retrieve(
     library,
     topK = 7,
     content = true,
-    includeConstraints = content,
     strategy = 'hybrid',
     maxTokens,
     progressiveLevel = 1
   } = options;
 
-  let docs: Doc[] =
-    strategy === 'vector'
-      ? await retrieveVector(query, { library, topK })
-      : await retrieveHybrid(query, { library, topK });
+  const libs = library ? [library] : availableLibraries();
+  await tryInitContext();
+
+  let docs: Doc[];
+
+  if (_contextAvailable && _contextInstance) {
+    const mode = strategy === 'vector' ? 'vector' : 'hybrid';
+    const allResults: { doc: Doc; score: number }[] = [];
+
+    for (const lib of libs) {
+      const zvecPath = path.join(DEFAULT_INDEX_DIR, `${lib}.zvec`);
+      if (!fs.existsSync(zvecPath)) {
+        console.error(
+          `[retrieve] zvec index not found for "${lib}". Run "build:index:zvec" first.`
+        );
+        continue;
+      }
+
+      const results = await _contextInstance.query(query, {
+        library: lib,
+        topK,
+        mode,
+        rerank: false
+      });
+
+      for (const result of results) {
+        allResults.push({ doc: resultToDoc(result), score: result.score ?? 0 });
+      }
+    }
+
+    allResults.sort((a, b) => b.score - a.score);
+    docs = allResults.slice(0, topK).map((item) => item.doc);
+  } else {
+    // Context unavailable — no independent retrieval logic.
+    // User must install model for semantic search.
+    docs = [];
+  }
 
   if (!content) {
     docs = docs.map(({ content, ...doc }) => doc);
-  }
-
-  if (includeConstraints) {
-    const libs = library ? [library] : [...new Set(docs.map((d) => d.library))];
-    const infoDocs: Doc[] = libs.flatMap((lib) => {
-      const docInfo = _getDocInfo(lib);
-      if (!docInfo) return [];
-      return [
-        {
-          id: `__info__${lib}`,
-          title: docInfo.name,
-          description: docInfo.description,
-          library: lib,
-          version: '',
-          category: '__info__',
-          subcategory: '',
-          tags: [],
-          use_cases: [],
-          anti_patterns: [],
-          related: [],
-          content: docInfo.constraintsContent
-        }
-      ];
-    });
-    docs = [...infoDocs, ...docs];
   }
 
   if (maxTokens && content) {
