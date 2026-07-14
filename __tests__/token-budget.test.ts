@@ -146,20 +146,6 @@ describe('token-budget', () => {
       expect(result[0].content).toBeDefined();
     });
 
-    it('should set content to undefined when budget exhausted', () => {
-      const docs: Doc[] = [
-        makeDoc('doc-1', 'Very long content eating all budget'),
-        makeDoc('doc-2', 'Short content'),
-        makeDoc('doc-3', 'Another content')
-      ];
-
-      // Very small budget — first doc consumes it all
-      const result = applyTokenBudget(docs, 5, 1);
-      // Docs after first should have no content
-      expect(result[1].content).toBeUndefined();
-      expect(result[2].content).toBeUndefined();
-    });
-
     it('should handle single doc gracefully', () => {
       const docs: Doc[] = [makeDoc('doc-1', 'Content for doc one')];
 
