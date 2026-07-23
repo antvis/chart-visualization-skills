@@ -64,41 +64,91 @@ chart.render();
 
 ## 气泡图（三维数据）
 
+气泡图样式要点：不要使用白色描边（浅色主题下像错误图表），推荐径向渐变 + 阴影 + 较高 fillOpacity；
+size 比例尺推荐使用 sqrt 类型，合理设置 size.range（建议 [4, 40]），隐藏 size 图例，
+坐标轴使用虚线网格，标签用 overlapDodgeY 防重叠。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({ container: 'container', width: 700, height: 500 });
 
+const data1990 = [
+  { income: 28604, life: 77,    population: 17096869, country: 'Australia' },
+  { income: 31163, life: 77.4,  population: 27662440, country: 'Canada' },
+  { income: 1516,  life: 68,    population: 1154605773, country: 'China' },
+  { income: 29476, life: 77.1,  population: 56943299, country: 'France' },
+  { income: 29550, life: 79.1,  population: 122249285, country: 'Japan' },
+  { income: 37062, life: 75.4,  population: 252847810, country: 'United States' },
+];
+
+const data2015 = [
+  { income: 44056, life: 81.8,  population: 23968973, country: 'Australia' },
+  { income: 43294, life: 81.7,  population: 35939927, country: 'Canada' },
+  { income: 13334, life: 76.9,  population: 1376048943, country: 'China' },
+  { income: 37599, life: 81.9,  population: 64395345, country: 'France' },
+  { income: 36162, life: 83.5,  population: 126573481, country: 'Japan' },
+  { income: 53354, life: 79.1,  population: 321773631, country: 'United States' },
+];
+
+const allData = [
+  ...data1990.map(d => ({ ...d, year: '1990' })),
+  ...data2015.map(d => ({ ...d, year: '2015' })),
+];
+
+// 颜色映射表：scale.color.range 和 fill 回调共用
+const COLOR_MAP = { '1990': '#fb7678', '2015': '#81e7ee' };
+
 chart.options({
   type: 'point',
-  data: [
-    { income: 30000, lifeExpect: 72, population: 1400, country: 'China'  },
-    { income: 60000, lifeExpect: 79, population: 330,  country: 'USA'    },
-    { income: 45000, lifeExpect: 84, population: 125,  country: 'Japan'  },
-    { income: 20000, lifeExpect: 68, population: 1380, country: 'India'  },
-    { income: 35000, lifeExpect: 80, population: 210,  country: 'Brazil' },
-  ],
+  data: allData,
   encode: {
     x: 'income',
-    y: 'lifeExpect',
+    y: 'life',
     size: 'population',    // 气泡大小 = 第三个维度
-    color: 'country',
+    color: 'year',
+    shape: 'point',
   },
   scale: {
-    size: { range: [10, 60] },    // 控制气泡大小范围
+    size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺 + 合适的气泡范围
+    color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
+  },
+  style: {
+    fillOpacity: 0.85,
+    lineWidth: 0,
+    // 径向渐变 + 阴影：模拟 3D 球体质感
+    // 通过 COLOR_MAP[datum.year] 获取颜色，与 scale.color.range 保持一致
+    fill: (datum) => {
+      const color = COLOR_MAP[datum.year];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
+    },
+    shadowBlur: 10,
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffsetY: 5,
+  },
+  legend: { size: false },    // size 图例意义不大，建议隐藏
+  labels: [
+    { text: 'country', fontSize: 12, fontWeight: 700, fill: '#2D3748', dy: 10,
+      transform: [{ type: 'overlapDodgeY' }] },
+  ],
+  axis: {
+    x: { grid: true, gridLineDash: [4, 4], gridStrokeOpacity: 0.3 },
+    y: { grid: true, gridLineDash: [4, 4], gridStrokeOpacity: 0.3 },
   },
   tooltip: {
-    title: 'country',
+    title: (d) => `${d.country} (${d.year})`,
     items: [
       { field: 'income',     name: '人均收入' },
-      { field: 'lifeExpect', name: '预期寿命' },
-      { field: 'population', name: '人口（百万）' },
+      { field: 'life',       name: '预期寿命' },
+      { field: 'population', name: '人口', valueFormatter: (v) => `${(v / 1e6).toFixed(1)}M` },
     ],
   },
 });
 
 chart.render();
 ```
+
+> 气泡图完整样式指南（含径向渐变、阴影等）见 [气泡图文档](g2-mark-point-bubble.md)。
 
 ## 自定义点形状
 

@@ -95,6 +95,9 @@ chart.options({
 ### 双数值轴 + 气泡图（多通道映射）
 
 ```javascript
+// 颜色映射表：scale.color.range 和 fill 回调共用
+const COLOR_MAP = { 'China': '#5B8FF9', 'USA': '#fb7678', 'Japan': '#81e7ee' };
+
 chart.options({
   type: 'point',
   data: [
@@ -110,8 +113,23 @@ chart.options({
     shape: 'point',
   },
   scale: {
-    size: { range: [10, 60] },
+    size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺 + 合适的气泡范围
+    color: { range: Object.values(COLOR_MAP) },
   },
+  style: {
+    fillOpacity: 0.85,            // 不要用 stroke: '#fff'，浅色主题下像错误图表
+    lineWidth: 0,
+    // 径向渐变：从白色中心到映射色边缘，模拟 3D 球体质感
+    // 通过 COLOR_MAP[datum.country] 获取颜色，与 scale.color.range 保持一致
+    fill: (datum) => {
+      const color = COLOR_MAP[datum.country];
+      return `radial-gradient(circle at 35% 35%, rgb(255,255,255) 0%, ${color} 100%)`;
+    },
+    shadowBlur: 10,
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffsetY: 5,
+  },
+  legend: { size: false },        // size 图例意义不大，建议隐藏
 });
 ```
 

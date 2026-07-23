@@ -22,8 +22,8 @@
     "cli"
   ],
   "scripts": {
-    "build": "tsc && npm run copy:zvec",
-    "copy:zvec": "rm -rf dist/.zvec && cp -R src/.zvec dist/.zvec",
+    "build": "rm -rf dist && tsc && npm run copy:zvec",
+    "copy:zvec": "cp -R src/.zvec dist/.zvec",
     "test": "vitest run",
     "test:watch": "vitest",
     "precommit": "npm run build"

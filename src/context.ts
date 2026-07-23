@@ -15,6 +15,10 @@ import { synonyms } from './synonyms';
 const ZVEC_DIR = path.resolve(__dirname, './.zvec');
 const CONTENT_DIR = path.resolve(__dirname, './content');
 
+function isZvecExists(library: string): boolean {
+  return fs.existsSync(path.join(ZVEC_DIR, `${library}.zvec`));
+}
+
 // Context 单例
 let _context: Context | null = null;
 
@@ -35,13 +39,13 @@ export async function getContext(): Promise<Context> {
   });
 
   // zvec 索引目录已存在时跳过 load（避免重复嵌入/构建），直接读取已有索引即可
-  if (fs.existsSync(ZVEC_DIR)) {
-    return _context;
+  const libs = ['g2', 'g6', 'x6'];
+  for (const lib of libs) {
+    if (isZvecExists(lib)) {
+      continue;
+    }
+    await _context.load(lib, path.join(CONTENT_DIR, lib, '**/*.md'));
   }
-
-  await _context.load('g2', path.join(CONTENT_DIR, 'g2/**/*.md'));
-  await _context.load('g6', path.join(CONTENT_DIR, 'g6/**/*.md'));
-  await _context.load('x6', path.join(CONTENT_DIR, 'x6/**/*.md'));
 
   return _context;
 }
