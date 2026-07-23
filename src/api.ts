@@ -1,4 +1,4 @@
-export type { QueryResult, RetrieveOptions } from './types';
+export type { Doc, RetrieveOptions } from './types';
 
 /**
  * Retrieve docs based on a query. Returns doc content by default.

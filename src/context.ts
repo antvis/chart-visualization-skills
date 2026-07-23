@@ -10,8 +10,8 @@ import path from 'path';
 import { Context } from '@antv/context';
 import { synonyms } from './synonyms';
 
-const ZVEC_DIR = path.resolve(__dirname, '../zvec');
-const CONTENT_DIR = path.resolve(__dirname, '../content');
+const ZVEC_DIR = path.resolve(__dirname, './.zvec');
+const CONTENT_DIR = path.resolve(__dirname, './content');
 
 // Context 单例
 let _context: Context | null = null;

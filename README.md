@@ -76,7 +76,55 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 [![npm version](https://img.shields.io/npm/v/%40antv%2Fchart-visualization-skills)](https://www.npmjs.com/package/@antv/chart-visualization-skills)
 ![license](https://img.shields.io/github/license/antvis/chart-visualization-skills)
 
-It can be used as a library in your Node.js projects with `API`.
+It can be used as a library in your Node.js projects with `CLI` and `API`.
+
+### CLI Usage
+
+We also provide a CLI tool named `antv` for easy usage in your terminal, Install globally:
+
+```bash
+npm install -g @antv/chart-visualization-skills
+```
+
+**Retrieve skills by query**:
+
+```bash
+# Retrieve skills by query (metadata only)
+antv retrieve "bar chart" --library g2 --topk 10
+
+# Retrieve skills with full markdown content
+antv retrieve "bar chart" --library g2 --content
+
+# Retrieve skills and output as JSON
+antv retrieve "bar chart" --library g2 --output json
+```
+
+**Usage for the command**:
+
+```
+Usage: antv [options] [command]
+
+CLI tool for AntV chart visualization skills retrieval
+
+Options:
+  -V, --version               output the version number
+  -h, --help                  display help for command
+
+Commands:
+  retrieve [options] <query>  Search for skills matching a query
+  help [command]              display help for command
+
+Options for retrieve:
+  --library <lib>             Filter by library (e.g. g2, g6, x6)
+  --topk <n>                  Number of results to return (default: 7)
+  --strategy <s>              Retrieval strategy: hybrid | vector (default: hybrid)
+  --content                   Include markdown content body in results
+  --output <format>           Output format: json | text (default: "text")
+```
+
+> Note: Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results when the query matches their content.
+
+### API Usage
 
 ```typescript
 import { retrieve } from '@antv/chart-visualization-skills';

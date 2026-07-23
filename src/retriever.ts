@@ -1,35 +1,25 @@
-import path from 'path';
-import fs from 'fs';
 import type { QueryResult } from '@antv/context';
-import type { RetrieveOptions } from './types';
+import type { RetrieveOptions, Doc } from './types';
 import { getContext } from './context';
 
-const ZVEC_DIR = path.resolve(__dirname, '../zvec');
-const CONTENT_DIR = path.resolve(__dirname, '../content');
-
-/**
- * Return the list of libraries that have a built zvec index on disk.
- */
-export function availableLibraries(): string[] {
-  if (!fs.existsSync(ZVEC_DIR)) return [];
-
-  return fs
-    .readdirSync(ZVEC_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && entry.name.endsWith('.zvec'))
-    .map((entry) => entry.name.replace('.zvec', ''));
-}
-
-/**
- * Return the list of libraries that have content directories on disk.
- * Used by build to discover which libraries to build.
- */
-export function contentLibraries(): string[] {
-  if (!fs.existsSync(CONTENT_DIR)) return [];
-
-  return fs
-    .readdirSync(CONTENT_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
+function resultToDoc(result: QueryResult): Doc {
+  const { id, path, content } = result;
+  const { title, description, library, version, category, subcategory, tags, use_cases, anti_patterns, related } = (result.meta ?? {}) as any;
+  return {
+    id,
+    path,
+    content,
+    title,
+    description,
+    library,
+    version,
+    category,
+    subcategory,
+    tags: Array.isArray(tags) ? tags : [],
+    use_cases: Array.isArray(use_cases) ? use_cases : [],
+    anti_patterns: Array.isArray(anti_patterns) ? anti_patterns : [],
+    related: Array.isArray(related) ? related : [],
+  };
 }
 
 /**
@@ -38,7 +28,7 @@ export function contentLibraries(): string[] {
 export async function retrieve(
   query: string,
   options: RetrieveOptions = {}
-): Promise<QueryResult[]> {
+): Promise<Doc[]> {
   const {
     library = 'g2',
     topK = 7,
@@ -50,10 +40,12 @@ export async function retrieve(
 
   const ctx = await getContext();
 
-  return await ctx.query(query, {
+  const results =  await ctx.query(query, {
     library,
     topK,
     mode: strategy === 'vector' ? 'vector' : 'hybrid',
     rerank: false
   });
+
+  return results.map(resultToDoc);
 }
