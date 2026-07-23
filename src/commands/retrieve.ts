@@ -17,7 +17,7 @@ export function registerRetrieveCommand(program: Command): void {
           library?: string;
           topk: string;
           strategy: string;
-          content?: true;
+          content?: boolean;
           output: string;
         }
       ) => {
