@@ -51,6 +51,7 @@ describe('retrieve API', () => {
     // Constraints docs (category: __constraints__) may appear in results
     // when the query matches their content.
     if (results.length > 0) {
+      // @ts-ignore
       const constraintDocs = results.filter((d) => d.category === '__constraints__');
       // Constraints are indexed as regular docs — they appear naturally in search.
       // No assertion on count since it depends on search relevance.
