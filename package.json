@@ -1,6 +1,6 @@
 {
   "name": "@antv/chart-visualization-skills",
-  "version": "0.1.4-beta.1",
+  "version": "0.1.4",
   "description": "Chart visualization skills for AntV, can be used in various scenarios such as data analysis, business intelligence, and dashboard development. Skills and CLI are included.",
   "type": "commonjs",
   "main": "dist/api.js",
