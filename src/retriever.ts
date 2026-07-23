@@ -1,6 +1,7 @@
 import type { QueryResult } from '@antv/context';
 import type { RetrieveOptions, Doc } from './types';
 import { getContext } from './context';
+import { applyTokenBudget } from './token';
 
 function resultToDoc(result: QueryResult): Doc {
   const { id, path, content } = result;
@@ -32,10 +33,9 @@ export async function retrieve(
   const {
     library = 'g2',
     topK = 7,
+    content = true,
     strategy = 'hybrid',
-    // maxTokens,
-    // content = true,
-    progressiveLevel = 1
+    maxTokens
   } = options;
 
   const ctx = await getContext();
@@ -47,5 +47,15 @@ export async function retrieve(
     rerank: false
   });
 
-  return results.map(resultToDoc);
+  let docs = results.map(resultToDoc);
+
+  if (maxTokens && content) {
+    docs = applyTokenBudget(docs, maxTokens);
+  }
+
+  if (!content) {
+    docs = docs.map(({ content, ...doc }) => doc);
+  }
+
+  return docs;
 }
