@@ -2,12 +2,11 @@
  * Shared skill tools for eval module.
  *
  * Exports:
- *   createReadSkillsTool - ai-sdk tool definition for read_skills
- *   loadSkillFile        - Load a skill markdown file (strips front matter)
- *   loadMainSkill        - Load SKILL.md for a library
- *   extractKeySections   - Extract key sections from skill markdown
- *   toolReadSkills       - Tool handler: read skill doc content
- *   buildSystemPrompt    - Build tool-call system prompt with SKILL.md overview
+ *   createSearchSkillsTool  - ai-sdk tool definition for search_skills (uses retrieve API)
+ *   buildSystemPrompt       - Build tool-call system prompt with constraints from index
+ *
+ * Changed from v1: replaced read_skills (file-path based) with search_skills (retrieve based).
+ * Constraints now come from the built index (info.constraintsContent) instead of SKILL.md files.
  */
 
 import fs from 'fs';
@@ -15,132 +14,129 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { tool } from 'ai';
 import { z } from 'zod';
-import logger from './logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const ROOT_DIR = process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
-const SKILLS_DIR = path.join(ROOT_DIR, 'skills');
+const INDEX_DIR = path.join(ROOT_DIR, 'src', 'index');
 
-const LIBRARY_DIR: Record<string, string> = {
-  g2: 'antv-g2-chart',
-  g6: 'antv-g6-graph',
-  x6: 'antv-x6-editor'
+// ── Info defaults (fallback when constraints file / index is unavailable) ────────
+
+const LIBRARY_INFO_DEFAULTS: Record<
+  string,
+  { name: string; description: string }
+> = {
+  g2: {
+    name: 'antv-g2-chart',
+    description: 'Generate G2 v5 chart code.',
+  },
+  g6: {
+    name: 'antv-g6-graph',
+    description: 'Generate G6 v5 graph/network visualization code.',
+  },
+  x6: {
+    name: 'antv-x6-editor',
+    description: 'Generate X6 v3 diagram/editor code.',
+  },
 };
 
-function resolveLibraryDir(library: string): string {
-  return LIBRARY_DIR[library] ?? library;
-}
+// ── Load skill info from the built index ─────────────────────────────────────────
 
-// ── File helpers ──────────────────────────────────────────────────────────────
+function loadSkillInfo(library: string): {
+  name: string;
+  description: string;
+  constraintsContent: string;
+} {
+  const defaults = LIBRARY_INFO_DEFAULTS[library];
+  const indexPath = path.join(INDEX_DIR, `${library}.index.json`);
 
-const _fileCache = new Map<string, string>();
-
-export function loadSkillFile(skillPath: string, verbose = false): string | null {
-  const fullPath = skillPath.startsWith('/') ? skillPath : path.join(ROOT_DIR, skillPath);
-  if (_fileCache.has(fullPath)) return _fileCache.get(fullPath)!;
-  if (!fs.existsSync(fullPath)) {
-    if (verbose) logger.warn({ path: fullPath }, 'Skill file not found');
-    return null;
+  if (!fs.existsSync(indexPath)) {
+    return {
+      name: defaults?.name ?? `antv-${library}`,
+      description: defaults?.description ?? '',
+      constraintsContent: '',
+    };
   }
-  const content = fs.readFileSync(fullPath, 'utf-8').replace(/^---[\s\S]*?---\n/, '');
-  _fileCache.set(fullPath, content);
-  return content;
+
+  const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+  const info = index.info;
+
+  return {
+    name: info?.name || defaults?.name || `antv-${library}`,
+    description: info?.description || defaults?.description || '',
+    constraintsContent: info?.constraintsContent || '',
+  };
 }
 
-export function loadMainSkill(library: string): string {
-  const dir = resolveLibraryDir(library);
-  return loadSkillFile(path.join(SKILLS_DIR, dir, 'SKILL.md')) ?? '';
-}
+// ── Tool definition ──────────────────────────────────────────────────────────────
 
-// ── Section extraction ────────────────────────────────────────────────────────
-
-const TARGET_SECTIONS = [
-  '最小可运行示例', '基本用法', '核心概念', 'API 速查',
-  '完整配置', '常见错误', '变体用法', '完整 Spec', '常见变体'
-];
-
-export function extractKeySections(content: string, maxChars = 5000): string {
-  const lines = content.split('\n');
-  const sections: string[] = [];
-  let inSection = false;
-  let sectionLevel = 0;
-  let currentLines: string[] = [];
-
-  for (const line of lines) {
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const title = headingMatch[2];
-      if (TARGET_SECTIONS.some((t) => title.includes(t))) {
-        if (currentLines.length > 0 && inSection) sections.push(currentLines.join('\n'));
-        inSection = true;
-        sectionLevel = level;
-        currentLines = [line];
-      } else if (inSection && level <= sectionLevel) {
-        sections.push(currentLines.join('\n'));
-        inSection = false;
-        sectionLevel = 0;
-        currentLines = [];
-      } else if (inSection) {
-        currentLines.push(line);
-      }
-    } else if (inSection) {
-      currentLines.push(line);
-    }
-  }
-  if (currentLines.length > 0 && inSection) sections.push(currentLines.join('\n'));
-
-  const withCode = sections.filter((s) => s.includes('```'));
-  const withoutCode = sections.filter((s) => !s.includes('```'));
-  return [...withCode, ...withoutCode].slice(0, 4).join('\n\n').slice(0, maxChars);
-}
-
-// ── Tool handler ──────────────────────────────────────────────────────────────
-
-export interface SkillToolResult {
-  id?: string;
-  path: string;
-  content?: string;
-  error?: string;
-}
-
-export function toolReadSkills(args: { paths: string[] }, verbose = false): SkillToolResult[] {
-  return args.paths.slice(0, 4).map((skillPath) => {
-    const content = loadSkillFile(skillPath, verbose);
-    const fileName = path.basename(skillPath, '.md');
-    if (!content) return { path: skillPath, error: 'File not found' };
-    const extracted = extractKeySections(content).slice(0, 10000);
-    if (verbose) logger.debug({ file: fileName, chars: extracted.length }, '加载 Skill');
-    return { id: fileName, path: skillPath, content: extracted };
-  });
-}
-
-// ── ai-sdk tool definition ────────────────────────────────────────────────────
-
-export function createReadSkillsTool() {
+export function createSearchSkillsTool(
+  library: string,
+  onResult?: (query: string, ids: string[]) => void,
+) {
   return tool({
-    description: '读取指定 Skill 参考文档的完整内容。一次最多读取 4 个文件。',
+    description:
+      '搜索相关技能/图表文档。用自然语言描述你需要查找的图表类型、配置项或功能，系统自动返回最相关的技术文档和代码示例。',
     inputSchema: z.object({
-      paths: z
-        .array(z.string())
-        .max(4)
-        .describe('Skill 文件路径列表，如 ["skills/antv-g2-chart/references/marks/g2-mark-interval-basic.md"]')
+      query: z
+        .string()
+        .describe(
+          '搜索查询，描述你需要查找的图表类型（如"柱状图"、"折线图"）、配置项（如"tooltip 配置"、"坐标轴样式"）或功能（如"堆叠"、"分组"、"brush 交互"）',
+        ),
     }),
-    execute: async ({ paths }) => toolReadSkills({ paths })
+    execute: async ({ query }) => {
+      try {
+        const mod = (await import('../../src/core/retriever.js')) as {
+          retrieve: (
+            q: string,
+            opts: {
+              library?: string;
+              topK?: number;
+              content?: boolean;
+              includeConstraints?: boolean;
+            },
+          ) => Promise<Array<{
+            id: string;
+            title: string;
+            description: string;
+            content?: string;
+            path?: string;
+          }>>;
+        };
+        const skills = await mod.retrieve(query, {
+          library,
+          topK: 5,
+          includeConstraints: false,
+        });
+        const ids = skills.map((s) => s.id);
+        onResult?.(query, ids);
+        return {
+          skills: skills.map((s) => ({
+            id: s.id,
+            title: s.title,
+            description: s.description,
+            content: s.content || '',
+          })),
+        };
+      } catch (err) {
+        return { error: `检索失败: ${(err as Error).message}` };
+      }
+    },
   });
 }
 
-// ── System prompt ─────────────────────────────────────────────────────────────
+// ── System prompt builders ───────────────────────────────────────────────────────
 
 export function buildSystemPrompt(library: string): string {
-  const dir = resolveLibraryDir(library);
-  const skillContent = loadMainSkill(library);
+  const info = loadSkillInfo(library);
+  const constraints = info.constraintsContent;
 
   if (library === 'x6') {
-    return buildX6SystemPrompt(dir, skillContent);
+    return buildX6Prompt(constraints);
   }
+  return buildG2G6Prompt(library, constraints);
+}
 
+function buildG2G6Prompt(library: string, constraints: string): string {
   return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
 
 ## 输出格式（严格遵守）
@@ -154,23 +150,22 @@ export function buildSystemPrompt(library: string): string {
 
 ## 工具使用（必须遵循）
 
-你有一个工具可以查阅详细参考文档：
+你有一个工具可以搜索参考文档：
 
-1. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
+1. **search_skills(query)** - 搜索相关技能文档，根据自然语言查询自动返回最相关的文档
 
 **工作流程**：
 1. 分析用户需求，确定涉及的图表类型、transform、coordinate、交互等
-2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
-3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
-4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
-5. 生成代码时严格参考文档中的示例写法
+2. **必须先调用 search_skills 搜索相关文档**，获取完整代码示例和配置细节后再生成代码
+3. 搜索时使用具体的技术关键词组合（如 "柱状图 堆叠"、"tooltip 配置"、"brush 交互"）
+4. 生成代码时严格参考文档中的示例写法
 
---- 知识库概览 ---
+--- 核心约束 ---
 
-${skillContent}`;
+${constraints}`;
 }
 
-function buildX6SystemPrompt(dir: string, skillContent: string): string {
+function buildX6Prompt(constraints: string): string {
   return `你是 AntV X6 3.x 图编辑引擎代码生成专家。根据用户描述生成准确、可运行的代码。
 
 ## 输出格式（严格遵守）
@@ -181,31 +176,18 @@ function buildX6SystemPrompt(dir: string, skillContent: string): string {
 - 禁止使用 \`<script>\`、\`<!DOCTYPE>\`、\`<html>\` 等任何 HTML 标签
 - container 变量已预先定义，**直接使用 container 变量**，禁止重新声明（禁止 \`const container = ...\`、\`let container = ...\`、\`document.getElementById\`）
 - 如需代码块，只用 \`\`\`javascript 包裹，不用其他格式
-
-## X6 3.x 关键规则（必须遵守）
-
-1. **禁止调用 graph.render()**：X6 3.x 在 addNode/addEdge/fromJSON 后自动渲染，无需手动 render
-2. **禁止使用 Graph.Selection、Graph.Keyboard 等命名空间写法**（不存在）
-3. **禁止使用 TypeScript 语法**（interface、type、as、泛型等），必须输出纯 JavaScript
-4. **禁止调用 node.hideTools() / node.showTools()**（3.x 不存在），使用 node.addTools() / node.removeTools()
-5. **禁止重新注册内置节点名**（如 'rect'、'circle' 等已内置，不要 Graph.registerNode('rect', ...)）
-6. **容器配置**：new Graph 的 container 属性直接传入 container 变量：\`new Graph({ container, ... })\`
-7. **插件使用**：plugins 数组中直接 new 实例化，如 \`plugins: [new Selection({ ... })]\`
+- **禁止使用 TypeScript 语法**（interface、type、as、泛型等）
 
 ## 工具使用（必须遵循）
 
-你有一个工具可以查阅详细参考文档：
+你有一个工具可以搜索参考文档：
 
-1. **read_skills(paths)** - 读取参考文档完整内容（最多 4 个文件）
+1. **search_skills(query)** - 搜索相关技能文档，根据自然语言查询自动返回最相关的文档
 
 **工作流程**：
 1. 分析用户需求，确定涉及的图表/图编辑功能
-2. 下方知识库概览只包含 API 速查表和链接，**不包含完整代码示例**
-3. **必须先调用 read_skills 读取相关的详细参考文档**，获取完整代码示例和配置细节后再生成代码
-4. 参考文档路径格式：\`skills/${dir}/references/{category}/{filename}.md\`，路径已在知识库概览中列出
-5. 生成代码时严格参考文档中的示例写法
+2. **必须先调用 search_skills 搜索相关文档**，获取完整代码示例和配置细节后再生成代码
+3. 搜索时使用具体的技术关键词（如 "node 自定义"、"edge 路由"、"selection 插件"）
 
---- 知识库概览 ---
-
-${skillContent}`;
+${constraints ? '--- 核心约束 ---\n\n' + constraints : ''}`;
 }
