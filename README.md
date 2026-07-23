@@ -34,6 +34,14 @@ npx skills add antvis/chart-visualization-skills
 
 `Chart Visualization` intelligently selects the most appropriate chart type from 26+ available options, extracts parameters based on detailed specifications, and generates high-quality chart images. It covers time series, comparisons, part-to-whole, relationships, geographic, hierarchical, statistical, and specialized visualizations.
 
+- 📈 **antv-g2-chart**: G2 v5 chart code generator. Use when users need to generate G2 charts — bar charts, line charts, pie charts, scatter plots, area charts, heatmaps, and any statistical data visualization with the G2 library.
+
+`AntV G2 Chart` generates accurate, runnable G2 v5 code following Spec Mode best practices. It covers 30+ chart types (interval, line, area, point, rect, cell, treemap, sankey, chord, wordCloud, gauge, and more), data transforms (stackY, dodgeX, binX, fold, etc.), coordinate systems (cartesian, polar, theta, radial), scales, interactions (brush, slider, legend filter), components (axis, legend, tooltip, annotation), and multi-view compositions. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated chain APIs, invalid palette names, or referencing `d3` in user code.
+
+- 🕸️ **antv-g6-graph**: G6 v5 graph visualization code generator. Use when users need to generate G6 graphs — network graphs, tree graphs, flow charts, mind maps, and any relational or graph-structured data visualization with the G6 library.
+
+`AntV G6 Graph` generates accurate, runnable G6 v5 code following best practices. It covers core graph initialization, data structures (nodes, edges, combos), 10+ layout algorithms (force, dagre, circular, grid, mindmap, fishbone, etc.), all built-in node/edge/combo types, state management, 15+ behaviors (drag-canvas, zoom-canvas, click-select, lasso, etc.), 10+ plugins (minimap, tooltip, toolbar, legend, timebar, etc.), custom element development, transforms, and animation. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated `G6.Graph()` constructors, `graph.data()` APIs, or Mode-based behavior configuration.
+
 - 🎨 **infographic-creator**: Create beautiful infographics based on given text content. Use when users request to create infographics.
 
 `Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
@@ -45,18 +53,6 @@ npx skills add antvis/chart-visualization-skills
 - 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 Syntax.
 
 `Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
-
-- 📋 **antv-s2-expert**: S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.
-
-`AntV S2 Expert` helps users develop with the S2 multi-dimensional cross-analysis table engine. It provides comprehensive guidance on `@antv/s2` core engine, `@antv/s2-react` and `@antv/s2-vue` framework bindings, `@antv/s2-react-components` advanced analysis components, and `@antv/s2-ssr` server-side rendering. Covers pivot tables, table sheets, custom cells, theming, events, interactions, sorting, totals, tooltips, frozen rows/columns, icons, pagination, and more.
-
-- 🕸️ **antv-g6-graph**: G6 v5 graph visualization code generator. Use when users need to generate G6 graphs — network graphs, tree graphs, flow charts, mind maps, and any relational or graph-structured data visualization with the G6 library.
-
-`AntV G6 Graph` generates accurate, runnable G6 v5 code following best practices. It covers core graph initialization, data structures (nodes, edges, combos), 10+ layout algorithms (force, dagre, circular, grid, mindmap, fishbone, etc.), all built-in node/edge/combo types, state management, 15+ behaviors (drag-canvas, zoom-canvas, click-select, lasso, etc.), 10+ plugins (minimap, tooltip, toolbar, legend, timebar, etc.), custom element development, transforms, and animation. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated `G6.Graph()` constructors, `graph.data()` APIs, or Mode-based behavior configuration.
-
-- 📈 **antv-g2-chart**: G2 v5 chart code generator. Use when users need to generate G2 charts — bar charts, line charts, pie charts, scatter plots, area charts, heatmaps, and any statistical data visualization with the G2 library.
-
-`AntV G2 Chart` generates accurate, runnable G2 v5 code following Spec Mode best practices. It covers 30+ chart types (interval, line, area, point, rect, cell, treemap, sankey, chord, wordCloud, gauge, and more), data transforms (stackY, dodgeX, binX, fold, etc.), coordinate systems (cartesian, polar, theta, radial), scales, interactions (brush, slider, legend filter), components (axis, legend, tooltip, annotation), and multi-view compositions. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated chain APIs, invalid palette names, or referencing `d3` in user code.
 
 **Evaluation Results**
 
@@ -148,12 +144,11 @@ const skills = retrieve('bar chart', {
 ```
 
 ```typescript
-retrieve(query: string, options?: RetrieveOptions): Promise<Doc[]>
+retrieve(query: string, options?: RetrieveOptions): Promise<QueryResult[]>
 
 interface RetrieveOptions {
   library?: string;    // Library filter, e.g. 'g2' or 'g6'
   topK?: number;       // Number of results (default: 7)
-  content?: boolean;   // Include markdown content body (default: true)
   strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
   maxTokens?: number;  // Token budget — content trimmed to fit when set
   progressiveLevel?: 0 | 1 | 2;  // 0=full, 1=summary+code, 2=summary (default: 1)
@@ -172,7 +167,6 @@ interface RetrieveOptions {
 > Notes:
 > - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
 > - `strategy: 'vector'` uses pure ANN vector similarity search.
-> - `content: true` returns markdown content body (frontmatter metadata is excluded).
 > - Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results.
 > - When `maxTokens` is set, skill content is formatted and trimmed to fit the budget according to `progressiveLevel`.
 

@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { retrieve } from '../core/retriever';
+import { retrieve } from '../retriever';
 
 export function registerRetrieveCommand(program: Command): void {
   program
@@ -17,7 +17,7 @@ export function registerRetrieveCommand(program: Command): void {
           library?: string;
           topk: string;
           strategy: string;
-          content?: true;
+          content?: boolean;
           output: string;
         }
       ) => {

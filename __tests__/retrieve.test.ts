@@ -6,11 +6,9 @@ describe('retrieve API', () => {
     const results = await retrieve('折线图');
     // When context is available, results should be non-empty.
     // When context is unavailable (model not downloaded), returns empty.
-    expect(Array.isArray(results)).toBe(true);
-    if (results.length > 0) {
-      expect(results[0]).toHaveProperty('id');
-      expect(results[0]).toHaveProperty('title');
-    }
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty('id');
+    expect(results[0]).toHaveProperty('title');
   });
 
   it('should respect topk parameter', async () => {
@@ -18,17 +16,15 @@ describe('retrieve API', () => {
       library: 'g2',
       topK: 3,
     });
-    expect(Array.isArray(results)).toBe(true);
-    if (results.length > 0) {
-      expect(results.length).toBeLessThanOrEqual(3);
-    }
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.length).toBeLessThanOrEqual(3);
   });
 
   it('should support g6 library parameter', async () => {
     const results = await retrieve('graph layout', {
       library: 'g6',
     });
-    expect(Array.isArray(results)).toBe(true);
+    expect(results.length).toBeGreaterThan(0);
   });
 
   it('should handle mixed Chinese/English query', async () => {
@@ -36,10 +32,9 @@ describe('retrieve API', () => {
       library: 'g2',
       topK: 5,
     });
-    expect(Array.isArray(results)).toBe(true);
-    if (results.length > 0) {
-      expect(results.length).toBeLessThanOrEqual(5);
-    }
+
+    expect(results.length).toBeGreaterThan(0);
+    expect(results.length).toBeLessThanOrEqual(5);
   });
 
   it('should include constraints docs as regular search results', async () => {
@@ -47,14 +42,13 @@ describe('retrieve API', () => {
       library: 'g2',
       topK: 5,
     });
-    expect(Array.isArray(results)).toBe(true);
     // Constraints docs (category: __constraints__) may appear in results
     // when the query matches their content.
-    if (results.length > 0) {
-      const constraintDocs = results.filter((d) => d.category === '__constraints__');
-      // Constraints are indexed as regular docs — they appear naturally in search.
-      // No assertion on count since it depends on search relevance.
-      expect(constraintDocs.every((d) => d.id.includes('constraints'))).toBe(true);
-    }
+    expect(results.length).toBeGreaterThan(0);
+    // @ts-ignore
+    const constraintDocs = results.filter((d) => d.category === '__constraints__');
+    // Constraints are indexed as regular docs — they appear naturally in search.
+    // No assertion on count since it depends on search relevance.
+    expect(constraintDocs.every((d) => d.id.includes('constraints'))).toBe(true);
   });
 });

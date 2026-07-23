@@ -2,7 +2,7 @@
 
 import { Command } from 'commander';
 import path from 'path';
-import { registerRetrieveCommand } from './commands/retrieve';
+  import { registerRetrieveCommand } from './commands/retrieve';
 
 const pkg = require(path.resolve(__dirname, '../package.json'));
 

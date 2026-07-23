@@ -1,0 +1,46 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+# OIDC Trusted Publishing 需要以下权限
+# - id-token: write - 允许 GitHub Actions 生成 OIDC token
+# - contents: read - 允许读取仓库内容
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run build
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      # 使用 OIDC Trusted Publishing 发布，无需 token
+      # 在 npmjs.com 上配置 Trusted Publisher 后，npm 会自动使用 OIDC 认证
+      - name: Publish to npm
+        run: npm publish --access public

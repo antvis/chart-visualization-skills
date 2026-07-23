@@ -1,6 +1,6 @@
 {
   "name": "@antv/chart-visualization-skills",
-  "version": "0.1.4-beta.1",
+  "version": "0.1.4",
   "description": "Chart visualization skills for AntV, can be used in various scenarios such as data analysis, business intelligence, and dashboard development. Skills and CLI are included.",
   "type": "commonjs",
   "main": "dist/api.js",
@@ -22,13 +22,11 @@
     "cli"
   ],
   "scripts": {
-    "build": "npm run build:index && tsc && npm run copy:index",
-    "build:index": "tsx src/scripts/build-zvec.ts",
-    "copy:index": "rm -rf dist/index && cp -R src/index dist/",
+    "build": "tsc && npm run copy:zvec",
+    "copy:zvec": "rm -rf dist/.zvec && cp -R src/.zvec dist/.zvec",
     "test": "vitest run",
     "test:watch": "vitest",
-    "precommit": "npm run build",
-    "postinstall": "node scripts/download-model.mjs"
+    "precommit": "npm run build"
   },
   "dependencies": {
     "@antv/context": "^0.1.0",

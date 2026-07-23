@@ -1,13 +1,3 @@
-/**
- * Synonym expansion for chart visualization queries.
- *
- * The synonym map is the single source of truth for chart-type term bridges.
- * At runtime, context's query() uses this map via queryExpansion option,
- * so expandQuery() is only needed for standalone / testing use.
- */
-
-import { expand } from '../utils/expand';
-
 // ---------------------------------------------------------------------------
 // Bidirectional synonym pairs: [term, synonyms[]]
 // ---------------------------------------------------------------------------
@@ -53,11 +43,7 @@ const SYNONYM_PAIRS: [string, string[]][] = [
   ['dagre', ['流程图']]
 ];
 
-// ---------------------------------------------------------------------------
-// Build bidirectional synonym record from pairs
-// ---------------------------------------------------------------------------
-
-function buildSynonymRecord(): Record<string, string[]> {
+function buildSynony(): Record<string, string[]> {
   const map: Record<string, string[]> = {};
   for (const [term, synonyms] of SYNONYM_PAIRS) {
     map[term] = synonyms;
@@ -73,27 +59,4 @@ function buildSynonymRecord(): Record<string, string[]> {
   return map;
 }
 
-export const synonymRecord = buildSynonymRecord();
-
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/** Get the full bidirectional synonym map. */
-export function getSynonymMap(): Map<string, string[]> {
-  return new Map(Object.entries(synonymRecord));
-}
-
-/**
- * Expand a query with chart-type synonyms.
- * Delegates to @antv/context's expand() function.
- * @example expandQuery('桑基图') → '桑基图 sankey'
- */
-export function expandQuery(query: string): string {
-  return expand(query, { synonyms: synonymRecord });
-}
-
-/** Return synonym expansions for a single token. */
-export function getSynonymsForToken(token: string): string[] {
-  return synonymRecord[token] ?? [];
-}
+export const synonyms = buildSynony();
