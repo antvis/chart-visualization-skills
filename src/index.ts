@@ -2,7 +2,6 @@
 
 import { Command } from 'commander';
 import path from 'path';
-import { registerRetrieveCommand } from './commands/retrieve';
 
 const pkg = require(path.resolve(__dirname, '../package.json'));
 
@@ -13,8 +12,6 @@ program
   .description('CLI tool for AntV chart visualization docs retrieval')
   .version(pkg.version)
   .option('--debug', 'Show full stack trace on error');
-
-registerRetrieveCommand(program);
 
 try {
   program.parse();
