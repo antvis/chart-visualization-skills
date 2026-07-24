@@ -10,7 +10,6 @@
   },
   "files": [
     "dist",
-    "scripts/download-model.mjs",
     "README.md",
     "LICENSE"
   ],
@@ -26,7 +25,8 @@
     "copy:zvec": "cp -R src/.zvec dist/.zvec",
     "test": "vitest run",
     "test:watch": "vitest",
-    "precommit": "npm run build"
+    "precommit": "npm run build",
+    "postinstall": "HF_ENDPOINT=https://hf-mirror.com node -e \"import('./dist/context.js').then(m => m.getContext().then(c => c.close()))\""
   },
   "dependencies": {
     "@antv/context": "^0.1.0",
