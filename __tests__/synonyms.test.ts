@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { synonyms } from '../src/synonyms';
+import { expandQuery, synonyms } from '../src/synonyms';
 
 describe('synonyms', () => {
   describe('bidirectional map', () => {
@@ -29,6 +29,26 @@ describe('synonyms', () => {
       expect(treemapSynonyms).toBeDefined();
       const unique = new Set(treemapSynonyms);
       expect(unique.size).toBe(treemapSynonyms.length);
+    });
+  });
+
+  describe('query expansion', () => {
+    it('should expand Chinese chart terms to English', () => {
+      expect(expandQuery('生成桑基图')).toBe('生成桑基图 sankey');
+    });
+
+    it('should expand English chart terms to Chinese', () => {
+      const result = expandQuery('create a treemap');
+      expect(result).toContain('矩形树图');
+      expect(result).toContain('树图');
+    });
+
+    it('should not duplicate existing synonyms', () => {
+      expect(expandQuery('桑基图 sankey')).toBe('桑基图 sankey');
+    });
+
+    it('should leave unknown queries unchanged', () => {
+      expect(expandQuery('未知图表')).toBe('未知图表');
     });
   });
 });

@@ -15,6 +15,7 @@ describe('retrieve API', () => {
     const results = await retrieve('bar chart', {
       library: 'g2',
       topK: 3,
+      content: false,
     });
     expect(results.length).toBeGreaterThan(0);
     expect(results.length).toBeLessThanOrEqual(3);
@@ -31,6 +32,7 @@ describe('retrieve API', () => {
     const results = await retrieve('饼图 tooltip', {
       library: 'g2',
       topK: 5,
+      content: false,
     });
 
     expect(results.length).toBeGreaterThan(0);
@@ -42,13 +44,25 @@ describe('retrieve API', () => {
       library: 'g2',
       topK: 5,
     });
-    // Constraints docs (category: __constraints__) may appear in results
-    // when the query matches their content.
     expect(results.length).toBeGreaterThan(0);
-    // @ts-ignore
     const constraintDocs = results.filter((d) => d.category === '__constraints__');
-    // Constraints are indexed as regular docs — they appear naturally in search.
-    // No assertion on count since it depends on search relevance.
     expect(constraintDocs.every((d) => d.id.includes('constraints'))).toBe(true);
+  });
+
+  it('should rank exact chart types first', async () => {
+    const results = await retrieve('桑基图', {
+      library: 'g2',
+      topK: 3,
+      content: false,
+    });
+    expect(results[0].id).toBe('g2-mark-sankey');
+  });
+
+  it('should search across libraries by default', async () => {
+    const results = await retrieve('force network graph', {
+      topK: 5,
+      content: false,
+    });
+    expect(results.some((doc) => doc.library === 'g6')).toBe(true);
   });
 });

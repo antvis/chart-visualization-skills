@@ -1,15 +1,29 @@
 import type { QueryResult } from '@antv/context';
 import type { RetrieveOptions, Doc } from './types';
-import { getContext } from './context';
+import { getContext, LIBRARIES, readContentFile } from './context';
 import { applyTokenBudget } from './token';
+import { expandQuery } from './synonyms';
 
 function resultToDoc(result: QueryResult): Doc {
   const { id, path, content } = result;
-  const { title, description, library, version, category, subcategory, tags, use_cases, anti_patterns, related } = (result.meta ?? {}) as any;
+  const {
+    id: metaId,
+    title,
+    description,
+    library,
+    version,
+    category,
+    subcategory,
+    tags,
+    use_cases,
+    anti_patterns,
+    related,
+    source_path
+  } = (result.meta ?? {}) as any;
   return {
-    id,
-    path,
-    content,
+    id: typeof metaId === 'string' ? metaId : id,
+    path: typeof source_path === 'string' ? `src/content/${source_path}` : path,
+    content: typeof source_path === 'string' ? readContentFile(source_path) ?? content : content,
     title,
     description,
     library,
@@ -19,7 +33,7 @@ function resultToDoc(result: QueryResult): Doc {
     tags: Array.isArray(tags) ? tags : [],
     use_cases: Array.isArray(use_cases) ? use_cases : [],
     anti_patterns: Array.isArray(anti_patterns) ? anti_patterns : [],
-    related: Array.isArray(related) ? related : [],
+    related: Array.isArray(related) ? related : []
   };
 }
 
@@ -31,23 +45,29 @@ export async function retrieve(
   options: RetrieveOptions = {}
 ): Promise<Doc[]> {
   const {
-    library = 'g2',
+    library,
     topK = 7,
     content = true,
     strategy = 'hybrid',
-    maxTokens
+    maxTokens,
   } = options;
 
   const ctx = await getContext();
+  const expandedQuery = expandQuery(query);
 
-  const results =  await ctx.query(query, {
-    library,
+  const libraries = library ? [library] : [...LIBRARIES];
+  const resultGroups = await Promise.all(libraries.map((lib) => ctx.query(expandedQuery, {
+    library: lib,
     topK,
     mode: strategy === 'vector' ? 'vector' : 'hybrid',
-    rerank: false
-  });
+  })));
 
-  let docs = results.map(resultToDoc);
+  let docs = resultGroups
+    .flat()
+    .sort((a, b) => b.score - a.score)
+    .map(resultToDoc)
+    .filter((doc, index, all) => all.findIndex((item) => item.id === doc.id) === index)
+    .slice(0, topK);
 
   if (maxTokens && content) {
     docs = applyTokenBudget(docs, maxTokens);

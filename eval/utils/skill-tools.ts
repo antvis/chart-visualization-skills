@@ -16,7 +16,8 @@ import { tool } from 'ai';
 import { z } from 'zod';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
+const ROOT_DIR =
+  process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
 const INDEX_DIR = path.join(ROOT_DIR, 'src', 'index');
 
 // ── Info defaults (fallback when constraints file / index is unavailable) ────────
@@ -27,16 +28,16 @@ const LIBRARY_INFO_DEFAULTS: Record<
 > = {
   g2: {
     name: 'antv-g2-chart',
-    description: 'Generate G2 v5 chart code.',
+    description: 'Generate G2 v5 chart code.'
   },
   g6: {
     name: 'antv-g6-graph',
-    description: 'Generate G6 v5 graph/network visualization code.',
+    description: 'Generate G6 v5 graph/network visualization code.'
   },
   x6: {
     name: 'antv-x6-editor',
-    description: 'Generate X6 v3 diagram/editor code.',
-  },
+    description: 'Generate X6 v3 diagram/editor code.'
+  }
 };
 
 // ── Load skill info from the built index ─────────────────────────────────────────
@@ -53,7 +54,7 @@ function loadSkillInfo(library: string): {
     return {
       name: defaults?.name ?? `antv-${library}`,
       description: defaults?.description ?? '',
-      constraintsContent: '',
+      constraintsContent: ''
     };
   }
 
@@ -63,7 +64,7 @@ function loadSkillInfo(library: string): {
   return {
     name: info?.name || defaults?.name || `antv-${library}`,
     description: info?.description || defaults?.description || '',
-    constraintsContent: info?.constraintsContent || '',
+    constraintsContent: info?.constraintsContent || ''
   };
 }
 
@@ -71,7 +72,7 @@ function loadSkillInfo(library: string): {
 
 export function createSearchSkillsTool(
   library: string,
-  onResult?: (query: string, ids: string[]) => void,
+  onResult?: (query: string, ids: string[]) => void
 ) {
   return tool({
     description:
@@ -80,12 +81,12 @@ export function createSearchSkillsTool(
       query: z
         .string()
         .describe(
-          '搜索查询，描述你需要查找的图表类型（如"柱状图"、"折线图"）、配置项（如"tooltip 配置"、"坐标轴样式"）或功能（如"堆叠"、"分组"、"brush 交互"）',
-        ),
+          '搜索查询，描述你需要查找的图表类型（如"柱状图"、"折线图"）、配置项（如"tooltip 配置"、"坐标轴样式"）或功能（如"堆叠"、"分组"、"brush 交互"）'
+        )
     }),
     execute: async ({ query }) => {
       try {
-        const mod = (await import('../../src/core/retriever.js')) as {
+        const mod = (await import('../../src/api.js')) as {
           retrieve: (
             q: string,
             opts: {
@@ -93,19 +94,21 @@ export function createSearchSkillsTool(
               topK?: number;
               content?: boolean;
               includeConstraints?: boolean;
-            },
-          ) => Promise<Array<{
-            id: string;
-            title: string;
-            description: string;
-            content?: string;
-            path?: string;
-          }>>;
+            }
+          ) => Promise<
+            Array<{
+              id: string;
+              title: string;
+              description: string;
+              content?: string;
+              path?: string;
+            }>
+          >;
         };
         const skills = await mod.retrieve(query, {
           library,
           topK: 5,
-          includeConstraints: false,
+          includeConstraints: false
         });
         const ids = skills.map((s) => s.id);
         onResult?.(query, ids);
@@ -114,13 +117,13 @@ export function createSearchSkillsTool(
             id: s.id,
             title: s.title,
             description: s.description,
-            content: s.content || '',
-          })),
+            content: s.content || ''
+          }))
         };
       } catch (err) {
         return { error: `检索失败: ${(err as Error).message}` };
       }
-    },
+    }
   });
 }
 

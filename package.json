@@ -21,12 +21,12 @@
     "cli"
   ],
   "scripts": {
-    "build": "rm -rf dist && tsc && npm run copy:zvec",
-    "copy:zvec": "cp -R src/.zvec dist/.zvec",
+    "build": "rm -rf dist && npm run build:index && tsc && npm run copy:assets",
+    "build:index": "rm -rf src/.zvec && HF_ENDPOINT=https://hf-mirror.com tsx -e \"import('./src/context.ts').then(async (m) => { const context = m.default ?? m; await context.getContext(); await context.disposeContext(); }).catch((error) => { console.error(error); process.exit(1); })\"",
+    "copy:assets": "cp -R src/.zvec dist/.zvec && cp -R src/content dist/content",
     "test": "vitest run",
     "test:watch": "vitest",
-    "precommit": "npm run build",
-    "postinstall": "HF_ENDPOINT=https://hf-mirror.com node -e \"import('./dist/context.js').then(m => m.getContext().then(c => c.close()))\""
+    "precommit": "npm run build"
   },
   "dependencies": {
     "@antv/context": "^0.1.0",
