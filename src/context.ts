@@ -71,8 +71,6 @@ async function createContext(): Promise<Context> {
     vectorsDir: ZVEC_DIR,
     basePath: path.resolve(__dirname, '..'),
     queryExpansion: { synonyms },
-    ftsFields: ['indexContent'],
-    ftsFieldWeights: { indexContent: 1 },
   });
 
   try {
