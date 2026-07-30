@@ -1,6 +1,6 @@
 import type { QueryResult } from '@antv/context';
 import type { RetrieveOptions, Doc } from './types';
-import { getContext, LIBRARIES, readContentFile } from './context';
+import { getContext, LIBRARIES } from './context';
 import { applyTokenBudget } from './token';
 import { expandQuery } from './synonyms';
 
@@ -17,13 +17,12 @@ function resultToDoc(result: QueryResult): Doc {
     tags,
     use_cases,
     anti_patterns,
-    related,
-    source_path
+    related
   } = (result.meta ?? {}) as any;
   return {
     id: typeof metaId === 'string' ? metaId : id,
-    path: typeof source_path === 'string' ? `src/content/${source_path}` : path,
-    content: typeof source_path === 'string' ? readContentFile(source_path) ?? content : content,
+    path,
+    content,
     title,
     description,
     library,
