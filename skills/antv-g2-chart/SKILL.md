@@ -54,7 +54,7 @@ Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Constraint
 | `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
-curl "https://antv.antgroup.com/api/v1/context/retrieve?query=bar+chart+stacked&library=g2"
+curl "https://sive.antv.antgroup.com/api/v1/context/retrieve?query=bar+chart+stacked&library=g2"
 ```
 
 ## Critical Rules
