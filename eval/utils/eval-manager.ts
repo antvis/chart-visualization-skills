@@ -7,28 +7,19 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { AgentLoop, callAI } from './ai-sdk.js';
+import { callAI } from './ai-sdk.js';
 import {
   buildQuery,
   evaluateCode,
   type TestCase,
-  type EvaluationResult,
+  type EvaluationResult
 } from './eval-utils.js';
-import {
-  createReadSkillsTool,
-  loadSkillFile,
-  extractKeySections,
-  buildSystemPrompt,
-} from './skill-tools.js';
+import { buildSystemPrompt } from './skill-tools.js';
 import { parallelMap } from './parallel-executor.js';
 import * as context7 from './context7.js';
 import logger from './logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const ROOT_DIR =
-  process.env.HARNESS_ROOT_DIR ?? path.resolve(__dirname, '../..');
-const MAX_TOOL_ROUNDS = 6;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,7 +34,11 @@ export interface EvalOptions {
   ids?: string[];
   concurrency?: number;
   similarityAlgorithm?: string;
-  retrieval?: 'tool-call' | 'bm25' | 'context7';
+  retrieval?: 'zvec' | 'context7';
+  /** Only for zvec retrieval: top-K to pre-retrieve (default 5). */
+  zvecTopK?: number;
+  /** Only for zvec retrieval: search strategy (default 'hybrid'). */
+  zvecStrategy?: 'vector' | 'hybrid';
   verbose?: boolean;
 }
 
@@ -56,9 +51,6 @@ interface EvalResult {
   generatedCode?: string;
   error?: string;
   duration: number;
-  toolCallsCount?: number;
-  toolCallsLog?: unknown[];
-  loadedSkillPaths?: string[];
   retrievedSkillIds?: string[];
   evaluation: EvaluationResult;
 }
@@ -70,7 +62,6 @@ interface EvalSummary {
   avgSimilarity: number;
   highSimilarityCount: number;
   issuesCount: number;
-  avgToolCalls: number;
   skillHitRate: number;
 }
 
@@ -88,6 +79,8 @@ interface EvalRun {
   summary?: EvalSummary;
   error?: string;
   abortController: AbortController;
+  zvecTopK: number;
+  zvecStrategy: 'vector' | 'hybrid';
 }
 
 export interface WsHandler {
@@ -96,12 +89,12 @@ export interface WsHandler {
     evalId: string,
     current: number,
     total: number,
-    result: EvalResult,
+    result: EvalResult
   ): void;
   onEvalComplete(
     evalId: string,
     summary: EvalSummary,
-    outputPath: string,
+    outputPath: string
   ): void;
   onEvalError(evalId: string, error: Error): void;
 }
@@ -112,45 +105,74 @@ export interface EvalStartResult {
   summary: EvalSummary;
 }
 
-// ── BM25 retriever loader ─────────────────────────────────────────────────────
+// ── Lazy retriever (loaded once, shared across all zvec calls) ─────────────────
 
-function loadRetriever() {
-  return import('../../src/core/retriever.js') as Promise<{
-    retrieve: (
-      query: string,
-      opts: {
-        library?: string;
-        topK?: number;
-        indexDir?: string;
-        content?: boolean;
-        includeInfo?: boolean;
-      },
-    ) => Array<{ id: string; title: string; path?: string; content?: string }>;
-  }>;
+type RetrieverModule = {
+  retrieve: (
+    q: string,
+    opts: {
+      library?: string;
+      topK?: number;
+      content?: boolean;
+      includeConstraints?: boolean;
+      strategy?: 'vector' | 'hybrid';
+    }
+  ) => Promise<Array<{ id: string; title: string; content?: string }>>;
+};
+
+let _retrieverPromise: Promise<RetrieverModule> | null = null;
+function getRetriever(): Promise<RetrieverModule> {
+  if (!_retrieverPromise) {
+    _retrieverPromise = import('../../src/api.js') as Promise<RetrieverModule>;
+  }
+  return _retrieverPromise;
 }
 
-// ── Shared RAG prompt builders ────────────────────────────────────────────────
+// ── RAG prompt builders ────────────────────────────────────────────────────────
 
 function buildRagSystemPrompt(library: string, skillContext: string): string {
-  const promptFile = path.join(
-    ROOT_DIR,
-    'prompts',
-    `${library}-system-prompt.md`,
-  );
-  const systemPrompt = fs.existsSync(promptFile)
-    ? fs.readFileSync(promptFile, 'utf-8')
-    : `你是 AntV ${library.toUpperCase()} 代码生成专家。`;
-  return systemPrompt.replace(
-    '{RETRIEVED_SKILLS_CONTENT}',
-    skillContext || '（暂无相关内容）',
-  );
+  if (library === 'x6') {
+    return `你是 AntV X6 3.x 图编辑引擎代码生成专家。根据用户描述生成准确、可运行的代码。
+
+## 输出格式（严格遵守）
+
+- **只输出纯 JavaScript 代码**，不要输出 HTML、Markdown 文档或任何解释文字
+- 代码使用 \`import { Graph, ... } from '@antv/x6'\` 风格的导入语句
+- 所有使用到的类（Graph、Shape、Selection 等）都**必须出现在 import 语句中**
+- 禁止使用 \`<script>\`、\`<!DOCTYPE>\`、\`<html>\` 等任何 HTML 标签
+- container 变量已预先定义，**直接使用 container 变量**，禁止重新声明
+- 禁止使用 TypeScript 语法（interface、type、as、泛型等）
+
+## X6 3.x 关键规则
+
+1. **禁止调用 graph.render()**：X6 3.x 自动渲染
+2. **禁止使用 Graph.Selection、Graph.Keyboard 等命名空间写法**
+3. **plugin 在 plugins 数组中直接 new 实例化**，如 \`plugins: [new Selection({ ... })]\`
+
+--- 参考知识库 ---
+
+${skillContext || '（暂无相关内容）'}`;
+  }
+  return `你是 AntV ${library.toUpperCase()} v5 代码生成专家。根据用户描述生成准确、可运行的代码。
+
+## 输出格式
+
+- **只输出纯 JavaScript 代码**，不要输出 HTML、Markdown 文档或任何解释文字
+- 代码以 \`import\` 语句开头，从 \`@antv/${library}\` 引入所需模块
+- 禁止使用 \`<script>\`、\`<!DOCTYPE>\`、\`<html>\` 等任何 HTML 标签
+- 禁止使用 CDN URL 引入（如 unpkg、jsdelivr）
+- container 变量直接使用，不要用字符串 'container'
+
+--- 参考知识库 ---
+
+${skillContext || '（暂无相关内容）'}`;
 }
 
 function buildRagUserMessage(library: string, query: string): string {
   if (library === 'x6') {
-    return `请根据以下描述生成 AntV X6 3.x 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import { Graph, ... } from '@antv/x6' 开头，所有用到的类必须 import\n3. container 变量已预定义，直接使用，禁止重新声明（禁止 const/let container = ...）\n4. 禁止调用 graph.render()，X6 3.x 自动渲染\n5. 禁止使用 TypeScript 语法`;
+    return `请根据以下描述生成 AntV X6 3.x 代码：\n\n${query}`;
   }
-  return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}\n\n要求：\n1. 只输出纯 JavaScript 代码，不要包含任何 HTML、<script> 标签或解释文字\n2. 代码以 import 语句开头，从 @antv/${library} 引入所需模块，禁止使用 CDN URL\n3. container 直接使用变量，不要写成字符串 'container'\n4. 提供的数据不满足需求时，自动补充所需数据\n5. 包含完整的 render() 调用`;
+  return `请根据以下描述生成 AntV ${library.toUpperCase()} 代码：\n\n${query}`;
 }
 
 // ── Summary helpers ───────────────────────────────────────────────────────────
@@ -159,11 +181,7 @@ function buildSummary(results: EvalResult[]): EvalSummary {
   const successResults = results.filter((r) => !r.error);
   const totalSimilarity = successResults.reduce(
     (s, r) => s + (r.evaluation?.similarity ?? 0),
-    0,
-  );
-  const totalToolCalls = results.reduce(
-    (s, r) => s + (r.toolCallsCount ?? 0),
-    0,
+    0
   );
   return {
     totalTests: results.length,
@@ -174,14 +192,12 @@ function buildSummary(results: EvalResult[]): EvalSummary {
     avgSimilarity:
       successResults.length > 0 ? totalSimilarity / successResults.length : 0,
     highSimilarityCount: results.filter(
-      (r) => (r.evaluation?.similarity ?? 0) >= 0.5,
+      (r) => (r.evaluation?.similarity ?? 0) >= 0.5
     ).length,
     issuesCount: results.filter((r) => r.evaluation?.hasIssues).length,
-    avgToolCalls:
-      successResults.length > 0 ? totalToolCalls / successResults.length : 0,
     skillHitRate:
-      results.filter((r) => (r.loadedSkillPaths?.length ?? 0) > 0).length /
-      (results.length || 1),
+      results.filter((r) => (r.retrievedSkillIds?.length ?? 0) > 0).length /
+      (results.length || 1)
   };
 }
 
@@ -199,8 +215,8 @@ function emptyEvaluationResult(errorMsg: string): EvaluationResult {
       functionCalls: [],
       objectKeys: [],
       stringLiterals: [],
-      apiPatterns: [],
-    },
+      apiPatterns: []
+    }
   };
 }
 
@@ -211,7 +227,7 @@ export default class EvaluationManager {
 
   async startEvaluation(
     options: EvalOptions,
-    wsHandler: WsHandler | null = null,
+    wsHandler: WsHandler | null = null
   ): Promise<EvalStartResult> {
     const {
       id: evalId,
@@ -223,7 +239,9 @@ export default class EvaluationManager {
       ids,
       concurrency = 1,
       similarityAlgorithm = 'hybrid',
-      retrieval = 'tool-call',
+      retrieval = 'zvec',
+      zvecTopK = 5,
+      zvecStrategy = 'hybrid'
     } = options;
 
     const datasetPath = path.join(__dirname, '..', 'data', dataset);
@@ -236,7 +254,7 @@ export default class EvaluationManager {
       : (datasetContent.results ?? []);
 
     let testData = rawData.map((t, i) =>
-      t.id ? t : { ...t, id: `case-${i}` },
+      t.id ? t : { ...t, id: `case-${i}` }
     );
 
     if (ids && ids.length > 0) {
@@ -257,6 +275,8 @@ export default class EvaluationManager {
       progress: { current: 0, total: testData.length },
       results: [],
       abortController: new AbortController(),
+      zvecTopK,
+      zvecStrategy
     };
 
     this.runningEvals.set(evalId, evalRun);
@@ -267,7 +287,7 @@ export default class EvaluationManager {
     const dateStr = new Date().toISOString().slice(0, 10);
     const outputPath = path.join(
       resultDir,
-      `eval-${retrieval}-${dataset.replace('.json', '')}-${model}-${dateStr}.json`,
+      `eval-${retrieval}-${dataset.replace('.json', '')}-${model}-${dateStr}.json`
     );
 
     wsHandler?.onEvalStart(evalId, options);
@@ -277,12 +297,12 @@ export default class EvaluationManager {
         outputPath,
         similarityAlgorithm,
         concurrency,
-        wsHandler,
+        wsHandler
       });
     } catch (error) {
       logger.error(
         { evalId, err: (error as Error).message },
-        'Evaluation error',
+        'Evaluation error'
       );
       evalRun.status = 'error';
       evalRun.error = (error as Error).message;
@@ -301,7 +321,7 @@ export default class EvaluationManager {
       similarityAlgorithm: string;
       concurrency: number;
       wsHandler: WsHandler | null;
-    },
+    }
   ) {
     const { outputPath, similarityAlgorithm, concurrency, wsHandler } = options;
     const { signal } = evalRun.abortController;
@@ -310,7 +330,7 @@ export default class EvaluationManager {
       if (signal.aborted) throw new Error('Evaluation cancelled');
       return this._processSingleCase(evalRun, testCase, index, {
         similarityAlgorithm,
-        signal,
+        signal
       });
     };
 
@@ -318,14 +338,12 @@ export default class EvaluationManager {
       const orderedResults = await parallelMap(testData, processCase, {
         concurrency,
         onProgress: ({ done, result }) => {
-          // Accumulate results as they complete for progress snapshots
           if (result) evalRun.results.push(result);
           evalRun.progress = { current: done, total: testData.length };
           this._saveProgress(evalRun, outputPath);
           wsHandler?.onEvalProgress(evalRun.id, done, testData.length, result!);
-        },
+        }
       });
-      // Replace with ordered results for the final output
       evalRun.results = orderedResults.filter(Boolean) as EvalResult[];
     } else {
       for (let i = 0; i < testData.length; i++) {
@@ -349,44 +367,44 @@ export default class EvaluationManager {
     evalRun: EvalRun,
     testCase: TestCase,
     index: number,
-    options: { similarityAlgorithm: string; signal: AbortSignal },
+    options: { similarityAlgorithm: string; signal: AbortSignal }
   ): Promise<EvalResult> {
     const { similarityAlgorithm } = options;
     const { provider, model, retrieval } = evalRun;
     const startTime = Date.now();
     const { query, library } = buildQuery(testCase);
+    // Retrieval query strips reference data — JSON arrays dilute vector
+    // embedding signal and FTS precision (e.g. "韦恩图" gets lost among
+    // hundreds of data tokens like "sets", "size", "视频创作者").
+    const { query: retrievalQuery } = buildQuery(testCase, {
+      includeData: false
+    });
     const expectedCode = testCase.codeString ?? '';
 
     try {
       let generatedCode: string;
       let retrievalInfo: Record<string, unknown>;
 
-      if (retrieval === 'bm25') {
-        ({ generatedCode, retrievalInfo } = await this._processBm25({
-          provider,
-          model,
-          query,
-          library,
-        }));
-      } else if (retrieval === 'context7') {
+      if (retrieval === 'context7') {
         ({ generatedCode, retrievalInfo } = await this._processContext7({
           provider,
           model,
-          query,
-          library,
+          query: retrievalQuery,
+          library
         }));
       } else {
-        ({ generatedCode, retrievalInfo } = await this._processToolCall({
+        ({ generatedCode, retrievalInfo } = await this._processZvec(evalRun, {
           provider,
           model,
-          query,
+          query: retrievalQuery,
           library,
+          userQuery: query
         }));
       }
 
       const evaluation = evaluateCode(generatedCode, expectedCode, {
         similarityAlgorithm,
-        library,
+        library
       });
 
       return {
@@ -398,7 +416,7 @@ export default class EvaluationManager {
         generatedCode,
         duration: Date.now() - startTime,
         ...retrievalInfo,
-        evaluation,
+        evaluation
       };
     } catch (error) {
       return {
@@ -409,99 +427,81 @@ export default class EvaluationManager {
         expectedCode,
         error: (error as Error).message,
         duration: Date.now() - startTime,
-        evaluation: emptyEvaluationResult((error as Error).message),
+        evaluation: emptyEvaluationResult((error as Error).message)
       };
     }
   }
 
-  private async _processToolCall({
-    provider,
-    model,
-    query,
-    library,
-  }: {
-    provider: string;
-    model: string;
-    query: string;
-    library: string;
-  }) {
-    const systemPrompt = buildSystemPrompt(library);
-    const agent = new AgentLoop({
+  // ── Zvec retrieval ──────────────────────────────────────────────────────────
+
+  private async _processZvec(
+    evalRun: EvalRun,
+    {
       provider,
       model,
-      maxRounds: MAX_TOOL_ROUNDS,
-      tools: { read_skills: createReadSkillsTool() },
-    });
-    const { content, toolCallsLog } = await agent.run(systemPrompt, query);
-    return {
-      generatedCode: this._extractCode(content),
-      retrievalInfo: {
-        toolCallsCount: toolCallsLog.length,
-        toolCallsLog,
-        loadedSkillPaths: this._extractSkillPaths(toolCallsLog),
-      },
-    };
-  }
-
-  private async _processBm25({
-    provider,
-    model,
-    query,
-    library,
-  }: {
-    provider: string;
-    model: string;
-    query: string;
-    library: string;
-  }) {
-    const retriever = await loadRetriever();
-    const indexDir = path.join(ROOT_DIR, 'dist', 'index');
-    const retrievedSkills = retriever.retrieve(query, {
+      query,
       library,
-      topK: 5,
-      indexDir,
-      content: true,
-      includeInfo: true,
+      userQuery
+    }: {
+      provider: string;
+      model: string;
+      query: string;
+      library: string;
+      userQuery?: string;
+    }
+  ) {
+    const llmQuery = userQuery ?? query;
+    const { zvecTopK, zvecStrategy } = evalRun;
+    const retriever = await getRetriever();
+
+    const retrievedSkills = await retriever.retrieve(query, {
+      library,
+      topK: zvecTopK,
+      strategy: zvecStrategy
     });
+
+    const retrievedSkillIds = retrievedSkills
+      .filter((s) => !s.id.startsWith('__info__'))
+      .map((s) => s.id);
 
     let skillContext = '';
-    const retrievedSkillIds: string[] = [];
-    const loadedSkillPaths: string[] = [];
-
     for (const skill of retrievedSkills) {
-      const fileContent = skill.path ? loadSkillFile(skill.path) : null;
-      const resolvedContent = fileContent || skill.content || null;
-      if (resolvedContent) {
-        skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${extractKeySections(resolvedContent)}`;
-        retrievedSkillIds.push(skill.id);
-        if (skill.path) loadedSkillPaths.push(skill.path);
+      const content = skill.content || '';
+      if (content) {
+        if (skill.id.startsWith('__info__')) {
+          skillContext = `### 核心约束\n${content}\n\n${skillContext}`;
+        } else {
+          skillContext += `\n\n### Skill: ${skill.title} (${skill.id})\n${content}`;
+        }
       }
     }
 
     const systemPrompt = buildRagSystemPrompt(library, skillContext);
-    const userMessage = buildRagUserMessage(library, query);
+    const userMessage = buildRagUserMessage(library, llmQuery);
     const response = await callAI({
       provider,
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: userMessage }
       ],
       temperature: 0.3,
-      maxTokens: 2000,
+      maxTokens: 5000
     });
 
     return {
       generatedCode: this._extractCode(response.content),
-      retrievalInfo: { retrievedSkillIds, loadedSkillPaths },
+      retrievalInfo: { retrievedSkillIds, zvecStrategy, zvecTopK }
     };
   }
+
+  // ── Context7 retrieval ──────────────────────────────────────────────────────
 
   private async _processContext7({
     provider,
     model,
     query,
-    library,
+    library
   }: {
     provider: string;
     model: string;
@@ -516,7 +516,7 @@ export default class EvaluationManager {
       const data = await context7.fetchDocs(
         query,
         libraryId,
-        process.env.CONTEXT7_API_KEY,
+        process.env.CONTEXT7_API_KEY
       );
       skillContext = context7.formatDocs(data);
     } catch (err) {
@@ -531,40 +531,29 @@ export default class EvaluationManager {
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        { role: 'user', content: userMessage }
       ],
       temperature: 0.3,
-      maxTokens: 2000,
+      maxTokens: 5000
     });
 
     return {
       generatedCode: this._extractCode(response.content),
-      retrievalInfo: { libraryId, ...(context7Error ? { context7Error } : {}) },
+      retrievalInfo: { libraryId, ...(context7Error ? { context7Error } : {}) }
     };
   }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   private _extractCode(response: string): string {
     if (!response) return '';
     const codeBlockMatch = response.match(
-      /```(?:javascript|js|typescript|ts)?\s*([\s\S]*?)```/,
+      /```(?:javascript|js|typescript|ts)?\s*([\s\S]*?)```/
     );
     if (codeBlockMatch) return codeBlockMatch[1].trim();
     const importMatch = response.match(/import[\s\S]*/);
     if (importMatch) return importMatch[0].trim();
     return response.trim();
-  }
-
-  private _extractSkillPaths(toolCallsLog: unknown[]): string[] {
-    const paths: string[] = [];
-    for (const call of toolCallsLog as Array<{
-      tool: string;
-      input: { paths?: string[] };
-    }>) {
-      if (call.tool === 'read_skills' && call.input?.paths) {
-        paths.push(...call.input.paths);
-      }
-    }
-    return paths;
   }
 
   private _buildOutputData(evalRun: EvalRun, extra?: Record<string, unknown>) {
@@ -578,7 +567,7 @@ export default class EvaluationManager {
       status: evalRun.status,
       ...extra,
       summary: buildSummary(evalRun.results),
-      results: evalRun.results,
+      results: evalRun.results
     };
   }
 
@@ -602,7 +591,7 @@ export default class EvaluationManager {
       startTime: evalRun.startTime,
       endTime: evalRun.endTime,
       summary: evalRun.summary,
-      error: evalRun.error,
+      error: evalRun.error
     };
   }
 

@@ -15,11 +15,13 @@ export async function POST(request: NextRequest) {
     library = 'g2',
     mode = 'skill',
     currentCode = null,
+    strategy = 'hybrid',
   }: {
     messages?: UIMessage[];
     library?: string;
     mode?: 'skill' | 'cli';
     currentCode?: string | null;
+    strategy?: string;
   } = await request.json();
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -29,7 +31,9 @@ export async function POST(request: NextRequest) {
   const llm = createLanguageModel();
 
   const system = [
-    mode === 'skill' ? buildSkillSystemPrompt(library) : buildCliSystemPrompt(library),
+    mode === 'skill'
+      ? buildSkillSystemPrompt(library)
+      : buildCliSystemPrompt(library, strategy as 'vector' | 'hybrid'),
     currentCode
       ? `当前代码如下，请在后续回答中基于它进行修改并返回完整 javascript 代码块：\n\`\`\`javascript\n${currentCode}\n\`\`\``
       : ''
@@ -37,8 +41,10 @@ export async function POST(request: NextRequest) {
     .filter(Boolean)
     .join('\n\n');
 
-  const tools = mode === 'skill' ? createSkillModeTools(library) : createCliModeTools(library);
-  console.log('[generate] mode:', mode, 'tools:', Object.keys(tools));
+  const tools = mode === 'skill'
+    ? createSkillModeTools(library)
+    : createCliModeTools(library, strategy as 'vector' | 'hybrid');
+  console.log('[generate] mode:', mode, 'strategy:', strategy, 'tools:', Object.keys(tools));
 
   const result = streamText({
     model: llm.model,

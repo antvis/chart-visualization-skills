@@ -19,7 +19,7 @@ This project is a skill-based system for generating chart visualization code usi
                           │                v                  │
                           │    ┌────────────────────────┐     │
                           │    │       CLI Tool         │     │
-                          │    │  (BM25 Retrieve/List)  │     │
+                          │    │  (zvec Hybrid/Vec)     │     │
                           │    └───────────┬────────────┘     │
                           │                │                  │
                           │                v                  │
@@ -39,11 +39,13 @@ Eval + Harness 通过自动化评测发现问题，再由 LLM 优化 Skill 文�
 
 ### 1. Skill Authoring (`skills/`)
 
-Skills are markdown files with YAML frontmatter, organized by library. Each skill documents a chart type or visualization pattern with metadata (category, tags, difficulty, use cases) and content (best practices, API usage, code examples).
+Skills are markdown files with YAML frontmatter, organized by library. Each skill documents a chart type or visualization pattern with metadata (category, tags, use cases) and content (best practices, API usage, code examples).
 
 ```
 skills/
 ├── antv-g2-chart/       # G2 chart skills + reference docs
+├── antv-g6-graph/       # G6 graph skills + reference docs
+├── antv-x6-editor/      # X6 editor skills + reference docs
 ├── antv-s2-expert/      # S2 pivot table skills
 ├── chart-visualization/  # Generic chart visualization via REST API
 ├── icon-retrieval/       # Icon retrieval skill
@@ -55,18 +57,32 @@ Skills are the **single source of truth** for chart generation knowledge.
 
 ### 2. CLI Tool (`src/`)
 
-The build script (`src/scripts/build.ts`) parses all skill markdown files and generates JSON index files (`src/index/*.index.json`). Each index stores two things: the `skills[]` array (reference docs) and `info` (SKILL.md metadata including `constraintsContent` — the core constraints section up to `<!-- CONSTRAINTS:END -->`).
+The build script (`src/scripts/build.ts`) reads all skill markdown files directly from `src/content/` and generates zvec vector collections (`src/index/*.zvec/`) with full FTS indexes on title, description, tags, content, use_cases, and anti_patterns. All metadata (including frontmatter `id`, `category`, `tags`, etc.) is stored in zvec fields via `@antv/context`, so no intermediate JSON index is needed.
 
-The CLI (`antv` command) provides four commands:
+The CLI (`antv` command) provides one command:
 
-- `antv retrieve <query>` - BM25 full-text search over skills; `--content` returns reference doc markdown and auto-prepends the core constraints block as the first result
-- `antv get <id>` - Get a single skill by exact ID
-- `antv list` - List/filter available skills
-- `antv info <library>` - Show library core constraints (SKILL.md Section 1-2)
+- `antv retrieve <query>` - zvec hybrid search (FTS + vector + RRF fusion); `--content` returns reference doc markdown; constraints docs are indexed as regular skill documents and appear naturally in search results
 
-The retrieval engine (`src/core/bm25.ts`) implements BM25 with Chinese/English tokenization, synonym expansion, and chart-type boosting.
+The retrieval engine uses **zvec** (in-process vector database) with two strategies:
+- **`hybrid`** (default): zvec native multiQuery — FTS (jieba tokenizer, raw text) + Vector (HNSW ANN, 512d) + RRF fusion
+- **`vector`**: Pure ANN vector similarity search
 
-Public API (`src/api.ts`) exports `retrieve()` and `info()` for programmatic use.
+Embedding is handled by `@antv/context`'s built-in embedder (tokenizer + multi-hash, 512d, synchronous).
+
+Public API (`src/api.ts`) exports `retrieve()` and `libraries()` for programmatic use.
+
+### HTTP Server (`http-server/`)
+
+Standalone REST API server (Express) providing POST endpoints for skill retrieval. Used by SKILL.md files for content retrieval via HTTP calls.
+
+```bash
+cd http-server && npm run dev    # starts on http://localhost:3100 (configurable via PORT env)
+```
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, strategy, maxTokens, progressiveLevel}` |
+| `/libraries` | GET | List available library names |
 
 ### 3. Evaluation (`eval/`)
 
@@ -79,7 +95,6 @@ Automated evaluation framework that measures skill quality across retrieval stra
 Key files:
 - `eval/data/eval-g2-dataset-174.json` - 174 labeled test cases
 - `eval/eval-cli/index.js` - Main eval runner
-- `eval/eval-recall.js` - BM25 retrieval recall measurement
 
 ### 4. Harness (`harness/`)
 
@@ -94,7 +109,7 @@ The controller (`harness/controller.js`) orchestrates five agents:
 - **RenderAgent** - Execute generated code in headless browser
 - **AnalyzeAgent** - Classify errors and attribute to specific skills
 - **OptimizeAgent** - LLM rewrites skill docs to fix errors
-- **IndexAgent** - Rebuild BM25 search index
+- **IndexAgent** - Rebuild search index
 
 Iterates until MAX_PASSES consecutive clean passes are achieved.
 
@@ -104,19 +119,21 @@ Next.js web app for interactive chart generation. Dual-panel UI with chat interf
 
 Two retrieval modes:
 - **Skill mode** - Agent calls `load_skill` / `read_file` tools to load SKILL.md and reference docs on demand
-- **CLI mode** - Agent calls `info` (first turn, gets core constraints) and `retrieve` tools (each turn, gets BM25-matched reference docs with constraints auto-prepended)
+- **CLI mode** - Agent calls `retrieve` tool each turn. Strategy selector (Hybrid / Vector) controls the retrieval mode. Hybrid is the default, using zvec's native FTS + Vector + RRF fusion.
 
 ## Project Structure
 
 ```
 .
-├── src/                  # Core library: CLI, API, BM25 retriever, build scripts
+├── src/                  # Core library: CLI, API, zvec retriever, build scripts
 │   ├── index.ts          # CLI entry point (Commander.js)
 │   ├── api.ts            # Public Node.js API
-│   ├── commands/         # CLI commands (retrieve, list, info)
-│   ├── core/             # BM25 engine, types
-│   ├── scripts/          # Build script (markdown -> JSON index)
-│   └── index/            # Generated JSON index files
+│   ├── commands/         # CLI commands (retrieve)
+│   ├── core/             # Types, zvec retriever, synonyms, token-budget
+│   ├── scripts/          # Build script (build.ts only)
+│   ├── content/          # Skill markdown source files (with frontmatter)
+│   └── index/            # Generated zvec index files only
+├── http-server/           # Standalone HTTP API deployment
 ├── skills/               # Skill definitions (markdown + YAML frontmatter)
 ├── eval/                 # Evaluation framework and test datasets
 ├── harness/              # Automated skill optimization loop
@@ -128,8 +145,11 @@ Two retrieval modes:
 ## Key Commands
 
 ```bash
-# Build: parse skills -> generate index -> compile TypeScript
+# Build: build zvec index → compile TS → copy index
 pnpm build
+
+# Build individual step
+pnpm build:index         # zvec vector index only
 
 # Test
 pnpm test
@@ -142,4 +162,7 @@ node harness/controller.js --library=g2 --sample=10 --retrieval=bm25
 
 # Playground: start dev server
 cd playground && pnpm dev
+
+# HTTP Server: start REST API
+cd http-server && npm run dev
 ```

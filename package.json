@@ -1,6 +1,6 @@
 {
   "name": "@antv/chart-visualization-skills",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Chart visualization skills for AntV, can be used in various scenarios such as data analysis, business intelligence, and dashboard development. Skills and CLI are included.",
   "type": "commonjs",
   "main": "dist/api.js",
@@ -21,14 +21,15 @@
     "cli"
   ],
   "scripts": {
-    "build": "npm run build:index && tsc && npm run copy:index",
-    "build:index": "tsx src/scripts/build.ts",
-    "copy:index": "rm -rf dist/index && cp -R src/index dist/",
+    "build": "rm -rf dist && npm run build:index && tsc && npm run copy:zvec",
+    "build:index": "rm -rf src/.zvec && HF_ENDPOINT=https://hf-mirror.com tsx -e \"import('./src/context.ts').then(async (m) => { const context = m.default ?? m; await context.getContext(); await context.disposeContext(); }).catch((error) => { console.error(error); process.exit(1); })\"",
+    "copy:zvec": "cp -R src/.zvec dist/.zvec",
     "test": "vitest run",
     "test:watch": "vitest",
     "precommit": "npm run build"
   },
   "dependencies": {
+    "@antv/context": "^0.1.3",
     "commander": "^12.1.0",
     "gray-matter": "^4.0.3"
   },
@@ -40,5 +41,9 @@
   },
   "author": "AntV AI Team",
   "license": "MIT",
-  "repository": "git@github.com:antvis/chart-visualization-skills.git"
+  "repository": "git@github.com:antvis/chart-visualization-skills.git",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
 }

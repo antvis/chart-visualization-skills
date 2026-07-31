@@ -5,6 +5,7 @@ import {
   useRef,
   useCallback,
   useImperativeHandle,
+  useState,
   forwardRef,
 } from "react";
 
@@ -33,6 +34,83 @@ const LIBRARY_SPECS: LibrarySpec[] = [
   { kind: "g6", pkg: "@antv/g6", globalName: "G6", defaultExports: ["Graph"] },
   { kind: "g2", pkg: "@antv/g2", globalName: "G2", defaultExports: ["Chart"] },
 ];
+
+/**
+ * 动态加载库模块，优先使用 npm 依赖的动态 import()，
+ * 对于未安装 npm 依赖的库（如 X6），回退到 CDN script 加载。
+ * 加载完成后将模块挂载到 window 上供 new Function 使用。
+ */
+const _loadedKinds = new Set<LibraryKind>();
+
+const CDN_URLS: Partial<Record<LibraryKind, string>> = {
+  // X6 不在 npm dependencies 中，需要 CDN 加载
+  x6: "https://unpkg.com/@antv/x6@3.1.7/dist/x6.min.js",
+};
+
+async function ensureLibrary(spec: LibrarySpec): Promise<void> {
+  if (_loadedKinds.has(spec.kind)) return;
+
+  // 优先使用动态 import() 加载 npm 依赖
+  if (spec.kind === "g2") {
+    const module = await import("@antv/g2");
+    (window as unknown as Record<string, unknown>)[spec.globalName] = module;
+    _loadedKinds.add(spec.kind);
+    return;
+  }
+
+  if (spec.kind === "g6") {
+    const module = await import("@antv/g6");
+    (window as unknown as Record<string, unknown>)[spec.globalName] = module;
+    _loadedKinds.add(spec.kind);
+    return;
+  }
+
+  // X6 回退到 CDN script 加载
+  const cdnUrl = CDN_URLS[spec.kind];
+  if (!cdnUrl) throw new Error(`No CDN URL for ${spec.kind}`);
+
+  // 先检查全局变量是否已存在（CDN 可能已加载过）
+  const existing = (window as unknown as Record<string, unknown>)[spec.globalName];
+  if (existing) {
+    _loadedKinds.add(spec.kind);
+    return;
+  }
+
+  // 检查 DOM 中是否已有对应 <script> 标签
+  const existingTag = document.querySelector(`script[src="${cdnUrl}"]`);
+  if (existingTag) {
+    await new Promise<void>((resolve, reject) => {
+      const lib = (window as unknown as Record<string, unknown>)[spec.globalName];
+      if (lib) { _loadedKinds.add(spec.kind); resolve(); return; }
+      existingTag.addEventListener("load", () => {
+        const lib = (window as unknown as Record<string, unknown>)[spec.globalName];
+        if (lib) { _loadedKinds.add(spec.kind); resolve(); }
+        else reject(new Error(`${spec.globalName} CDN script loaded but global not found`));
+      });
+      existingTag.addEventListener("error", () => reject(new Error(`Failed to load CDN: ${cdnUrl}`)));
+    });
+    return;
+  }
+
+  // 创建新的 <script> 标签
+  await new Promise<void>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = cdnUrl;
+    script.onload = () => {
+      const lib = (window as unknown as Record<string, unknown>)[spec.globalName];
+      if (lib) { _loadedKinds.add(spec.kind); resolve(); }
+      else {
+        script.remove();
+        reject(new Error(`${spec.globalName} CDN script loaded but global not found`));
+      }
+    };
+    script.onerror = () => {
+      script.remove();
+      reject(new Error(`Failed to load CDN: ${cdnUrl}`));
+    };
+    document.head.appendChild(script);
+  });
+}
 
 /**
  * 根据代码内容判定库类型。
@@ -69,6 +147,7 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef<unknown>(null);
+  const [loading, setLoading] = useState(false);
 
   const execCode = useCallback(
     (container: HTMLDivElement) => {
@@ -78,7 +157,9 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
       ];
 
       if (!globalLib) {
-        throw new Error(`${spec.globalName} 库尚未加载，请稍后重试`);
+        throw new Error(
+          `${spec.globalName} 库未就绪，请刷新页面重试。`,
+        );
       }
 
       // 提取该包所有 named imports（处理多行、别名、`type X`）
@@ -152,15 +233,35 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
     [code],
   );
 
-  const runCode = useCallback(() => {
+  const runCode = useCallback(async () => {
     if (!code.trim() || !containerRef.current) return;
 
+    const spec = detectLibrary(code);
+    const container = containerRef.current;
+
+    // Dispose previous instance
     disposeInstance(instanceRef.current);
     instanceRef.current = null;
-
-    const container = containerRef.current;
     container.innerHTML = "";
 
+    // Ensure the library is loaded
+    const globalLib = (window as unknown as Record<string, unknown>)[spec.globalName];
+    if (!globalLib) {
+      setLoading(true);
+      onStatusChange(`${spec.globalName} 库加载中…`, "var(--yellow)");
+      try {
+        await ensureLibrary(spec);
+      } catch (e) {
+        console.error("[Preview] Library import failed:", e);
+        container.innerHTML = `<div class="error-block"><strong>加载错误</strong><br>${spec.globalName} 库加载失败。请刷新页面重试。</div>`;
+        onStatusChange("加载错误", "var(--red)");
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+    }
+
+    // Execute user code
     try {
       execCode(container);
       onStatusChange("预览已更新", "var(--green)");
@@ -174,30 +275,12 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
 
   useImperativeHandle(ref, () => ({ run: runCode }), [runCode]);
 
-  // 自动运行（带去抖）；轮询等待 CDN 库就绪
+  // Auto-run: code non-empty → 800ms debounce
   useEffect(() => {
     if (!code.trim()) return;
 
-    let pollTimer: ReturnType<typeof setTimeout>;
-    const debounceTimer = setTimeout(() => {
-      const spec = detectLibrary(code);
-      const check = () => {
-        const ready = !!(window as unknown as Record<string, unknown>)[
-          spec.globalName
-        ];
-        if (ready) {
-          runCode();
-        } else {
-          pollTimer = setTimeout(check, 200);
-        }
-      };
-      check();
-    }, 800);
-
-    return () => {
-      clearTimeout(debounceTimer);
-      clearTimeout(pollTimer!);
-    };
+    const timer = setTimeout(() => runCode(), 800);
+    return () => clearTimeout(timer);
   }, [code, runCode]);
 
   return (
@@ -221,6 +304,11 @@ const Preview = forwardRef<PreviewHandle, PreviewProps>(function Preview(
             </div>
             <p>运行代码后在此预览</p>
             <small>点击「运行」或修改代码自动触发</small>
+          </div>
+        )}
+        {code.trim() && loading && (
+          <div className="preview-placeholder">
+            <p>正在加载可视化库…</p>
           </div>
         )}
         <div

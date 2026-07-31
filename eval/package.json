@@ -7,8 +7,7 @@
   "scripts": {
     "studio": "pnpm --filter eval-studio dev",
     "eval": "tsx eval-cli/index.ts",
-    "recall": "tsx eval-recall.ts",
-    "tune": "tsx _tune-bm25.ts"
+    "recall": "tsx eval-recall.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "3.0.52",

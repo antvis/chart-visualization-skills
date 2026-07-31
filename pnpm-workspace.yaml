@@ -3,3 +3,11 @@ packages:
   - 'eval'
   - 'eval/studio'
   - 'harness'
+allowBuilds:
+  '@zvec/zvec': true
+  esbuild: true
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true
+minimumReleaseAgeExclude:
+  - '@antv/context@0.1.0'
