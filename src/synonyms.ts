@@ -60,3 +60,20 @@ function buildSynony(): Record<string, string[]> {
 }
 
 export const synonyms = buildSynony();
+
+/** Expand known chart terms with their bidirectional synonyms. */
+export function expandQuery(query: string): string {
+  const additions = new Set<string>();
+
+  for (const [term, values] of Object.entries(synonyms)) {
+    if (!query.toLowerCase().includes(term.toLowerCase())) continue;
+
+    for (const value of values) {
+      if (!query.toLowerCase().includes(value.toLowerCase())) {
+        additions.add(value);
+      }
+    }
+  }
+
+  return additions.size > 0 ? `${query} ${[...additions].join(' ')}` : query;
+}

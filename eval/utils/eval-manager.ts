@@ -123,8 +123,7 @@ type RetrieverModule = {
 let _retrieverPromise: Promise<RetrieverModule> | null = null;
 function getRetriever(): Promise<RetrieverModule> {
   if (!_retrieverPromise) {
-    _retrieverPromise =
-      import('../../src/core/retriever.js') as Promise<RetrieverModule>;
+    _retrieverPromise = import('../../src/api.js') as Promise<RetrieverModule>;
   }
   return _retrieverPromise;
 }
@@ -377,7 +376,9 @@ export default class EvaluationManager {
     // Retrieval query strips reference data — JSON arrays dilute vector
     // embedding signal and FTS precision (e.g. "韦恩图" gets lost among
     // hundreds of data tokens like "sets", "size", "视频创作者").
-    const { query: retrievalQuery } = buildQuery(testCase, { includeData: false });
+    const { query: retrievalQuery } = buildQuery(testCase, {
+      includeData: false
+    });
     const expectedCode = testCase.codeString ?? '';
 
     try {
@@ -397,7 +398,7 @@ export default class EvaluationManager {
           model,
           query: retrievalQuery,
           library,
-          userQuery: query,
+          userQuery: query
         }));
       }
 
@@ -440,8 +441,14 @@ export default class EvaluationManager {
       model,
       query,
       library,
-      userQuery,
-    }: { provider: string; model: string; query: string; library: string; userQuery?: string }
+      userQuery
+    }: {
+      provider: string;
+      model: string;
+      query: string;
+      library: string;
+      userQuery?: string;
+    }
   ) {
     const llmQuery = userQuery ?? query;
     const { zvecTopK, zvecStrategy } = evalRun;
