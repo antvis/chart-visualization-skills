@@ -71,12 +71,34 @@ The results show that Harness Engineering enables LLMs to achieve near-productio
 > [!TIP]
 > More skills are coming soon.
 
-## Library Usage
+## Context Retrieval Service
 
 [![npm version](https://img.shields.io/npm/v/%40antv%2Fchart-visualization-skills)](https://www.npmjs.com/package/@antv/chart-visualization-skills)
 ![license](https://img.shields.io/github/license/antvis/chart-visualization-skills)
 
-It can be used as a library in your Node.js projects with `CLI` and `API`.
+We provide a context HTTP service for the model, intended for AI Coding. You can also use the provided `CLI` and `API` for local retrieval or private deployment.
+
+### HTTP Context Service
+
+- **Host**: `https://sive.antv.antgroup.com`
+- **Endpoint**: `/api/v1/context/retrieve`
+- **Method**: `GET`
+- **Parameters**: `query`, `library`, `topK`, `content`, `maxTokens`, `progressiveLevel`
+
+Parameters are as follows:
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `query` | string | ✅ | Search keywords, e.g. `bar chart interval` |
+| `library` | string | ✅ | Library name: `g2`, `g6`, `x6` |
+| `topK` | number | | Number of results to return (default: 5) |
+| `content` | boolean | | Return full reference doc markdown (default: true) |
+| `maxTokens` | number | | Max tokens per result (default: unlimited) |
+| `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
+
+```bash
+curl "https://sive.antv.antgroup.com/api/v1/context/retrieve?query=bar+chart+stacked&library=g2"
+```
 
 ### CLI Usage
 

@@ -43,11 +43,14 @@ await graph.render();
 </script>
 ```
 
-## Content Retrieval
+## Content Retrieval Service
 
-Skill content is retrieved via an antv HTTP API server using GET requests.
+When using AntV G6 for data visualization, if you need to understand the concepts, usage, API, examples, and other aspects of G6 v5, you can use the provided context retrieval service. When using the skill, content is retrieved via an antv HTTP API server using GET requests.
 
-### `GET /api/v1/context/retrieve`
+- Host: `https://sive.antv.antgroup.com`
+- Endpoint: `/api/v1/context/retrieve`
+- Method: `GET`
+- Parameters: `query`, `library`, `topK`, `content`, `maxTokens`, `progressiveLevel`
 
 Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Constraints docs are indexed as regular skill documents and will appear in search results naturally.
 
