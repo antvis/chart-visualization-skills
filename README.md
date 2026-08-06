@@ -42,17 +42,25 @@ npx skills add antvis/chart-visualization-skills
 
 `AntV G6 Graph` generates accurate, runnable G6 v5 code following best practices. It covers core graph initialization, data structures (nodes, edges, combos), 10+ layout algorithms (force, dagre, circular, grid, mindmap, fishbone, etc.), all built-in node/edge/combo types, state management, 15+ behaviors (drag-canvas, zoom-canvas, click-select, lasso, etc.), 10+ plugins (minimap, tooltip, toolbar, legend, timebar, etc.), custom element development, transforms, and animation. Built-in guard rails prevent common v4→v5 migration pitfalls such as using deprecated `G6.Graph()` constructors, `graph.data()` APIs, or Mode-based behavior configuration.
 
+- 🎯 **antv-x6-editor**: X6 v3 graph editor for interactive diagrams — flowcharts, DAGs, ER diagrams, org charts, UML, and custom graph editors. Triggers on any X6-related requests (nodes, edges, ports, plugins, layouts, serialization, HTML shapes, stencil, DnD).
+
+`AntV X6 Editor` generates imperative X6 v3 diagram code with strict rule enforcement: no `graph.render()`, string-literal `container`, 11 official plugins only (`Selection`, `History`, `Clipboard`, etc.), proper background + defaults, and always `centerContent()` after modifications. Supports custom HTML nodes, edge routers/connectors, and all interactive editor features.
+
+- 🤖 **gpt-vis**: AI-native visualization for the LLM era, powered by GPT-Vis. Supports 26 chart types with natural syntax that LLMs can generate effortlessly.
+
+`GPT-Vis` provides framework-agnostic chart generation using a simple markdown-like syntax ideal for AI tools. It supports two output modes: (1) **Syntax mode** — generates declarative configuration for `GPTVis.render()` consumption (ideal for streaming), and (2) **Code mode** — generates complete runnable code for HTML/React/Vue. Includes built-in streaming support, fault tolerance, and intelligent defaults.
+
 - 🎨 **infographic-creator**: Create beautiful infographics based on given text content. Use when users request to create infographics.
 
 `Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
 
-- 🖼️ **icon-retrieval**: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default (customizable).
-
-`Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their URLs and complete SVG content.
-
 - 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 Syntax.
 
 `Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
+
+- 🖼️ **icon-retrieval**: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default (customizable).
+
+`Icon Search` helps users find appropriate icons for various use cases including infographics, web development, design, and more. Search by keywords to discover available icons and retrieve their SVG strings directly. Each search returns up to 5 matching icons by default (customizable via topK parameter) with their URLs and complete SVG content.
 
 **Evaluation Results**
 
