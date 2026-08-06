@@ -64,12 +64,21 @@
       ]
     },
     {
-      "name": "antv-s2-expert",
-      "description": "S2 multi-dimensional cross-analysis table development assistant. Use when users need help with S2 pivot tables, table sheets, or any @antv/s2 related development.",
+      "name": "antv-x6-editor",
+      "description": "X6 v3 graph editor for interactive diagrams — flowcharts, DAGs, ER diagrams, org charts, and custom graph editors. Triggers on X6-related requests (nodes, edges, ports, plugins, layouts, HTML shapes, stencil, DnD).",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/antv-s2-expert"
+        "./skills/antv-x6-editor"
+      ]
+    },
+    {
+      "name": "gpt-vis",
+      "description": "AI-native visualization for the LLM era, powered by GPT-Vis. Supports 26 chart types with natural syntax that LLMs can generate effortlessly. Ideal for streaming output and AI tool integration.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/gpt-vis"
       ]
     }
   ]
