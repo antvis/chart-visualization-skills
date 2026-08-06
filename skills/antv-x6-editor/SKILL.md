@@ -1,6 +1,8 @@
 ---
 name: antv-x6-editor
 description: "Use this skill whenever the user wants to create, customize, or troubleshoot X6 v3 graph editor diagrams. Triggers include: any mention of 'X6', 'antv x6', '@antv/x6', 'X6 editor', 'X6 图编辑', '流程图', 'DAG', 'ER图', '实体关系图', '血缘图', '组织架构图', 'UML类图', 'flowchart', 'DAG diagram', 'ER diagram', 'lineage graph', 'org chart', 'network topology', 'stencil', 'drag-and-drop editor', 'port connection', 'node port edge', 'graph editor', 'diagram editor', or requests about X6 node/edge styling, plugins (Selection, History, Clipboard, Keyboard, MiniMap, Scroller, Snapline, Stencil, Dnd, Transform, Export), interactions (panning, mousewheel, connecting, embedding), HTML shape nodes, custom shapes, serialization, or layout. Also use when debugging X6 rendering errors, v2→v3 migration, or editor interaction issues. Do NOT use for G2 statistical charts, G6 network graphs, or S2 pivot tables."
+tools:
+  - curl
 ---
 
 # X6 v3 Graph Editor
