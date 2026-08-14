@@ -1,6 +1,8 @@
 ---
 name: antv-g6-graph
 description: "Use this skill whenever the user wants to create, customize, or troubleshoot G6 v5 graph/network visualizations. Triggers include: any mention of 'G6', 'antv g6', '@antv/g6', 'G6 graph', 'G6 图', '网络图', '关系图', '拓扑图', '树形图', '流程图', '思维导图', '鱼骨图', '力导向图', 'force graph', 'network visualization', 'node-edge diagram', 'graph layout', 'tree layout', 'dagre layout', 'mindmap', 'social network', or requests about G6 node styles, edge types, behaviors, plugins, layouts, combos, or data structures. Also use when debugging G6 rendering errors, v4→v5 migration, or graph interaction issues. Do NOT use for G2 statistical charts, X6 editor diagrams, or S2 pivot tables."
+tools:
+  - curl
 ---
 
 # G6 v5 Graph Visualization
