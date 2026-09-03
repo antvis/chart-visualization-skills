@@ -23,7 +23,7 @@ tags:
   - "exportSVG"
   - "dataUri"
 related:
-  - "x 6-core-graph-init"
+  - "x6-core-graph-init"
   - "x6-plugins"
 use_cases:
   - "将画布导出为 SVG 文件"

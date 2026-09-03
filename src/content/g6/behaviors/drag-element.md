@@ -16,7 +16,7 @@ tags:
   - "移动节点"
 related:
   - "g6-behavior-click-select"
-  - "g6-behavior-drag-canvas"
+  - "g6-behavior-canvas-nav"
   - "g6-layout-force"
 use_cases:
   - "手动调整节点位置"
