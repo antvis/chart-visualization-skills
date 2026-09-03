@@ -81,7 +81,7 @@ cd http-server && npm run dev    # starts on http://localhost:3100 (configurable
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, strategy, maxTokens, progressiveLevel}` |
+| `/retrieve` | POST | Retrieve skills by query (hybrid/vector search). Body: `{query, library, topK, content, strategy, maxTokens}` |
 | `/libraries` | GET | List available library names |
 
 ### 3. Evaluation (`eval/`)

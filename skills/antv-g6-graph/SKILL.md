@@ -52,7 +52,7 @@ When using AntV G6 for data visualization, if you need to understand the concept
 - Host: `https://sive.antv.antgroup.com`
 - Endpoint: `/api/v1/context/retrieve`
 - Method: `GET`
-- Parameters: `query`, `library`, `topK`, `content`, `maxTokens`, `progressiveLevel`
+- Parameters: `query`, `library`, `topK`, `content`, `maxTokens`
 
 Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Constraints docs are indexed as regular skill documents and will appear in search results naturally.
 
@@ -63,7 +63,6 @@ Retrieve skills by query (hybrid search = FTS + vector + RRF fusion). Constraint
 | `topK` | number | | Number of results to return (default: 5) |
 | `content` | boolean | | Return full reference doc markdown (default: true) |
 | `maxTokens` | number | | Max tokens per result (default: unlimited) |
-| `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
 curl "https://sive.antv.antgroup.com/api/v1/context/retrieve?query=force+layout+node+style&library=g6"

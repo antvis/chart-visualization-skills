@@ -91,7 +91,7 @@ We provide a context HTTP service for the model, intended for AI Coding. You can
 - **Host**: `https://sive.antv.antgroup.com`
 - **Endpoint**: `/api/v1/context/retrieve`
 - **Method**: `GET`
-- **Parameters**: `query`, `library`, `topK`, `content`, `maxTokens`, `progressiveLevel`
+- **Parameters**: `query`, `library`, `topK`, `content`, `maxTokens`
 
 Parameters are as follows:
 
@@ -102,7 +102,6 @@ Parameters are as follows:
 | `topK` | number | | Number of results to return (default: 5) |
 | `content` | boolean | | Return full reference doc markdown (default: true) |
 | `maxTokens` | number | | Max tokens per result (default: unlimited) |
-| `progressiveLevel` | number | | Progressive disclosure level: `0`=full, `1`=summary+code, `2`=summary-only |
 
 ```bash
 curl "https://sive.antv.antgroup.com/api/v1/context/retrieve?query=bar+chart+stacked&library=g2"
@@ -165,11 +164,10 @@ const skills = retrieve('bar chart', { library: 'g2', topK: 5 });
 // Metadata only (no content body)
 const skills = retrieve('bar chart', { library: 'g2', topK: 5, content: false });
 
-// With token budget — content trimmed to fit 4000 tokens, summary + code only
+// With token budget — content trimmed to fit 4000 tokens
 const skills = retrieve('bar chart', {
   library: 'g2',
   maxTokens: 4000,
-  progressiveLevel: 1,
 });
 ```
 
@@ -181,7 +179,6 @@ interface RetrieveOptions {
   topK?: number;       // Number of results (default: 7)
   strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
   maxTokens?: number;  // Token budget — content trimmed to fit when set
-  progressiveLevel?: 0 | 1 | 2;  // 0=full, 1=summary+code, 2=summary (default: 1)
 }
 ```
 
@@ -192,13 +189,11 @@ interface RetrieveOptions {
 | `content` | `boolean` | `true` | Include markdown content body |
 | `strategy` | `'hybrid' \| 'vector'` | `'hybrid'` | Retrieval strategy |
 | `maxTokens` | `number` | — | Token budget; content trimmed to fit when set |
-| `progressiveLevel` | `0 \| 1 \| 2` | `1` | 0=full, 1=summary+code, 2=summary only |
 
 > Notes:
 > - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
 > - `strategy: 'vector'` uses pure ANN vector similarity search.
 > - Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results.
-> - When `maxTokens` is set, skill content is formatted and trimmed to fit the budget according to `progressiveLevel`.
 
 ## License
 
