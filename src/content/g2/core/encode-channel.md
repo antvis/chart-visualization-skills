@@ -22,7 +22,7 @@ related:
   - "g2-core-chart-init"
   - "g2-scale-linear"
   - "g2-scale-ordinal"
-  - "g2-core-data-binding"
+  - "g2-data-transform-patterns"
 use_cases:
   - "将数据字段映射到图表的视觉属性"
   - "理解 Spec 模式中 encode 对象的结构"

@@ -17,7 +17,6 @@ tags:
   - "spec"
 related:
   - "g2-mark-funnel"
-  - "g2-recipe-funnel"
   - "g2-core-chart-init"
 use_cases:
   - "展示能源/物质流动分配"

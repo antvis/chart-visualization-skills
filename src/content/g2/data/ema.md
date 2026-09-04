@@ -16,7 +16,7 @@ tags:
   - "数据变换"
   - "data transform"
 related:
-  - "g2-mark-line"
+  - "g2-mark-line-basic"
 use_cases:
   - "时间序列数据平滑"
   - "金融数据技术分析"

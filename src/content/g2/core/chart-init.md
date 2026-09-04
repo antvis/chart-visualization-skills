@@ -28,8 +28,7 @@ tags:
   - "布局"
 related:
   - "g2-core-encode-channel"
-  - "g2-core-data-binding"
-  - "g2-core-lifecycle"
+  - "g2-data-transform-patterns"
   - "g2-theme-builtin"
 use_cases:
   - "开始创建任何 G2 图表"

@@ -18,7 +18,7 @@ tags:
 related:
   - "g6-core-data-structure"
   - "g6-layout-dagre"
-  - "g6-behavior-collapse-expand"
+  - "g6-behavior-lasso-collapse"
 use_cases:
   - "思维导图"
   - "知识树"
