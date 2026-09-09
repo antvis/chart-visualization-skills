@@ -18,6 +18,7 @@ tags:
   - "多系列"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-area-basic"
   - "g2-core-encode-channel"
   - "g2-scale-time"
@@ -34,26 +35,43 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 单系列趋势图：用稳定主色 + `style.lineWidth: 2`（覆写引擎默认 `1`）。语义化文本（轴标题/单位/tooltip/title）只写数据真实携带的语义，未知则省略，不要照搬本例的销量/件。完整策略见 `g2-design-default-aesthetics`。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
   type: 'line',
   data: [
-    { month: 'Jan', value: 33 },
-    { month: 'Feb', value: 78 },
-    { month: 'Mar', value: 56 },
-    { month: 'Apr', value: 91 },
-    { month: 'May', value: 67 },
-    { month: 'Jun', value: 45 },
+    { month: '1月', sales: 33 },
+    { month: '2月', sales: 78 },
+    { month: '3月', sales: 56 },
+    { month: '4月', sales: 91 },
+    { month: '5月', sales: 67 },
+    { month: '6月', sales: 45 },
   ],
-  encode: { x: 'month', y: 'value' },
+  encode: { x: 'month', y: 'sales' },
+  style: {
+    stroke: '#5B8FF9',
+    lineWidth: 2,
+  },
+  padding: 'auto',
+  title: { title: '上半年月度销量', subtitle: '单位：件' },
+  axis: {
+    x: { title: '月份' },
+    y: { title: '销量 / 件' },
+  },
+  tooltip: {
+    title: 'month',
+    items: [{ channel: 'y', name: '销量', valueFormatter: (v) => `${v} 件` }],
+  },
 });
 
 chart.render();
@@ -329,8 +347,8 @@ chart.options({
 });
 ```
 
-### 错误 3：多 Mark 叠加需要 view+children（详见核心约束 #3）
+### 错误 3：多 Mark 叠加需要 view+children
 ```javascript
-// ❌ chart.options({ type: 'line', ... }); chart.options({ type: 'point', ... }); → 只有 point 生效
+// ❌ 顺序修改根 type 不会创建 line 与 point 两个图层
 // ✅ chart.options({ type: 'view', data, children: [{ type: 'line', ... }, { type: 'point', ... }] });
 ```

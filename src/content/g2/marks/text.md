@@ -16,6 +16,7 @@ tags:
   - "annotation"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-line-basic"
   - "g2-mark-interval-basic"
   - "g2-core-view-composition"

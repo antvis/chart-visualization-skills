@@ -17,6 +17,7 @@ tags:
   - "树形"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-arc-pie"
   - "g2-mark-sankey"
   - "g2-core-chart-init"
@@ -28,6 +29,8 @@ use_cases:
 
 
 ## 最小可运行示例
+
+> 矩形树图的面积是首要编码，颜色只能表达层级或额外状态，不能干扰面积比较。小矩形默认隐藏放不下的标签，并保留父子层级的视觉区分；固定画布尺寸在需要稳定布局时是合理例外。
 
 ```javascript
 import { Chart } from '@antv/g2';

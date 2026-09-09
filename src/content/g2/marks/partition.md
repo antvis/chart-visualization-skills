@@ -20,6 +20,7 @@ tags:
   - "下钻"
   - "drillDown"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-treemap"
   - "g2-mark-sunburst"
   - "g2-interaction-drilldown"

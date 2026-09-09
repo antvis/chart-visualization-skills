@@ -16,6 +16,7 @@ tags:
   - "annotation"
   - "折线连接"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-link"
   - "g2-mark-linex-liney"
   - "g2-comp-annotation"

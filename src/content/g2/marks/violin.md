@@ -13,6 +13,7 @@ tags:
   - "密度分布"
   - "统计分析"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-boxplot"
   - "g2-mark-density"
 use_cases:

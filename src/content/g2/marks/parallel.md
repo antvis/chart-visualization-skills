@@ -13,6 +13,7 @@ tags:
   - "多维数据"
   - "关系分析"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-radar"
   - "g2-mark-sankey"
 use_cases:

@@ -16,6 +16,7 @@ tags:
   - "箭头"
   - "流场"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-core-encode-channel"
 use_cases:

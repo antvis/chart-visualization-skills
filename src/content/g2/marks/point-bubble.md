@@ -6,13 +6,9 @@ description: |
   通过 encode.size 绑定数值字段，G2 自动将数值映射为圆的面积（而非半径）。
   适合同时展示三个数值维度的关系。
   
-  样式要点：
-  1. 不要使用白色描边（stroke: '#fff'），浅色主题下会显得像错误图表；
-  2. 推荐径向渐变填充（radial-gradient）+ 阴影（shadow），模拟 3D 球体质感；
-  3. 定义颜色映射表 COLOR_MAP，scale.color.range 和 fill 回调共用，保持一致；
-  4. size 比例尺推荐使用 sqrt 类型，确保气泡面积与数值成正比；
-  5. 合理设置 size.range（建议 [4, 40] 区间），避免极端大小差异；
-  6. 坐标轴使用虚线网格（gridLineDash），背景更清爽。
+  默认策略：颜色仅表达独立分组；Point 对定量 size 默认推断 sqrt 比例尺，
+  可按数据范围设置 size.range；标签与 size 图例按可读性决定。
+  径向渐变、阴影和虚线网格属于展示型增强，不是所有气泡图的默认配置。
 
 library: "g2"
 version: "5.x"
@@ -25,6 +21,7 @@ tags:
   - "三维度"
   - "size"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-scale-linear"
   - "g2-scale-pow-sqrt"
@@ -38,7 +35,7 @@ use_cases:
 
 ## 最小可运行示例
 
-经典气泡图设计：径向渐变填充 + 阴影 + sqrt 比例尺 + 虚线网格 + 双系列对比。
+这是一个展示型气泡图：径向渐变、阴影和虚线网格用于明确要求精致视觉的场景；普通分析图优先遵循 `g2-design-default-aesthetics` 的克制基线。
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -112,7 +109,7 @@ chart.options({
         shape: 'point',
       },
       scale: {
-        size: { type: 'sqrt', range: [4, 40] },   // ✅ sqrt 比例尺：确保面积与数值成正比
+        size: { type: 'sqrt', range: [4, 40] },   // 显式控制范围；Point 默认也会推断 sqrt
         color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
         y: { nice: true },
       },
@@ -131,9 +128,8 @@ chart.options({
         shadowColor: 'rgba(0, 0, 0, 0.15)',
         shadowOffsetY: 5,
       },
-      legend: { size: false },
       labels: [
-        { text: 'country', position: 'outside', fontSize: 11, fill: '#333',
+        { text: 'country', position: 'top', fontSize: 11, fill: '#333',
           transform: [{ type: 'overlapDodgeY' }] },
       ],
       tooltip: {
@@ -155,20 +151,20 @@ chart.options({
 chart.render();
 ```
 
-> **设计要点**：
-> - **径向渐变**（`radial-gradient`）— 从白色中心到映射色边缘，模拟 3D 球体质感
-> - **阴影**（`shadowBlur` + `shadowColor` + `shadowOffsetY`）— 让气泡有浮起感
-> - **sqrt 比例尺** — 确保气泡面积与数值成正比，而非半径
-> - **虚线网格**（`gridLineDash: [4, 4]`）— 背景更清爽不喧宾夺主
-> - **双系列对比**（1990 vs 2015）— 用颜色区分时间维度
-> - **隐藏 size 图例**（`legend: { size: false }`）— size 图例对用户意义不大
+> **展示型气泡图的可复用配置点**：
+> - **径向渐变**（`radial-gradient`）— 白色中心到映射色边缘，要 3D 球质感时启用
+> - **阴影**（`shadowBlur` + `shadowColor` + `shadowOffsetY`）— 要气泡浮起感时启用
+> - **sqrt 比例尺** — Point 对定量 size 默认推断 sqrt；显式写出只为控制 `range`，否则可省略
+> - **虚线网格**（`gridLineDash: [4, 4]`）— 背景网格喧宾夺主时改虚线降视觉权重
+> - **双系列颜色** — 有时间或分组对比维度时用 `encode.color` 区分；单系列不要硬造第二类
+> - **size 图例** — 默认保留；仅当 size 各级大小无解读价值（如纯定量快照）时才 `size: false`
 
 ## 配置 size 比例尺
 
 ```javascript
 scale: {
   size: {
-    type: 'sqrt',    // ✅ 推荐：sqrt 比例尺，确保气泡面积与数值成正比
+    type: 'sqrt',    // 覆盖 scale 时保持 sqrt，确保面积与数值成正比
     range: [4, 40],  // [最小半径, 最大半径] (px)
     // 注意：G2 用面积而非半径映射，视觉上更准确
     // 建议 range 区间适中（4~40），避免极端大小差异导致遮挡或不可见
@@ -182,13 +178,13 @@ scale: {
 
 ## 气泡样式最佳实践
 
-### ✅ 推荐：径向渐变 + 阴影 + sqrt 比例尺 + 虚线网格
+### 展示型增强：径向渐变 + 阴影 + sqrt 比例尺 + 虚线网格
 ```javascript
 chart.options({
   type: 'point',
   encode: { x: 'income', y: 'life', size: 'population', color: 'year' },
   scale: {
-    size: { type: 'sqrt', range: [4, 40] },    // sqrt 比例尺
+    size: { type: 'sqrt', range: [4, 40] },    // 显式范围；未覆盖时 G2 默认推断 sqrt
     color: { domain: ['1990', '2015'], range: Object.values(COLOR_MAP) },
   },
   style: {
@@ -205,7 +201,6 @@ chart.options({
     shadowColor: 'rgba(0, 0, 0, 0.15)',
     shadowOffsetY: 5,
   },
-  legend: { size: false },
   axis: {
     x: { grid: true, gridLineDash: [4, 4], gridStrokeOpacity: 0.3 },
     y: { grid: true, gridLineDash: [4, 4], gridStrokeOpacity: 0.3 },

@@ -13,6 +13,7 @@ tags:
   - "项目管理"
   - "进度"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-comp-slider"
 use_cases:
@@ -39,6 +40,8 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 单项目计划以位置、任务名和时间区间表达信息，使用稳定单色即可；只有阶段、负责人或状态是独立比较维度时才映射 `encode.color` 并显示图例。任务较多时优先保证行高与时间轴可读，不强制标签。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
@@ -59,8 +62,8 @@ chart.options({
     x: 'name',
     y: 'startTime',
     y1: 'endTime',
-    color: 'name',
   },
+  style: { fill: '#5B8FF9', radius: 4 },
   coordinate: {
     transform: [{ type: 'transpose' }],
   },

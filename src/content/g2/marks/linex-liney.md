@@ -17,6 +17,7 @@ tags:
   - "annotation"
   - "标注"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-comp-annotation"
   - "g2-mark-rangex"
   - "g2-mark-line-basic"

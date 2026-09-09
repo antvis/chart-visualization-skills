@@ -133,11 +133,11 @@ chart.options({
 
 ## 常见错误与修正
 
-### 错误 1：多次调用 options() 覆盖配置
+### 场景 1：叠加 mark 不能靠修改根 type
 ```javascript
-// ❌ 错误：每次 options() 调用都会覆盖上一次
+// ❌ 错误：后一次更新把同一根 mark 改成 line，不会创建两层
 chart.options({ type: 'area', ... });
-chart.options({ type: 'line', ... });   // 覆盖了面积图！
+chart.options({ type: 'line', ... });
 
 // ✅ 正确：用 view + children
 chart.options({

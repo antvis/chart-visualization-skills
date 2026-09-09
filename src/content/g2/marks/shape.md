@@ -17,6 +17,7 @@ tags:
   - "custom shape"
   - "矢量图形"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-image"
   - "g2-mark-point-scatter"
   - "g2-core-chart-init"

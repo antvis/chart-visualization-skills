@@ -13,6 +13,7 @@ tags:
   - "关系图"
   - "网络"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-chord"
   - "g2-mark-sankey"
 use_cases:

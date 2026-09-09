@@ -16,6 +16,7 @@ tags:
   - "进度"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-chart-init"
   - "g2-mark-arc-pie"
 use_cases:

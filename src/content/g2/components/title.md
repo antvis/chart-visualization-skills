@@ -15,6 +15,7 @@ tags:
   - "副标题"
   - "标题样式"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-chart-init"
   - "g2-comp-axis-config"
   - "g2-comp-legend-config"
@@ -24,6 +25,9 @@ use_cases:
   - "控制标题对齐方式（左对齐/居中/右对齐）"
 ---
 
+## 默认决策
+
+标题用于表达已知的指标、时间范围、单位或报告语境，不用于重复字段名。只有用户提供或数据明确给出这些语义时才添加标题/副标题；语义未知时省略，而不是猜测单位、来源或结论。
 
 ## 基本用法
 
@@ -110,14 +114,14 @@ const chart = new Chart({
 
 ## 常见错误与修正
 
-### 错误：title 写成字符串而不是对象
+### 选择字符串或对象 title
 ```javascript
-// ❌ 错误：title 字段必须是配置对象，不能直接写字符串
+// ✅ 合法：只有标题文本时可使用字符串
 chart.options({
-  title: '月度销售额',   // ❌ 不支持字符串
+  title: '月度销售额',
 });
 
-// ✅ 正确：title 字段是对象，主标题文本在 title.title 中
+// ✅ 需要副标题或样式时，使用对象
 chart.options({
   title: {
     title: '月度销售额',   // ✅ 正确写法

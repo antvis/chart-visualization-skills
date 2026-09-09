@@ -18,6 +18,7 @@ tags:
   - "分布"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-encode-channel"
   - "g2-scale-linear"
   - "g2-interaction-tooltip"
@@ -33,29 +34,48 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 颜色编码规则：当存在独立的分组维度（如品牌、类别）需要区分时，映射 `encode.color` 并保留图例让颜色自我解释；散点密集时不要加常驻标签，靠 tooltip 读数。完整策略见 `g2-design-default-aesthetics`。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
   type: 'point',
   data: [
-    { x: 10, y: 30, category: 'A' },
-    { x: 20, y: 50, category: 'B' },
-    { x: 30, y: 20, category: 'A' },
-    { x: 40, y: 80, category: 'B' },
-    { x: 50, y: 40, category: 'A' },
-    { x: 60, y: 65, category: 'B' },
+    { price: 120, sales: 210, brand: '北极星' },
+    { price: 150, sales: 180, brand: '远航' },
+    { price: 200, sales: 155, brand: '北极星' },
+    { price: 90, sales: 240, brand: '远航' },
+    { price: 260, sales: 120, brand: '北极星' },
+    { price: 175, sales: 165, brand: '远航' },
   ],
   encode: {
-    x: 'x',
-    y: 'y',
-    color: 'category',
+    x: 'price',
+    y: 'sales',
+    color: 'brand',
+  },
+  style: {
+    fillOpacity: 0.85,
+  },
+  padding: 'auto',
+  title: { title: '商品价格与销量关系', subtitle: '价格：元；销量：件' },
+  axis: {
+    x: { title: '价格 / 元' },
+    y: { title: '销量 / 件' },
+  },
+  tooltip: {
+    title: 'brand',
+    items: [
+      { channel: 'x', name: '价格', valueFormatter: (v) => `${v} 元` },
+      { channel: 'y', name: '销量', valueFormatter: (v) => `${v} 件` },
+    ],
   },
 });
 

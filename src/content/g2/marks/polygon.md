@@ -15,6 +15,7 @@ tags:
   - "地图"
   - "自定义形状"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-image"
   - "g2-mark-path"
 use_cases:

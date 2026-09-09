@@ -13,6 +13,7 @@ tags:
   - "candlestick"
   - "股票"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-line-basic"
   - "g2-mark-boxplot"
 use_cases:
@@ -39,6 +40,8 @@ K线图展示金融数据的价格走势：
 - 最低价（min）
 
 ## 最小可运行示例
+
+> K 线图中涨跌颜色具有领域语义，应显式固定 domain 与 range；影线和实体已经承载价格信息，默认不添加常驻标签或额外图例，以免遮挡时间序列。
 
 ```javascript
 import { Chart } from '@antv/g2';

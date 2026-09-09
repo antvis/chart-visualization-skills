@@ -17,6 +17,7 @@ tags:
   - "参考区域"
   - "时间区间"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-comp-annotation"
   - "g2-mark-line-basic"
   - "g2-comp-view"

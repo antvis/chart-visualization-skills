@@ -19,6 +19,7 @@ tags:
   - "异常值"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-core-encode-channel"
 use_cases:
@@ -44,13 +45,16 @@ Box Mark 需要 5 个数值通道：
 
 ## 使用 boxplot transform 自动计算（推荐）
 
+> 箱线图的中位数、四分位和异常值已构成完整信息层级。默认用低饱和填充与清晰描边，不把类别重复映射为颜色；只有比较独立分组时才增加颜色和图例。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 // 原始数据，每个分类有多个观测值

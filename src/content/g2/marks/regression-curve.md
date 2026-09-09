@@ -16,6 +16,7 @@ tags:
   - "d3-regression"
   - "散点图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-mark-line-basic"
 use_cases:
@@ -38,6 +39,8 @@ anti_patterns:
 
 **回归函数输出格式**：返回一个点数组 `[[x0, y0], [x1, y1], ...]`，encode 时用 `(d) => d[0]` 和 `(d) => d[1]`
 
+> 回归线是对散点关系的辅助解释，不应压过原始观测：散点保持半透明、趋势线使用清晰实线；只在公式已知且空间足够时标注方程，不为每个点添加标签。
+
 ## 线性回归（最小可运行示例）
 
 ```javascript
@@ -52,7 +55,7 @@ const chart = new Chart({
 chart.options({
   type: 'view',
   autoFit: true,
-   {
+  data: {
     type: 'fetch',
     value: 'https://assets.antv.antgroup.com/g2/linear-regression.json',
   },
@@ -67,7 +70,7 @@ chart.options({
     // 折线：回归曲线
     {
       type: 'line',
-       {
+      data: {
         transform: [
           {
             type: 'custom',
@@ -106,7 +109,7 @@ import { regressionQuad } from 'd3-regression';
 chart.options({
   type: 'view',
   autoFit: true,
-   [
+  data: [
     { x: -4, y: 5.2 }, { x: -3, y: 2.8 }, { x: -2, y: 1.5 },
     { x: -1, y: 0.8 }, { x: 0, y: 0.5 }, { x: 1, y: 0.8 },
     { x: 2, y: 1.5 }, { x: 3, y: 2.8 }, { x: 4, y: 5.2 },
@@ -119,7 +122,7 @@ chart.options({
     },
     {
       type: 'line',
-       {
+      data: {
         transform: [
           {
             type: 'custom',
@@ -257,7 +260,7 @@ children: [
 children: [
   {
     type: 'line',
-     {                        // ✅ 必须有 data: 键
+    data: {
       transform: [{ type: 'custom', callback: regressionLinear() }],
     },
     encode: { x: (d) => d[0], y: (d) => d[1] },

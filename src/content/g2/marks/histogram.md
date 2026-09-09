@@ -13,6 +13,7 @@ tags:
   - "分布"
   - "统计"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-boxplot"
   - "g2-transform-binx"
 use_cases:
@@ -38,6 +39,8 @@ anti_patterns:
 - `x1` 通道：表示区间结束位置
 
 ## 最小可运行示例
+
+> 直方图的柱体表达连续区间，默认不留柱间空隙、不为单一分布添加分类图例或逐柱标签；需要比较多个分布时才用 `encode.color` 表达独立分组。
 
 ```javascript
 import { Chart } from '@antv/g2';

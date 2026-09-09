@@ -17,6 +17,7 @@ tags:
   - "stackY"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-arc-donut"
   - "g2-core-chart-init"
   - "g2-transform-stacky"
@@ -42,13 +43,16 @@ G2 v5 饼图的 Spec 结构：
 
 ## 最小可运行示例
 
+> 标签与图例择一：类别 ≤ 6 个时用外置标签（带 connector）直接标注扇区，此时关闭颜色图例避免重复；类别更多或标签放不下时改用 legend。tooltip 始终保留精确值。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 380,
+  theme: 'classic',
 });
 
 chart.options({
@@ -67,16 +71,21 @@ chart.options({
   },
   transform: [{ type: 'stackY' }],   // 必须：将 y 值转换为角度区间
   coordinate: { type: 'theta', outerRadius: 0.8 },
-  legend: {
-    color: { position: 'bottom', layout: { justifyContent: 'center' } },
-  },
+  padding: 'auto',
+  title: { title: '各渠道销售额占比', subtitle: '单位：万元' },
+  legend: false,
   labels: [
     {
-      text: (d) => `${d.type}\n${d.value}`,
+      text: (d) => `${d.type}\n${d.value} 万元`,
       position: 'outside',
       connector: true,
+      transform: [{ type: 'overlapHide' }],
     },
   ],
+  tooltip: {
+    title: 'type',
+    items: [{ channel: 'y', name: '销售额', valueFormatter: (v) => `${v} 万元` }],
+  },
 });
 
 chart.render();
