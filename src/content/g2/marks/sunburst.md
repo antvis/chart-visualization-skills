@@ -18,6 +18,7 @@ tags:
   - "polar"
   - "g2-extension-plot"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-partition"
   - "g2-mark-treemap"
   - "g2-mark-arc-pie"

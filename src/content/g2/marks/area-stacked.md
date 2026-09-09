@@ -17,6 +17,7 @@ tags:
   - "总量"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-area-basic"
   - "g2-transform-stacky"
   - "g2-mark-interval-stacked"
@@ -32,13 +33,16 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 配色与标签：堆叠面积展示组成系列时映射 `encode.color` 并保留图例；不要默认添加逐点标签，会遮挡趋势轮廓，靠 tooltip 读数。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
@@ -56,6 +60,18 @@ chart.options({
   ],
   encode: { x: 'month', y: 'value', color: 'type' },
   transform: [{ type: 'stackY' }],
+  style: { fillOpacity: 0.65 },
+  padding: 'auto',
+  title: { title: '第一季度收入来源变化', subtitle: '单位：万元' },
+  axis: {
+    x: { title: '月份' },
+    y: { title: '收入 / 万元' },
+  },
+  legend: { color: { position: 'bottom' } },
+  tooltip: {
+    title: 'month',
+    items: [{ channel: 'y', name: '收入', valueFormatter: (v) => `${v} 万元` }],
+  },
 });
 
 chart.render();

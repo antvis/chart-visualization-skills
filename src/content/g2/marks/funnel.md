@@ -16,6 +16,7 @@ tags:
   - "流程"
   - "symmetryY"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-transform-symmetryy"
   - "g2-coord-transpose"
@@ -42,6 +43,8 @@ anti_patterns:
 **金字塔变体**：`shape: 'pyramid'` + `style: { reverse: true }`
 
 ## 最小可运行示例
+
+> 漏斗的宽度已表达阶段量级，颜色仅用于帮助区分阶段；保留内部标签供少量阶段直接阅读，阶段过多时应改用 tooltip 或表格。渐变和入场动画不是默认视觉配置。
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -71,7 +74,6 @@ chart.options({
   scale: {
     color: { palette: 'spectral' },
   },
-  animate: { enter: { type: 'fadeIn' } },
   axis: false,
   labels: [
     {

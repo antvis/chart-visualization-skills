@@ -3,7 +3,7 @@ id: "g2-concept-rendering-troubleshoot"
 title: "G2 图表渲染排查清单"
 description: |
   G2 v5 图表不显示或部分不显示时的排查指南，涵盖 chart.render() 缺失、
-  多次 chart.options() 覆盖、encode 字段名不匹配、mark type 不存在、
+  根 mark 类型被后续 options 更新替换、encode 字段名不匹配、mark type 不存在、
   自定义 HTML 样式不生效等常见问题及修复方案。
 library: "g2"
 version: "5.x"
@@ -37,7 +37,7 @@ use_cases:
 | # | 检查项 | 常见表现 |
 |---|--------|---------|
 | 1 | 缺少 `chart.render()` | 图表完全空白 |
-| 2 | 多次调用 `chart.options()` | 只有最后一次的 mark 显示 |
+| 2 | 用顺序更新根 `type` 试图叠加 mark | 只显示当前根 mark |
 | 3 | `encode` 字段名与 data 不匹配 | mark 静默不渲染 |
 | 4 | 使用了不存在的 mark type | 运行时报错或空白 |
 | 5 | `data` 不是数组 | mark 静默跳过 |
@@ -63,12 +63,12 @@ chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });
 chart.render();
 ```
 
-## 2. 多次调用 `chart.options()` 导致覆盖
+## 2. 用顺序更新根 `type` 试图叠加 mark
 
-`chart.options()` 是**全量替换**——多次调用只有最后一次生效。
+`chart.options()` 支持深度合并局部更新；但根节点只有一个，后续把 `type` 改为 `line` 会把该根 mark 改成折线，而不会新增图层。
 
 ```javascript
-// ❌ 错误：第一次 options 被第二次完全覆盖，柱状图不渲染
+// ❌ 错误：第二次更新将根 mark 改为 line，不会保留 interval 作为另一层
 chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });
 chart.options({ type: 'line', data, encode: { x: 'x', y: 'y' } });
 chart.render(); // 只有折线图

@@ -13,6 +13,7 @@ tags:
   - "KPI"
   - "进度"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-gauge"
 use_cases:
@@ -38,6 +39,8 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 子弹图用背景区间、实际值和目标标记表达三个不同角色；色彩与形状应服务于这些角色，而不是把常量 hex 写进 `encode.color`。单个 KPI 不需要图例，多指标或多状态时才按真实分组加颜色与图例。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
@@ -57,14 +60,14 @@ chart.options({
     {
       type: 'interval',
       data,
-      encode: { x: 'title', y: 'ranges', color: '#f0efff' },
-      style: { maxWidth: 30 },
+      encode: { x: 'title', y: 'ranges' },
+      style: { fill: '#f0efff', maxWidth: 30 },
     },
     {
       type: 'interval',
       data,
-      encode: { x: 'title', y: 'measures', color: '#5B8FF9' },
-      style: { maxWidth: 20 },
+      encode: { x: 'title', y: 'measures' },
+      style: { fill: '#5B8FF9', maxWidth: 20 },
     },
     {
       type: 'point',
@@ -73,9 +76,9 @@ chart.options({
         x: 'title',
         y: 'target',
         shape: 'line',
-        color: '#3D76DD',
         size: 8,
       },
+      style: { stroke: '#3D76DD' },
     },
   ],
 });

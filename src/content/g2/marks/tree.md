@@ -16,6 +16,7 @@ tags:
   - "树状"
   - "hierarchy"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-treemap"
   - "g2-mark-partition"
   - "g2-mark-sankey"
@@ -28,6 +29,8 @@ use_cases:
 
 
 ## 最小可运行示例（横向树形图）
+
+> 树图的层级与连线比装饰更重要。节点较多时优先保证层间距、文字截断和展开交互，避免为每层分配无意义颜色；固定宽高可为稳定的树布局预留必要空间。
 
 ```javascript
 import { Chart } from '@antv/g2';

@@ -19,6 +19,7 @@ tags:
   - "bin"
   - "热力图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-cell-heatmap"
   - "g2-mark-interval-stacked"
 use_cases:
@@ -29,6 +30,8 @@ use_cases:
 
 
 ## 核心概念
+
+> 马赛克图同时以宽和高表达联合分布，颜色只在需要额外强调独立分组时使用。面积很小的格子不强行放标签，优先让 tooltip 补充精确值；不要用装饰性渐变掩盖面积比较。
 
 马赛克图有三种实现方式：
 

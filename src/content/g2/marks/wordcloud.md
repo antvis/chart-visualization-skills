@@ -15,6 +15,7 @@ tags:
   - "文本可视化"
   - "词频"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-text"
   - "g2-core-chart-init"
 use_cases:
@@ -25,6 +26,8 @@ use_cases:
 
 
 ## 最小可运行示例
+
+> 词云以词频对应字号，颜色应克制并仅用于真实分组。为保证词语可读，优先限制旋转角度和词数；固定画布尺寸是布局算法获得稳定结果的必要条件，不应强制替换为 `autoFit`。
 
 ```javascript
 import { Chart } from '@antv/g2';

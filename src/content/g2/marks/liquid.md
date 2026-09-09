@@ -16,6 +16,7 @@ tags:
   - "KPI"
   - "完成率"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-gauge"
   - "g2-core-chart-init"
 use_cases:

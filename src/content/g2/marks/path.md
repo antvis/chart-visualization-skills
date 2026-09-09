@@ -15,6 +15,7 @@ tags:
   - "自定义形状"
   - "annotation"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-polygon"
   - "g2-mark-link"
   - "g2-mark-connector"

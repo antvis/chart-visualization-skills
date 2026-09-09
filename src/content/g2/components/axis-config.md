@@ -16,6 +16,7 @@ tags:
   - "网格线"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-chart-init"
   - "g2-scale-linear"
   - "g2-scale-time"
@@ -27,6 +28,10 @@ use_cases:
   - "隐藏坐标轴"
 ---
 
+
+## 默认决策
+
+坐标轴优先服务比较与读数：字段语义和单位明确时添加标题与 formatter，未知时保留字段名或省略附加文案。常规直角坐标图使用默认轴和 `padding: 'auto'`；饼/环、漏斗等不依赖坐标轴的图应关闭它，而不是保留无意义的刻度或网格。
 
 ## 基本用法
 

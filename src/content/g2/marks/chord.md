@@ -14,6 +14,7 @@ tags:
   - "流向图"
   - "矩阵可视化"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-sankey"
   - "g2-mark-link"
   - "g2-coord-polar"

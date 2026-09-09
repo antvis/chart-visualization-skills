@@ -15,6 +15,7 @@ tags:
   - "smooth"
   - "KDE"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-histogram"
   - "g2-mark-density"
   - "g2-mark-violin"

@@ -16,6 +16,7 @@ tags:
   - "背景分区"
   - "annotation"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-rangex"
   - "g2-comp-annotation"
   - "g2-mark-linex-liney"

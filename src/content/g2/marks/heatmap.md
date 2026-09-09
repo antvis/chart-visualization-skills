@@ -16,6 +16,7 @@ tags:
   - "高斯核"
   - "空间密度"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-cell-heatmap"
   - "g2-mark-density"
   - "g2-mark-point-scatter"
@@ -27,6 +28,8 @@ use_cases:
 
 
 ## 最小可运行示例
+
+> 连续热力图的颜色与透明度表达空间密度或强度，不应改成离散彩虹类别。默认保留连续色标以说明强度范围；只有用户明确需要展示型效果时才增加额外光晕或动画。
 
 ```javascript
 import { Chart } from '@antv/g2';

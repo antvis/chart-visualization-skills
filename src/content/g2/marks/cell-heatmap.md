@@ -17,6 +17,7 @@ tags:
   - "颜色映射"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-encode-channel"
   - "g2-scale-sequential"
   - "g2-comp-legend-config"
@@ -30,6 +31,8 @@ anti_patterns:
 
 
 ## 最小可运行示例
+
+> cell 热力图用连续颜色表达数值高低，应保留能解释数值范围的连续图例。仅在单元格足够大时显示数值标签；矩阵密集时让色带与 tooltip 承担读数任务。
 
 ```javascript
 import { Chart } from '@antv/g2';

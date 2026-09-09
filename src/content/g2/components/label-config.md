@@ -18,6 +18,7 @@ tags:
   - "transform"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-line-basic"
   - "g2-comp-annotation"
@@ -29,6 +30,9 @@ use_cases:
   - "标签颜色与图形颜色对比度优化"
 ---
 
+## 默认决策
+
+标签不是默认装饰：仅当图内精确读取比悬浮 tooltip 更重要、且空间足够时添加。密集散点、多系列折线、分组/堆叠图默认不显示全量标签；inside 标签使用 `contrastReverse`，可能重叠时按场景增加 `overlapDodgeY`、`overlapHide` 或 `overflowHide`。优先用 `position` 决定位置，`dx` / `dy` 只作细微避让。
 
 ## 基本用法
 

@@ -17,6 +17,7 @@ tags:
   - "饼图变体"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-arc-pie"
   - "g2-transform-stacky"
 use_cases:
@@ -28,13 +29,16 @@ use_cases:
 
 ## 最小可运行示例
 
+> 少量类别用外置标签完成直接阅读；不要再叠加重复 legend。精确数值仍通过 tooltip 提供。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 480,
-  height: 480,
+  autoFit: true,
+  height: 380,
+  theme: 'classic',
 });
 
 chart.options({
@@ -52,6 +56,21 @@ chart.options({
     type: 'theta',
     outerRadius: 0.8,
     innerRadius: 0.5,    // 关键：设置内径产生空心效果
+  },
+  padding: 'auto',
+  title: { title: '客户来源占比', subtitle: '单位：%' },
+  legend: false,
+  labels: [
+    {
+      text: (d) => `${d.type} ${d.value}%`,
+      position: 'outside',
+      connector: true,
+      transform: [{ type: 'overlapHide' }],
+    },
+  ],
+  tooltip: {
+    title: 'type',
+    items: [{ channel: 'y', name: '占比', valueFormatter: (v) => `${v}%` }],
   },
 });
 

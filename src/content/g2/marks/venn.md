@@ -13,6 +13,7 @@ tags:
   - "集合关系"
   - "交集"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-chord"
   - "g2-mark-sankey"
 use_cases:

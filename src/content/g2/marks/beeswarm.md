@@ -15,6 +15,7 @@ tags:
   - "无重叠散点"
   - "分布图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-transform-jitter"
   - "g2-mark-box-boxplot"

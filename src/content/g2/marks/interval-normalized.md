@@ -18,6 +18,7 @@ tags:
   - "100% stacked bar"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-stacked"
   - "g2-mark-interval-grouped"
   - "g2-transform-normalizey"
@@ -40,13 +41,16 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 百分比堆叠取舍：本图强调结构占比而非绝对值，故 Y 轴格式化为百分比、保留系列图例；精确的原始绝对值不要塞进轴，交给 tooltip（tooltip 用 `field` 取变换前的原始值，见下方说明）。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
@@ -72,7 +76,18 @@ chart.options({
     { type: 'normalizeY' },  // 2. 再归一化为百分比
   ],
   axis: {
-    y: { labelFormatter: (v) => `${(v * 100).toFixed(0)}%` },
+    x: { title: '月份' },
+    y: { title: '构成占比', labelFormatter: (v) => `${(v * 100).toFixed(0)}%` },
+  },
+  style: { stroke: '#fff', lineWidth: 1 },
+  padding: 'auto',
+  title: { title: '第一季度产品月度销量构成', subtitle: '百分比堆叠' },
+  legend: { color: { position: 'bottom' } },
+  tooltip: {
+    title: 'month',
+    // 这里用 field:'value'（变换前的原始绝对值）而非 channel:'y'（归一化后的 0~1），
+    // 因为百分比图轴线已表达占比，tooltip 应补充用户更关心的原始销量。
+    items: [{ field: 'value', name: '销量', valueFormatter: (v) => `${v} 件` }],
   },
 });
 

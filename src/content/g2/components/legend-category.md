@@ -13,6 +13,7 @@ tags:
   - "分类"
   - "category"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-comp-legend-config"
   - "g2-scale-ordinal"
   - "g2-interaction-legend-filter"
@@ -24,6 +25,10 @@ anti_patterns:
   - "连续数据应使用连续图例（LegendContinuous）"
 ---
 
+
+## 默认决策
+
+分类图例只用于解释独立的 color 或 shape 分组。若分类已经由位置直接区分（如单指标分类柱图），不要把同一字段再映射到颜色；系列数量较多时再根据可用空间选择底部多列或侧边纵向布局。
 
 ## 核心概念
 
