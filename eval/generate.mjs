@@ -1,7 +1,7 @@
 /**
  * Step 1 — generate: for each case, let the agent search skill docs and write
- * chart code. Writes per-case code to results/<id>.js and a manifest to
- * results/eval-result.json (which judge.mjs reads and augments).
+ * chart code. Writes a manifest (with per-case generatedCode) to
+ * results/<model>-<library>-eval-result.json (which judge.mjs reads).
  *
  * Usage:
  *   node generate.mjs --model kimi|glm|deepseek [--library g2|g6|x6]
@@ -68,11 +68,10 @@ async function main() {
     try {
       const agent = createGenerateAgent({ model, temperature });
       const result = await agent.generate({
-        prompt: `请根据以下描述生成代码：\n\n${c.description}`,
+        prompt: `请根据以下描述生成代码：\n\n${c.query}`,
       });
       steps = result.steps?.length ?? 0;
       generatedCode = extractCode(result.text);
-      await fs.writeFile(path.join(RESULTS_DIR, `${modelName}-${c.id}.js`), generatedCode);
       console.log(`ok (${steps} steps)`);
     } catch (err) {
       error = err.message?.slice(0, 200);
@@ -81,15 +80,15 @@ async function main() {
     results.push({
       id: c.id,
       library: c.library,
-      query: c.description,
-      expectedCode: c.codeString,
+      query: c.query,
+      expectedCode: c.code,
       generatedCode,
       steps,
       ...(error ? { error } : {}),
     });
   }
 
-  const resultFile = path.join(RESULTS_DIR, `${modelName}-eval-result.json`);
+  const resultFile = path.join(RESULTS_DIR, `${modelName}-${library}-eval-result.json`);
   await fs.writeFile(
     resultFile,
     JSON.stringify({ model: model.modelId, library, results }, null, 2),

@@ -1,7 +1,7 @@
 /**
  * Load evaluation cases from a dataset JSON file.
  *
- * Dataset entries have { description, codeString } and no id — one is
+ * Dataset entries have { query, code } and no id — one is
  * generated as `<library>-<index>` when missing.
  */
 
@@ -19,8 +19,8 @@ export async function loadCases(options) {
   let cases = raw.map((c, i) => ({
     id: c.id ?? `${library}-${i}`,
     library,
-    description: c.description,
-    codeString: c.codeString,
+    query: c.query,
+    code: c.code,
   }));
 
   if (ids && ids.length > 0) {

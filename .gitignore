@@ -77,7 +77,8 @@ temp-*/
 .zvec/
 
 # eval studio (Next.js)
-eval/result/
+eval/results/
+!eval/results/summary.json
 
 # eval source (the Python "lib/" rule above would otherwise ignore it)
 !eval/lib/
