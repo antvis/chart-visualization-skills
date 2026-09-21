@@ -1,9 +1,10 @@
 /**
- * Step 2 — judge: score each generated case against its reference code.
+ * Step 2 — judge: score each generated case against its reference code and by
+ * rendering it in a headless browser.
  *
- * Two independent tracks (kept separate, matching the original eval):
- *   - rule checks  → hasIssues / issues / warnings (hard failures)
- *   - similarity   → 0..1 hybrid score vs the reference codeString
+ * Two independent tracks (kept separate):
+ *   - similarity → 0..1 hybrid score vs the reference code
+ *   - render     → status 'success' | 'blank' | 'error' (screenshot saved)
  *
  * Reads results/<model>-<library>-eval-result.json (full per-case detail
  * written by generate), scores each entry, and writes the summary to
@@ -15,8 +16,8 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { checkCode } from './lib/check.mjs';
 import { calculateSimilarity } from './lib/similarity.mjs';
+import { renderCase, closeBrowser } from './lib/render.mjs';
 import { RESULTS_DIR } from './lib/const.mjs';
 import { MODEL_NAMES } from './lib/llm.mjs';
 
@@ -58,51 +59,81 @@ async function main() {
   for (const item of data.results) {
     process.stdout.write(`  ${item.id} ... `);
     if (item.error || !item.generatedCode) {
-      judged.push({ ...item, similarity: 0, hasIssues: true, issues: ['生成失败或代码为空'] });
+      judged.push({ ...item, similarity: 0, status: 'error', error: 'empty code' });
       console.log('fail: no code');
       continue;
     }
 
-    const check = checkCode(item.generatedCode, { library: item.library });
     const similarity = calculateSimilarity(item.generatedCode, item.expectedCode, {
       library: item.library,
     });
+    // Render in a headless browser + blank detection (separate track — does
+    // not affect similarity).
+    const render = await renderCase(item.id, item.generatedCode);
 
-    judged.push({ ...item, ...check, similarity });
+    judged.push({ ...item, similarity, ...render });
     console.log(
-      check.hasIssues
-        ? `issues=${check.issues.length} sim=${similarity.toFixed(2)}`
-        : `ok sim=${similarity.toFixed(2)}`,
+      [
+        `sim=${similarity.toFixed(2)}`,
+        render.status === 'success' ? 'rendered' : `[${render.status}]`,
+      ].join(' '),
     );
   }
+  await closeBrowser();
 
   const total = judged.length;
-  const successCount = judged.filter((r) => r.hasIssues === false).length;
-  const issuesCount = judged.filter((r) => r.hasIssues).length;
   const scored = judged.filter((r) => r.similarity !== undefined);
   const similarity = scored.length
     ? scored.reduce((sum, r) => sum + (r.similarity ?? 0), 0) / scored.length
     : 0;
+  // success = number of cases that render non-blank; score = success / total.
+  const success = judged.filter((r) => r.status === 'success').length;
+  const score = total ? success / total : 0;
 
-  const summary = { totalTests: total, successCount, issuesCount, similarity };
+  const summary = { total, success, similarity, score };
+  // Failed (blank/error) cases with their render error, for troubleshooting.
+  const failures = judged
+    .filter((r) => r.status !== 'success')
+    .map((r) => ({
+      id: r.id,
+      status: r.status,
+      error: r.error,
+      query: r.query,
+    }));
+
   // Write the summary to a separate file — the per-case result file is kept.
   const summaryFile = path.join(RESULTS_DIR, `${modelName}-${data.library}-summary.json`);
   await fs.writeFile(
     summaryFile,
-    JSON.stringify({ model: data.model ?? modelName, library: data.library, summary }, null, 2),
+    JSON.stringify(
+      {
+        model: data.model ?? modelName,
+        library: data.library,
+        updatedAt: new Date().toISOString(),
+        summary,
+        failures,
+      },
+      null,
+      2,
+    ),
   );
 
   console.log('\n' + '='.repeat(50));
   console.log(`  Model:          ${data.model ?? modelName}`);
-  console.log(`  Success Rate:   ${successCount}/${total}`);
+  console.log(`  Render Success: ${success}/${total}`);
+  console.log(`  Score (render): ${(score * 100).toFixed(1)}%`);
   console.log(`  Avg Similarity: ${(similarity * 100).toFixed(1)}%`);
-  console.log(`  Issues Count:   ${issuesCount}`);
+  console.log(`  Failures:       ${failures.length}`);
   console.log(`  Summary →       ${summaryFile}`);
   console.log('='.repeat(50));
-  if (successCount < total) process.exitCode = 1;
+  if (success < total) process.exitCode = 1;
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .catch(async (err) => {
+    console.error(err);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await closeBrowser();
+  });
