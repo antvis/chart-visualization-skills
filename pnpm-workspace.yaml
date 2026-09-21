@@ -1,8 +1,6 @@
 packages:
   - 'playground'
   - 'eval'
-  - 'eval/studio'
-  - 'harness'
 allowBuilds:
   '@zvec/zvec': true
   esbuild: true
