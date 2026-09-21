@@ -19,7 +19,7 @@ tags:
 related:
   - "g2-interaction-tooltip"
   - "g2-mark-linex-liney"
-  - "g2-recipe-dashboard"
+  - "g2-pattern-performance"
 use_cases:
   - "多折线图联动查看同一时间点各指标值"
   - "时序数据 Dashboard 中的十字游标"

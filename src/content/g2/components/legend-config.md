@@ -15,6 +15,7 @@ tags:
   - "颜色图例"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-chart-init"
   - "g2-interaction-legend-filter"
   - "g2-comp-axis-config"
@@ -27,6 +28,9 @@ use_cases:
   - "配置连续颜色图例（色带）"
 ---
 
+## 默认决策
+
+只有颜色、形状或大小编码了独立的系列/状态时，图例才承担解释作用。单指标分类柱状图等已由位置区分类别的图，默认不应再把同一字段映射为颜色并显示重复图例。玫瑰图是例外：扇区较多且较窄时，颜色有助于快速定位，可保留 `encode.color` + 图例；扇区少时按单色处理即可。饼/环图在少量类别时优先外置标签；类别更多时再改用 legend，不要默认同时展示两者。
 
 ## 基本用法
 

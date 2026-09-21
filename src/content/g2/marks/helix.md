@@ -14,6 +14,7 @@ tags:
   - "周期性"
   - "大数据量"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-line-basic"
   - "g2-mark-interval-basic"
 use_cases:

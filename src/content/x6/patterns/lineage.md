@@ -19,7 +19,7 @@ related:
   - "x6-pattern-dag"
   - "x6-core-ports"
   - "x6-core-edge"
-  - "x 6-intermediate-custom-node"
+  - "x6-intermediate-custom-node"
   - "x6-intermediate-layout"
 use_cases:
   - "数据仓库表级血缘"

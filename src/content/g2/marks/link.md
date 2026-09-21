@@ -16,6 +16,7 @@ tags:
   - "迁移图"
   - "两点连线"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-line-basic"
   - "g2-mark-point-scatter"
 use_cases:

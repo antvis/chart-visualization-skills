@@ -19,6 +19,7 @@ tags:
   - "背景带"
   - "annotation"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-linex-liney"
   - "g2-mark-connector"
   - "g2-comp-annotation"

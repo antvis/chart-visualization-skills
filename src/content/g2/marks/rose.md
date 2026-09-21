@@ -13,6 +13,7 @@ tags:
   - "南丁格尔图"
   - "极坐标"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-arc-pie"
   - "g2-coord-polar"
 use_cases:
@@ -38,17 +39,20 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 玫瑰图配色判定：扇区少（≤ 5 个）且由极坐标位置即能区分时用单色，不重复映射颜色或图例；扇区多且窄、位置区分困难时再映射 `encode.color` 帮助定位（见 `legend-config` 默认决策）。tooltip 用于精确读取。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
+  autoFit: true,
+  height: 380,
   theme: 'classic',
 });
 
 chart.options({
   type: 'interval',
-  autoFit: true,
   coordinate: { type: 'polar' },
   data: [
     { country: '中国', cost: 96 },
@@ -59,11 +63,21 @@ chart.options({
   encode: {
     x: 'country',
     y: 'cost',
-    color: 'country',
   },
   style: {
+    fill: '#5B8FF9',
     stroke: 'white',
     lineWidth: 1,
+  },
+  padding: 'auto',
+  title: { title: '四国物流成本对比', subtitle: '单位：美元 / 吨' },
+  axis: {
+    x: { title: false },
+    y: { title: false },
+  },
+  tooltip: {
+    title: 'country',
+    items: [{ channel: 'y', name: '物流成本', valueFormatter: (v) => `${v} 美元 / 吨` }],
   },
 });
 

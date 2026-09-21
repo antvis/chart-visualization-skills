@@ -18,6 +18,7 @@ tags:
   - "中位数"
   - "离群值"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-box-boxplot"
   - "g2-mark-point-scatter"
   - "g2-transform-bin"
@@ -37,6 +38,8 @@ use_cases:
 | 适用场景 | 大多数场景（推荐） | 数据已预聚合时 |
 
 ## 最小可运行示例
+
+> 箱线图的箱体、须线和异常值已经表达统计层级。单指标分类比较默认保持单色，不把 `x` 上的分类重复映射到颜色；只有额外分组需要比较时才使用 `encode.color` 与图例。
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -76,7 +79,6 @@ chart.options({
   encode: {
     x: 'category',
     y: 'score',
-    color: 'category',   // 按类别着色
   },
   style: {
     boxFill: '#1890ff',          // 箱体填充色
@@ -326,6 +328,4 @@ chart.options({
     ]
   }
 });
-```
-</skill>
 ```

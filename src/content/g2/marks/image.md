@@ -15,6 +15,7 @@ tags:
   - "icon"
   - "图片散点图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-point-scatter"
   - "g2-mark-text"
 use_cases:

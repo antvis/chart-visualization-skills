@@ -18,6 +18,7 @@ tags:
   - "多系列"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-interval-grouped"
   - "g2-mark-interval-normalized"
@@ -40,13 +41,16 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 配色与标签：堆叠展示组成系列时映射 `encode.color` 并保留图例；堆叠分段较多时默认不显示内部标签，靠 tooltip 提供精确值，避免标签溢出小段。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
@@ -68,6 +72,18 @@ chart.options({
     color: 'type',
   },
   transform: [{ type: 'stackY' }],   // 关键：堆叠变换
+  style: { stroke: '#fff', lineWidth: 1 },
+  padding: 'auto',
+  title: { title: '第一季度产品月度销量构成', subtitle: '单位：件' },
+  axis: {
+    x: { title: '月份' },
+    y: { title: '销量 / 件' },
+  },
+  legend: { color: { position: 'bottom' } },
+  tooltip: {
+    title: 'month',
+    items: [{ channel: 'y', name: '销量', valueFormatter: (v) => `${v} 件` }],
+  },
 });
 
 chart.render();
@@ -85,7 +101,8 @@ chart.options({
     {
       text: 'value',
       position: 'inside',     // 标签在柱体内部
-      style: { fontSize: 11, fill: 'white' },
+      style: { fontSize: 11 },
+      transform: [{ type: 'contrastReverse' }],
     },
   ],
 });

@@ -16,7 +16,7 @@ tags:
   - "toolbar"
 related:
   - "g6-plugin-tooltip"
-  - "g6-plugin-history"
+  - "g6-plugin-history-legend"
 ---
 
 

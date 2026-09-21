@@ -16,6 +16,7 @@ tags:
   - "butterfly chart"
   - "对称条形图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-interval-stacked"
 use_cases:
@@ -43,6 +44,8 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 双向柱图应先用左右方向表达相反含义，再用颜色辅助区分真实状态；不要按重复的分类字段着色。对比维度较多时保留状态图例，单个明确对照则可直接用标签说明。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
@@ -64,12 +67,11 @@ chart.options({
   encode: {
     x: 'department',
     y: (d) => (d.type === 'completed' ? d.people : -d.people),
-    color: 'department',
+    color: 'type',
   },
+  scale: { color: { domain: ['completed', 'uncompleted'], range: ['#5B8FF9', '#91Caff'] } },
   style: {
-    fill: ({ type }) => type === 'uncompleted' ? 'transparent' : undefined,
-    stroke: ({ type }) => type === 'uncompleted' ? '#1890ff' : undefined,
-    lineWidth: 2,
+    radius: 3,
   },
 });
 

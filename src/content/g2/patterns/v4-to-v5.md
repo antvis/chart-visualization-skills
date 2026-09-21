@@ -189,6 +189,8 @@ chart.options({
 });
 ```
 
+`chart.options()` 可以在运行时深度合并局部更新；这里使用 `view + children` 的原因是需要声明两个独立图层，而不是因为 options 只能调用一次。
+
 ## 变更 10：动画配置
 
 ```javascript
@@ -214,4 +216,4 @@ chart.options({
 - [ ] `.adjust('stack')` / `.adjust('dodge')`（应为 transform 数组）
 - [ ] `chart.guide().line()`（应为 lineY/lineX mark）
 - [ ] `.label()` 方法（应为 `labels` 数组）
-- [ ] 多次 `chart.options()` 调用（应用 view + children）
+- [ ] 用顺序修改根 `type` 试图叠加多个 mark（应用 `view + children`）

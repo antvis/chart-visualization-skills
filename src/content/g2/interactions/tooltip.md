@@ -18,7 +18,7 @@ tags:
   - "spec"
 related:
   - "g2-core-chart-init"
-  - "g2-interaction-crosshair"
+  - "g2-interaction-chart-index"
 use_cases:
   - "为图表添加数据悬停提示"
   - "自定义 Tooltip 展示的字段和格式"

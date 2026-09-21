@@ -2,7 +2,7 @@
 id: "g2-comp-tooltip-config"
 title: "G2 Tooltip 配置与自定义"
 description: |
-  G2 v5 tooltip 通过 tooltip 顶层配置或 interaction: [{ type: 'tooltip' }] 启用，
+  G2 v5 默认推断并启用 tooltip；通过 tooltip 顶层配置或 interaction: [{ type: 'tooltip' }] 定制，
   支持自定义内容（items 字段过滤、render 函数完全自定义 HTML），
   groupKey 控制合并规则，crosshairs 显示十字准线。
 library: "g2"
@@ -15,6 +15,7 @@ tags:
   - "交互"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-interaction-tooltip"
   - "g2-mark-line-basic"
   - "g2-mark-interval-basic"
@@ -26,7 +27,9 @@ use_cases:
 ---
 
 
-## 最小可运行示例（启用默认 tooltip）
+## 默认行为与最小示例
+
+G2 的运行时默认启用 tooltip，因此不需要为了“打开提示框”而额外添加配置。只有在字段名称、单位或格式已知时，才配置 `title`、`items` 或 `valueFormatter`；未知语义时保留默认内容，不要编造货币、百分比或业务名称。
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -47,7 +50,19 @@ chart.options({
   type: 'line',
   data,
   encode: { x: 'month', y: 'value', color: 'type' },
-  // tooltip 默认开启，此配置可自定义
+  // 无需 tooltip 配置，默认 tooltip 已启用。
+});
+
+chart.render();
+```
+
+## 已知语义时定制 tooltip
+
+```javascript
+chart.options({
+  type: 'line',
+  data,
+  encode: { x: 'month', y: 'value', color: 'type' },
   tooltip: {
     title: (d) => `${d.month} 数据`,   // 自定义标题
     items: [
@@ -55,8 +70,6 @@ chart.options({
     ],
   },
 });
-
-chart.render();
 ```
 
 ## 多字段 tooltip（显示多个信息项）

@@ -20,7 +20,7 @@ tags:
   - "ETL"
   - "端口连线"
 related:
-  - "x 6-core-ports"
+  - "x6-core-ports"
   - "x6-core-edge"
   - "x6-core-node"
   - "x6-plugins"

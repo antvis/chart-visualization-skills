@@ -16,8 +16,8 @@ tags:
   - "转化漏斗"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-funnel"
-  - "g2-recipe-funnel"
   - "g2-core-chart-init"
 use_cases:
   - "展示能源/物质流动分配"
@@ -28,6 +28,8 @@ use_cases:
 
 
 ## 最小可运行示例
+
+> 桑基图优先让流量宽度表达量级，颜色用于追踪来源、去向或独立分组，而不是给每条流随机上色。节点和流较多时避免常驻全量标签，给连线与节点保留足够留白；固定宽高可保证复杂网络的可读性。
 
 ```javascript
 import { Chart } from '@antv/g2';

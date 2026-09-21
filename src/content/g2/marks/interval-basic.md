@@ -20,6 +20,7 @@ tags:
   - "spec"
   - "options"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-grouped"
   - "g2-mark-interval-stacked"
   - "g2-mark-interval-normalized"
@@ -53,28 +54,44 @@ Interval Mark 将数据映射为矩形区间：
 
 ## 最小可运行示例
 
+> 单指标分类比较：用稳定单色 + `style.radius: 4`（覆写引擎无圆角），不要把类别重复映射到 `encode.color` 或图例。语义化文本（轴标题/单位/tooltip/title）只写数据真实携带的语义，未知则省略，不要照搬本例的销量/件。完整策略见 `g2-design-default-aesthetics`。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
   type: 'interval',
   data: [
-    { genre: 'Sports',   sold: 275 },
-    { genre: 'Strategy', sold: 115 },
-    { genre: 'Action',   sold: 120 },
-    { genre: 'Shooter',  sold: 350 },
-    { genre: 'Other',    sold: 150 },
+    { genre: '体育', sold: 275 },
+    { genre: '策略', sold: 115 },
+    { genre: '动作', sold: 120 },
+    { genre: '射击', sold: 350 },
+    { genre: '其他', sold: 150 },
   ],
   encode: {
     x: 'genre',
     y: 'sold',
-    color: 'genre',
+  },
+  style: {
+    fill: '#5B8FF9',
+    radius: 4,
+  },
+  padding: 'auto',
+  title: { title: '游戏类别销量', subtitle: '单位：件' },
+  axis: {
+    x: { title: '游戏类型' },
+    y: { title: '销量 / 件' },
+  },
+  tooltip: {
+    title: 'genre',
+    items: [{ channel: 'y', name: '销量', valueFormatter: (v) => `${v} 件` }],
   },
 });
 
@@ -398,9 +415,9 @@ chart.options({
 });
 ```
 
-### 错误 7：多 mark 需要 view+children（详见核心约束 #3）
+### 错误 7：多 mark 需要 view+children
 ```javascript
-// ❌ 多次 chart.options() → 只有最后一次生效
+// ❌ 修改根 type 不会新增另一层 mark
 // ✅ chart.options({ type: 'view', children: [{ type: 'interval', ... }, { type: 'image', ... }] });
 ```
 
@@ -448,16 +465,16 @@ chart.options({
 });
 ```
 
-### 错误 10：区间图未正确使用 y1 通道
+### 区间图的范围编码
 ```javascript
-// ❌ 错误：将区间起点和终点都映射到 y 通道
+// ✅ 常用写法：用两个字段组成范围数组（K 线、区间柱）
 chart.options({
   type: 'interval',
   data: [{ start: 1, end: 5 }],
-  encode: { x: 'name', y: ['start', 'end'] }  // 错误方式
+  encode: { x: 'name', y: ['start', 'end'] },
 });
 
-// ✅ 正确：使用 y 和 y1 通道分别映射起点和终点
+// ✅ 也可显式使用 y 与 y1
 chart.options({
   type: 'interval',
   data: [{ start: 1, end: 5 }],

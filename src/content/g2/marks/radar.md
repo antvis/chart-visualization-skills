@@ -17,6 +17,7 @@ tags:
   - "多维度"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-view-composition"
   - "g2-mark-area-basic"
   - "g2-mark-line-basic"
@@ -32,6 +33,8 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 雷达图只适合量纲一致、维度较少（通常不超过 8 个）的对比。多对象时用 `encode.color` 区分系列并保留图例；面积填充保持低透明度、折线保持清晰，避免逐点标签遮挡维度名称。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
@@ -39,6 +42,7 @@ const chart = new Chart({
   container: 'container',
   width: 480,
   height: 480,
+  theme: 'classic',
 });
 
 const data = [

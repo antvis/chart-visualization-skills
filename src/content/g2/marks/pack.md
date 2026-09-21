@@ -16,6 +16,7 @@ tags:
   - "树形"
   - "嵌套"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-treemap"
   - "g2-core-chart-init"
 use_cases:

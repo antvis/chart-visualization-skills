@@ -16,6 +16,7 @@ tags:
   - "核密度"
   - "violin"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-boxplot"
   - "g2-mark-point-scatter"
   - "g2-data-kde"

@@ -27,9 +27,9 @@ tags:
   - "inset"
   - "布局"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-core-encode-channel"
-  - "g2-core-data-binding"
-  - "g2-core-lifecycle"
+  - "g2-data-transform-patterns"
   - "g2-theme-builtin"
 use_cases:
   - "开始创建任何 G2 图表"
@@ -38,7 +38,7 @@ use_cases:
 anti_patterns:
   - "不要在同一个容器上多次 new Chart（会产生多个画布）"
   - "禁止使用链式 API（chart.interval().encode()...）"
-  - "禁止在同一图表中多次调用 chart.options({})（后者会完全覆盖前者）——合并配置时应合并为一次调用；叠加多个 mark 时应使用 type: 'view' + children"
+  - "不要通过顺序修改根 type 来叠加多个 mark；应使用 type: 'view' + children"
 ---
 
 
@@ -46,7 +46,7 @@ anti_patterns:
 
 `Chart` 是 G2 中最顶层的容器对象，负责管理画布、视图、坐标系和渲染。
 
-**必须使用 Spec 模式**：通过 `chart.options({})` 一次性传入完整描述对象，结构清晰，易于序列化和动态生成。
+**必须使用 Spec 模式**：生成一次性图表时，优先通过 `chart.options({})` 传入完整描述对象，结构清晰，易于序列化和动态生成。运行时可以用后续 `chart.options()` 深度合并局部更新。
 
 **禁止使用链式 API**：`chart.interval().encode()` 等链式调用禁止使用。
 
@@ -100,7 +100,7 @@ const chart = new Chart({
   inset: 0,                      // 数据区域内缩（防止数据点紧贴边缘）
 
   // ── 主题 ──────────────────────────────
-  theme: 'classic',              // 'classic' | 'classicDark' | 'academy'
+  theme: 'classic',              // 'classic' | 'classicDark' | 'light' | 'dark' | 'academy'
 
   // ── 渲染器 ────────────────────────────
   renderer: undefined,           // 默认 Canvas，可传入 SVG 渲染器
@@ -248,16 +248,16 @@ const chart = new Chart({
 
 ## 常见错误与修正
 
-### 错误 0：多次调用 chart.options({})
+### 场景 0：叠加多个 mark
 
-`chart.options()` 是**全量替换**，不是合并。每个图表只能调用一次。多 mark 叠加必须用 `type: 'view'` + `children`。详见 SKILL.md 核心约束 #3。
+`chart.options()` 会深度合并局部更新；但把根 `type` 从 `interval` 改成 `text` 不会新增一个图层。多个独立 mark 应在初始 spec 中使用 `type: 'view'` + `children`。
 
 ```javascript
-// ❌ 错误：多次调用，只有最后一次生效
+// ❌ 错误：修改同一个根 mark，不会产生 interval + text 两层
 chart.options({ type: 'interval', data, encode: { x: 'x', y: 'y' } });
 chart.options({ type: 'text', data: labelData, encode: { x: 'x', y: 'y', text: 'text' } });
 
-// ✅ 正确：一次 chart.options()，用 view + children 组合
+// ✅ 正确：用 view + children 组合
 chart.options({
   type: 'view',
   children: [

@@ -17,6 +17,7 @@ tags:
   - "对比"
   - "spec"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-interval-stacked"
   - "g2-transform-dodgex"
@@ -37,13 +38,16 @@ anti_patterns:
 
 ## 最小可运行示例
 
+> 配色与标签：分组的子系列需区分时映射 `encode.color` 并保留图例；柱子总根数较多（一般 ≥ 6 根）时不要加常驻标签，靠 tooltip 读数，避免标签互相挤压。
+
 ```javascript
 import { Chart } from '@antv/g2';
 
 const chart = new Chart({
   container: 'container',
-  width: 640,
-  height: 480,
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
 });
 
 chart.options({
@@ -65,6 +69,18 @@ chart.options({
     color: 'type',
   },
   transform: [{ type: 'dodgeX' }],   // 关键：分组变换
+  style: { radius: 3 },
+  padding: 'auto',
+  title: { title: '第一季度产品月度销量', subtitle: '单位：件' },
+  axis: {
+    x: { title: '月份' },
+    y: { title: '销量 / 件' },
+  },
+  legend: { color: { position: 'bottom' } },
+  tooltip: {
+    title: 'month',
+    items: [{ channel: 'y', name: '销量', valueFormatter: (v) => `${v} 件` }],
+  },
 });
 
 chart.render();

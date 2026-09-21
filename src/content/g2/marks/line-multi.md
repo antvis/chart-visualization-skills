@@ -16,6 +16,7 @@ tags:
   - "趋势对比"
   - "多折线"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-line-basic"
   - "g2-mark-area-stacked"
   - "g2-transform-select"
@@ -27,6 +28,8 @@ use_cases:
 
 
 ## 最小可运行示例
+
+> 配色与标签：多系列按独立分组（如城市）映射 `encode.color` 并保留图例；多条线交错时不要给每个数据点加标签，靠 tooltip 读数。
 
 ```javascript
 import { Chart } from '@antv/g2';
@@ -46,7 +49,12 @@ const data = [
   { month: 'Apr', city: '广州', temp: 26 },
 ];
 
-const chart = new Chart({ container: 'container', width: 640, height: 400 });
+const chart = new Chart({
+  container: 'container',
+  autoFit: true,
+  height: 360,
+  theme: 'classic',
+});
 
 chart.options({
   type: 'line',
@@ -57,7 +65,17 @@ chart.options({
     color: 'city',   // 关键：按城市分色，自动生成多条折线
   },
   style: { lineWidth: 2 },
-  legend: { color: { position: 'top' } },
+  padding: 'auto',
+  title: { title: '三座城市春季月均气温', subtitle: '单位：°C' },
+  axis: {
+    x: { title: '月份' },
+    y: { title: '气温 / °C', labelFormatter: (v) => `${v}°C` },
+  },
+  legend: { color: { position: 'bottom' } },
+  tooltip: {
+    title: 'month',
+    items: [{ channel: 'y', name: '气温', valueFormatter: (v) => `${v} °C` }],
+  },
 });
 
 chart.render();

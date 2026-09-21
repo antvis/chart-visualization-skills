@@ -18,7 +18,7 @@ tags:
   - "transform"
 related:
   - "g2-mark-line-basic"
-  - "g2-transform-filter"
+  - "g2-data-filter"
 use_cases:
   - "折线图数据超过 2000 条时保留视觉趋势的采样"
   - "实时数据流的性能优化"

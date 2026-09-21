@@ -16,7 +16,7 @@ tags:
   - "指数增长"
 related:
   - "g2-scale-linear"
-  - "g2-scale-pow"
+  - "g2-scale-pow-sqrt"
 use_cases:
   - "展示数量级差异悬殊的数据（如 GDP 对比：100 万到 1 万亿）"
   - "病毒传播等指数增长数据"

@@ -198,9 +198,9 @@ chart.options({
 
 ### 错误：在非 view 容器中直接叠加标注
 ```javascript
-// ❌ 错误：多个 chart.options() 会互相覆盖
+// ❌ 错误：顺序修改根 type 不会创建图表与标注两层
 chart.options({ type: 'line', ... });
-chart.options({ type: 'lineY', ... });  // 覆盖了折线图！
+chart.options({ type: 'lineY', ... });
 
 // ✅ 正确：用 type: 'view' + children 数组叠加
 chart.options({

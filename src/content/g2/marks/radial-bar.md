@@ -13,6 +13,7 @@ tags:
   - "radial bar"
   - "环形柱状图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-interval-basic"
   - "g2-mark-rose"
 use_cases:

@@ -14,6 +14,7 @@ tags:
   - "color legend"
   - "热力图"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-comp-legend-config"
   - "g2-comp-legend-category"
   - "g2-scale-sequential"
@@ -25,6 +26,10 @@ anti_patterns:
   - "分类数据应使用分类图例（legendCategory）"
 ---
 
+
+## 默认决策
+
+连续数值映射到颜色或大小时保留连续图例，帮助读者理解数值范围；分类字段不应强行使用色带。色带放在右侧时为它预留足够 `length`，窄容器可改放底部，避免让色带短到无法表达刻度。
 
 ## 核心概念
 

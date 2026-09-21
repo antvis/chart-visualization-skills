@@ -16,6 +16,7 @@ tags:
   - "连续数据"
   - "二维分布"
 related:
+  - "g2-design-default-aesthetics"
   - "g2-mark-cell-heatmap"
   - "g2-mark-point-scatter"
 use_cases:
