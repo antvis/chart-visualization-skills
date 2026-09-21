@@ -46,17 +46,17 @@ npx skills add antvis/chart-visualization-skills
 
 `AntV X6 Editor` generates imperative X6 v3 diagram code with strict rule enforcement: no `graph.render()`, string-literal `container`, 11 official plugins only (`Selection`, `History`, `Clipboard`, etc.), proper background + defaults, and always `centerContent()` after modifications. Supports custom HTML nodes, edge routers/connectors, and all interactive editor features.
 
-- 🤖 **gpt-vis**: AI-native visualization for the LLM era, powered by GPT-Vis. Supports 26 chart types with natural syntax that LLMs can generate effortlessly.
+- 🤖 **antv-gpt-vis**: Recommend and generate appropriate data visualization charts using the GPT-Vis library. Supports two output modes — (1) Syntax mode, which generates Syntax or JSON configurations, and (2) Code mode, which generates complete runnable code. Supports 26 chart types.
 
-`GPT-Vis` provides framework-agnostic chart generation using a simple markdown-like syntax ideal for AI tools. It supports two output modes: (1) **Syntax mode** — generates declarative configuration for `GPTVis.render()` consumption (ideal for streaming), and (2) **Code mode** — generates complete runnable code for HTML/React/Vue. Includes built-in streaming support, fault tolerance, and intelligent defaults.
+`AntV GPT-Vis` provides framework-agnostic chart generation using a simple markdown-like syntax ideal for AI tools. It supports two output modes: (1) **Syntax mode** — generates declarative configuration for `GPTVis.render()` consumption (ideal for streaming), and (2) **Code mode** — generates complete runnable code for HTML/React/Vue. Includes built-in streaming support, fault tolerance, and intelligent defaults.
 
-- 🎨 **infographic-creator**: Create beautiful infographics based on given text content. Use when users request to create infographics.
+- 🎨 **antv-infographic**: Create beautiful infographics based on given text content. Use when users request to create infographics.
 
-`Infographic Creator` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
+`AntV Infographic` uses AntV Infographic to transform data, information, and knowledge into a perceptible visual language. It combines visual design with data visualization, providing 50+ templates including lists, sequences, hierarchies, comparisons, relations, and charts. It compresses complex information with intuitive symbols to help audiences quickly understand and remember key points.
 
-- 📝 **narrative-text-visualization**: Generate structured narrative text visualizations from data using T8 Syntax.
+- 📝 **antv-t8-ntv**: Generate structured narrative text visualizations from data using T8 Syntax. Use when users want to create data interpretation reports, summaries, or structured articles with semantic entity annotations.
 
-`Narrative Text Visualization` (T8) transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
+`AntV T8 NTV` transforms unstructured data into semantically rich narrative reports using T8 Syntax - a declarative Markdown-like language for creating data narratives with entity annotations. It's LLM-friendly and framework-agnostic, working seamlessly with HTML, React, and Vue. Perfect for creating data analysis reports, summaries, and insights documents with entities like metrics, values, trends, and dimensions properly labeled. Features include built-in mini charts, standardized styling, and professional formatting. Supports authentic data sources and provides lightweight, technology-agnostic rendering.
 
 - 🖼️ **icon-retrieval**: Search and retrieve icon SVG strings from icon library. Returns up to 5 matching icons by default (customizable).
 

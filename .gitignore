@@ -72,7 +72,7 @@ playground/.env.local
 *.tsbuildinfo
 
 # AI
-settings.local.json
+.claude
 
 # temp
 temp/

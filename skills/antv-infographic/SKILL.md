@@ -1,5 +1,5 @@
 ---
-name: infographic-creator
+name: antv-infographic
 description: Create beautiful infographics based on given text content. Use when users request to create infographics.
 ---
 

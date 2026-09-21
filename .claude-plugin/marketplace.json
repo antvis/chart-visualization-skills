@@ -19,12 +19,12 @@
       ]
     },
     {
-      "name": "infographic-creator",
+      "name": "antv-infographic",
       "description": "Create beautiful infographics based on given text content. Use when users request to create infographics.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/infographic-creator"
+        "./skills/antv-infographic"
       ]
     },
     {
@@ -37,12 +37,12 @@
       ]
     },
     {
-      "name": "narrative-text-visualization",
-      "description": "Generate structured narrative text visualizations from data using T8 Syntax. Creates data interpretation reports with semantic entity annotations using a declarative Markdown-like language.",
+      "name": "antv-t8-ntv",
+      "description": "Generate structured narrative text visualizations from data using T8 Syntax. Use when users want to create data interpretation reports, summaries, or structured articles with semantic entity annotations. T8 is designed for unstructured data visualization where T stands for Text and 8 represents a byte of 8 bits, symbolizing deep insights beneath the text.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/narrative-text-visualization"
+        "./skills/antv-t8-ntv"
       ]
     },
     {
@@ -73,12 +73,12 @@
       ]
     },
     {
-      "name": "gpt-vis",
-      "description": "AI-native visualization for the LLM era, powered by GPT-Vis. Supports 26 chart types with natural syntax that LLMs can generate effortlessly. Ideal for streaming output and AI tool integration.",
+      "name": "antv-gpt-vis",
+      "description": "Recommend and generate appropriate data visualization charts using the GPT-Vis library. Supports two output modes — (1) Syntax mode, which generates Syntax or JSON configurations, and (2) Code mode, which generates complete runnable code. Supports 26 chart types.",
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/gpt-vis"
+        "./skills/antv-gpt-vis"
       ]
     }
   ]
