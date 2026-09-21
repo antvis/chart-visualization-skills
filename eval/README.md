@@ -16,8 +16,8 @@ Summary metrics: `successCount` (no-issues rate), `similarity` (average), `issue
 ## Setup
 
 ```bash
-pnpm build          # at repo root (agent retrieval depends on dist/api.js)
-cd eval && pnpm install
+npm run build          # at repo root (agent retrieval depends on dist/api.js)
+cd eval && npm install
 cp .env.example .env   # fill in KIMI_/GLM_/DEEPSEEK_ BASE_URL + API_KEY
 ```
 

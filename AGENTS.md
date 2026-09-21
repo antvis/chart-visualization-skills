@@ -11,7 +11,7 @@ This file defines the maintenance principles and constraints for agents modifyin
 
 ## Constraints
 
-- After modifying skill documents under `src/content/`, rebuild the index (`pnpm build:index`) and run tests (`pnpm test`).
+- After modifying skill documents under `src/content/`, rebuild the index (`npm run build:index`) and run tests (`npm test`).
 - Do not introduce new runtime dependencies unless strictly necessary; prefer existing dependencies (`@antv/context`, `commander`, `gray-matter`).
 - Do not change the zvec index field structure or embedding dimension (512d) unless the build script, retriever, and all tests are updated accordingly.
 - Write commit messages in English.
