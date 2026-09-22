@@ -12,7 +12,7 @@ Use the icon HTTP API directly with `curl`.
 ### Search Endpoint
 
 - **Method**: `GET`
-- **URL**: `https://lab.weavefox.cn/api/v1/infographic/icon`
+- **URL**: `https://www.weavefox.cn/api/v1/infographic/icon`
 - **Query params**:
   - `text` (required): search keyword, e.g. `"data analysis"`
   - `topK` (optional): number of icons to fetch (1-20), default `5`
@@ -20,7 +20,7 @@ Use the icon HTTP API directly with `curl`.
 Example:
 
 ```bash
-curl -sS -L --max-time 20 "https://lab.weavefox.cn/api/v1/infographic/icon?text=document&topK=5"
+curl -sS -L --max-time 20 "https://www.weavefox.cn/api/v1/infographic/icon?text=document&topK=5"
 ```
 
 Typical response:

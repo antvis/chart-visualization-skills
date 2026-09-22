@@ -1,0 +1,79 @@
+{
+  "model": "Kimi-K2.5",
+  "library": "g2",
+  "updatedAt": "2026-09-22T01:18:03.659Z",
+  "summary": {
+    "total": 174,
+    "success": 163,
+    "similarity": 0.6996418026001026,
+    "score": 0.9367816091954023
+  },
+  "failures": [
+    {
+      "id": "g2-41",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，通过堆叠条形图展示不同营销活动的效率分级数据，同时用不同图形元素标记实际点击率和目标点击率，用于直观对比各活动表现与目标之间的差距。参考数据：[{\"campaign\":\"618大促\",\"ctr\":5.2,\"targetCtr\":6,\"maxCtr\":10,\"bands\":[4,3,3]},{\"campaign\":\"双11\",\"ctr\":7.8,\"targetCtr\":7,\"maxCtr\":10,\"bands\":[4,3,3]},{\"campaign\":\"春节场\",\"ctr\":3.9,\"targetCtr\":5.5,\"maxCtr\":10,\"bands\":[4,3,3]}]"
+    },
+    {
+      "id": "g2-59",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 创建一个密度分布与箱线图组合图表，展示实验组与光速测量值之间的分布情况，数据按实验组分组，通过核密度估计生成密度曲线并叠加小提琴图样式的箱线图。\n参考数据：\n[{\"Expt\":1,\"Run\":1,\"Speed\":850},{\"Expt\":1,\"Run\":2,\"Speed\":740},{\"Expt\":1,\"Run\":3,\"Speed\":900},{\"Expt\":1,\"Run\":4,\"Speed\":1070},{\"Expt\":1,\"Run\":5,\"Speed\":930},{\"Expt\":1,\"Run\":6,\"Speed\":850},{\"Expt\":1,\"Run\":7,\"Speed\":950},{\"Expt\":1,\"Run\":8,\"Speed\":980},{\"Expt\":1,\"Run\":9,\"Speed\":980},{\"Expt\":1,\"Run\":10,\"Speed\":880}]"
+    },
+    {
+      "id": "g2-61",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用桑基图展示能源流动路径及各环节的能量值，数据来源于不同能源的生产、转换和消费过程，通过节点和连线表示能源去向和数量。参考数据：[{\"source\":\"Agricultural 'waste'\",\"target\":\"Bio-conversion\",\"value\":124.729},{\"source\":\"Bio-conversion\",\"target\":\"Liquid\",\"value\":0.597},{\"source\":\"Bio-conversion\",\"target\":\"Losses\",\"value\":26.862},{\"source\":\"Bio-conversion\",\"target\":\"Solid\",\"value\":280.322},{\"source\":\"Bio-conversion\",\"target\":\"Gas\",\"value\":81.144},{\"source\":\"Biofuel imports\",\"target\":\"Liquid\",\"value\":35},{\"source\":\"Biomass imports\",\"target\":\"Solid\",\"value\":35},{\"source\":\"Coal imports\",\"target\":\"Coal\",\"value\":11.606},{\"source\":\"Coal reserves\",\"target\":\"Coal\",\"value\":63.965},{\"source\":\"Coal\",\"target\":\"Solid\",\"value\":75.571}]"
+    },
+    {
+      "id": "g2-81",
+      "status": "error",
+      "error": "TypeError: Cannot read properties of undefined (reading 'toFixed')",
+      "query": "根据描述绘制图表，使用 G2 绘制年龄分布的直方图（矩形柱状图），按 group 分组统计人数，将年龄划分为 10 个区间，x 轴为年龄区间，y 轴为人数，color 区分不同组别（A、B、C），并设置图例位置、配色和样式。参考数据：\n[{\"age\":23,\"group\":\"A\"},{\"age\":25,\"group\":\"B\"},{\"age\":30,\"group\":\"A\"},{\"age\":35,\"group\":\"C\"},{\"age\":40,\"group\":\"B\"},{\"age\":34,\"group\":\"A\"},{\"age\":21,\"group\":\"C\"},{\"age\":50,\"group\":\"B\"},{\"age\":29,\"group\":\"A\"},{\"age\":60,\"group\":\"C\"}]"
+    },
+    {
+      "id": "g2-96",
+      "status": "error",
+      "error": "Script error.",
+      "query": "根据描述绘制图表，渲染一个词云图，根据提供的词语及其影响力分和情感倾向进行可视化。词语大小映射影响力分数，颜色映射情感类别（正/中/负），支持图例和 tooltip 信息展示，使用矩形螺旋布局。参考数据：\n[{\"word\":\"增长\",\"influence\":92,\"sentiment\":\"positive\"},{\"word\":\"风险\",\"influence\":85,\"sentiment\":\"negative\"},{\"word\":\"机会\",\"influence\":78,\"sentiment\":\"positive\"},{\"word\":\"调整\",\"influence\":70,\"sentiment\":\"neutral\"},{\"word\":\"波动\",\"influence\":66,\"sentiment\":\"negative\"},{\"word\":\"创新\",\"influence\":63,\"sentiment\":\"positive\"},{\"word\":\"政策\",\"influence\":60,\"sentiment\":\"neutral\"}]"
+    },
+    {
+      "id": "g2-103",
+      "status": "error",
+      "error": "TypeError: Cannot read properties of undefined (reading 'endTime')",
+      "query": "根据描述绘制图表，使用 G2 渲染一个横向甘特图，展示各活动事项的起止时间分布，通过 transpose 坐标变换实现时间轴为 Y 轴、事项为 X 轴的布局，并应用基于持续时间与开始时间的进入动画。参考数据：\n[{\"name\":\"活动策划\",\"startTime\":1,\"endTime\":4},{\"name\":\"场地物流规划\",\"startTime\":3,\"endTime\":13},{\"name\":\"选择供应商\",\"startTime\":5,\"endTime\":8},{\"name\":\"租赁场地\",\"startTime\":9,\"endTime\":13},{\"name\":\"预定餐饮服务商\",\"startTime\":10,\"endTime\":14},{\"name\":\"租赁活动装饰团队\",\"startTime\":12,\"endTime\":17},{\"name\":\"彩排\",\"startTime\":14,\"endTime\":16},{\"name\":\"活动庆典\",\"startTime\":17,\"endTime\":18}]"
+    },
+    {
+      "id": "g2-104",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用箱型图展示不同企鹅物种的鳍肢长度分布情况，并按性别进行分组比较。参考数据：[{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":39.1,\"culmen_depth_mm\":18.7,\"flipper_length_mm\":181,\"body_mass_g\":3750,\"sex\":\"MALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":39.5,\"culmen_depth_mm\":17.4,\"flipper_length_mm\":186,\"body_mass_g\":3800,\"sex\":\"FEMALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":40.3,\"culmen_depth_mm\":18,\"flipper_length_mm\":195,\"body_mass_g\":3250,\"sex\":\"FEMALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":\"NaN\",\"culmen_depth_mm\":\"NaN\",\"flipper_length_mm\":\"NaN\",\"body_mass_g\":\"NaN\",\"sex\":\"\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":36.7,\"culmen_depth_mm\":19.3,\"flipper_length_mm\":193,\"body_mass_g\":3450,\"sex\":\"FEMALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":39.3,\"culmen_depth_mm\":20.6,\"flipper_length_mm\":190,\"body_mass_g\":3650,\"sex\":\"MALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":38.9,\"culmen_depth_mm\":17.8,\"flipper_length_mm\":181,\"body_mass_g\":3625,\"sex\":\"FEMALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":39.2,\"culmen_depth_mm\":19.6,\"flipper_length_mm\":195,\"body_mass_g\":4675,\"sex\":\"MALE\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":34.1,\"culmen_depth_mm\":18.1,\"flipper_length_mm\":193,\"body_mass_g\":3475,\"sex\":\"\"},{\"species\":\"Adelie\",\"island\":\"Torgersen\",\"culmen_length_mm\":42,\"culmen_depth_mm\":20.2,\"flipper_length_mm\":190,\"body_mass_g\":4250,\"sex\":\"\"}]"
+    },
+    {
+      "id": "g2-106",
+      "status": "error",
+      "error": "TypeError: value.toFixed is not a function",
+      "query": "根据描述绘制图表，使用 G2 渲染一个单元格热力图，基于模拟地形高程数据展示二维网格上每个点的海拔值，通过颜色深浅表示高程分布，附带图例、坐标轴和工具提示功能。\n参考数据：\n[{\"x\":0,\"y\":0,\"elevation\":10.000203873647742},{\"x\":0,\"y\":2,\"elevation\":10.000201352088794},{\"x\":0,\"y\":4,\"elevation\":10.00019379782702},{\"x\":0,\"y\":6,\"elevation\":10.000181210862447},{\"x\":0,\"y\":8,\"elevation\":10.000163591195072},{\"x\":0,\"y\":10,\"elevation\":10.000140938824893},{\"x\":0,\"y\":12,\"elevation\":10.00011325375192},{\"x\":0,\"y\":14,\"elevation\":10.000080535976187},{\"x\":0,\"y\":16,\"elevation\":10.000042785506649},{\"x\":0,\"y\":18,\"elevation\":10.00000000234335}]"
+    },
+    {
+      "id": "g2-118",
+      "status": "error",
+      "error": "Script error.",
+      "query": "根据描述绘制图表，通过生成模拟的年度空气质量数据，按月份和昼夜分段展示 AQI 指数的变化情况。使用螺旋坐标系绘制柱状图，将昼夜数据作为不同系列展示在同一图表中，颜色根据 AQI 阈值进行映射以反映污染程度，辅以标题说明其为城市 AQI 年度昼夜螺旋分布图。参考数据：[{\"segment\":\"Jan Day\",\"time\":\"Jan-01\",\"aqi\":59.75309820130072,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-01\",\"aqi\":38.42223227663679,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-02\",\"aqi\":63.18905725375226,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-02\",\"aqi\":41.28575136478989,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-03\",\"aqi\":65.79830525173698,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-03\",\"aqi\":43.16982369674006,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-04\",\"aqi\":67.61207982884797,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-04\",\"aqi\":45.45676930938814,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-05\",\"aqi\":69.13532791158072,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-05\",\"aqi\":47.21420319164731,\"section\":\"Night\"}]"
+    },
+    {
+      "id": "g2-133",
+      "status": "error",
+      "error": "Build failed with 1 error:\n<stdin>:148:0: ERROR: Top-level await is not available in the configured target environment (\"es2020\")",
+      "query": "根据描述绘制图表，使用弦图展示多个模块之间的关联关系，每个模块根据风险等级着色，连接线的粗细和颜色映射了模块间关系的强度。参考数据：[{\"source\":\"支付\",\"target\":\"客服\",\"value\":16},{\"source\":\"支付\",\"target\":\"营销\",\"value\":24},{\"source\":\"支付\",\"target\":\"风控\",\"value\":38},{\"source\":\"支付\",\"target\":\"数据平台\",\"value\":30},{\"source\":\"支付\",\"target\":\"网关\",\"value\":12},{\"source\":\"客服\",\"target\":\"支付\",\"value\":16},{\"source\":\"客服\",\"target\":\"营销\",\"value\":10},{\"source\":\"客服\",\"target\":\"风控\",\"value\":19},{\"source\":\"客服\",\"target\":\"数据平台\",\"value\":15},{\"source\":\"客服\",\"target\":\"网关\",\"value\":6}]"
+    },
+    {
+      "id": "g2-157",
+      "status": "error",
+      "error": "Build failed with 1 error:\n<stdin>:2:21: ERROR: Could not resolve \"@antv/g\"",
+      "query": "根据描述绘制图表，创建一个液体填充图表，用于展示目标完成度等单指标达成情况，通过三角形水波图形和文字标注直观显示数值比例。参考数据：[0.6]"
+    }
+  ]
+}

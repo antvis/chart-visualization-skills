@@ -1,9 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
 build/
 develop-eggs/
 dist/
@@ -50,11 +44,6 @@ Thumbs.db
 # eval/result/
 logs
 
-# Validator state directory
-eval/temp/
-
-# harness
-harness/memory.json
 
 # lock files
 pnpm-lock.yaml
@@ -62,24 +51,22 @@ pnpm-lock.yaml
 # skills index
 src/index/
 
-# Playground (Next.js)
-playground/.next/
-playground/out/
-playground/.env.local
-
-
 # TypeScript build cache
 *.tsbuildinfo
 
 # AI
-settings.local.json
+.claude
 
 # temp
 temp/
 temp-*/
 .zvec/
 
-# eval studio (Next.js)
-eval/studio/.next/
-eval/studio/out/
-eval/studio/.env.local
+# eval results (ignore contents, keep *-summary.json)
+# Note: must ignore "results/*" (contents), not "results/" (the dir itself) —
+# git cannot re-include a file whose parent directory is excluded.
+eval/results/*
+!eval/results/*-summary.json
+
+# eval source
+!eval/lib/

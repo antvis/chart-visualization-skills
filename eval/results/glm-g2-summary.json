@@ -1,0 +1,193 @@
+{
+  "model": "GLM-5.1",
+  "library": "g2",
+  "updatedAt": "2026-09-22T01:17:11.892Z",
+  "summary": {
+    "total": 174,
+    "success": 144,
+    "similarity": 0.6510401731718987,
+    "score": 0.8275862068965517
+  },
+  "failures": [
+    {
+      "id": "g2-3",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 绘制一个带有径向坐标系的环形柱状图，中心位置放置一张图片。图表展示不同时间段的数值分布情况，并对部分区间进行高亮处理，同时关闭坐标轴和图例显示，具备元素高亮交互功能。\n参考数据：[{\"type\":\"1-3秒\",\"value\":0.16},{\"type\":\"4-10秒\",\"value\":0.125},{\"type\":\"11-30秒\",\"value\":0.2},{\"type\":\"1-3分\",\"value\":0.2},{\"type\":\"3-10分\",\"value\":0.05},{\"type\":\"10-30分\",\"value\":0.01},{\"type\":\"30+分\",\"value\":0.015}]"
+    },
+    {
+      "id": "g2-7",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用G2渲染一个横向对称漏斗图，展示A、B、C、D四类数据的数值分布，并在每个漏斗段右侧标注其与前一段的转换率百分比。同时绘制一条从A到D数值的连接线，并在左侧标注总转换率和标签。参考数据：\n[{\"text\":\"A\",\"value\":12000},{\"text\":\"B\",\"value\":9800},{\"text\":\"C\",\"value\":6789},{\"text\":\"D\",\"value\":4569}]"
+    },
+    {
+      "id": "g2-8",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用随机生成的数据绘制一个直方图，将数据按值分布划分为30个区间，并根据数值范围设置不同颜色。数值在40到60之间的数据使用绿色填充，其余数据使用灰色填充，用于展示数据的频数分布情况。参考数据：[{\"value\":7.894792053848505},{\"value\":58.15232781692175},{\"value\":12.903659483417869},{\"value\":57.368316082283854},{\"value\":1.0589697393588722},{\"value\":59.61116428952664},{\"value\":28.427108987234533},{\"value\":30.94372609623242},{\"value\":52.52069826237857},{\"value\":8.365064114332199}]"
+    },
+    {
+      "id": "g2-14",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 渲染一个水波图（Liquid Chart），展示达成率 68% 的可视化进度，水波形态为'pin'，配置了颜色、边框、波浪参数及中心文本样式。参考数据：\n[0.68]"
+    },
+    {
+      "id": "g2-41",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，通过堆叠条形图展示不同营销活动的效率分级数据，同时用不同图形元素标记实际点击率和目标点击率，用于直观对比各活动表现与目标之间的差距。参考数据：[{\"campaign\":\"618大促\",\"ctr\":5.2,\"targetCtr\":6,\"maxCtr\":10,\"bands\":[4,3,3]},{\"campaign\":\"双11\",\"ctr\":7.8,\"targetCtr\":7,\"maxCtr\":10,\"bands\":[4,3,3]},{\"campaign\":\"春节场\",\"ctr\":3.9,\"targetCtr\":5.5,\"maxCtr\":10,\"bands\":[4,3,3]}]"
+    },
+    {
+      "id": "g2-67",
+      "status": "error",
+      "error": "TypeError: Cannot read properties of undefined (reading 'toFixed')",
+      "query": "根据描述绘制图表，使用折线图展示某股票的收盘价走势，并通过指数移动平均线（EMA）对价格数据进行平滑处理，形成两条线：一条为原始收盘价的折线，另一条为经过 EMA 计算后的平滑折线。参考数据：[{\"date\":\"2007-04-23\",\"close\":93.24},{\"date\":\"2007-04-24\",\"close\":95.35},{\"date\":\"2007-04-25\",\"close\":98.84},{\"date\":\"2007-04-26\",\"close\":99.92},{\"date\":\"2007-04-29\",\"close\":99.8},{\"date\":\"2007-05-01\",\"close\":99.47},{\"date\":\"2007-05-02\",\"close\":100.39},{\"date\":\"2007-05-03\",\"close\":100.4},{\"date\":\"2007-05-04\",\"close\":100.81},{\"date\":\"2007-05-07\",\"close\":103.92}]"
+    },
+    {
+      "id": "g2-106",
+      "status": "error",
+      "error": "Build failed with 1 error:\n<stdin>:45:30: ERROR: Expected \"}\" but found \"$\"",
+      "query": "根据描述绘制图表，使用 G2 渲染一个单元格热力图，基于模拟地形高程数据展示二维网格上每个点的海拔值，通过颜色深浅表示高程分布，附带图例、坐标轴和工具提示功能。\n参考数据：\n[{\"x\":0,\"y\":0,\"elevation\":10.000203873647742},{\"x\":0,\"y\":2,\"elevation\":10.000201352088794},{\"x\":0,\"y\":4,\"elevation\":10.00019379782702},{\"x\":0,\"y\":6,\"elevation\":10.000181210862447},{\"x\":0,\"y\":8,\"elevation\":10.000163591195072},{\"x\":0,\"y\":10,\"elevation\":10.000140938824893},{\"x\":0,\"y\":12,\"elevation\":10.00011325375192},{\"x\":0,\"y\":14,\"elevation\":10.000080535976187},{\"x\":0,\"y\":16,\"elevation\":10.000042785506649},{\"x\":0,\"y\":18,\"elevation\":10.00000000234335}]"
+    },
+    {
+      "id": "g2-113",
+      "status": "error",
+      "error": "Build failed with 1 error:\n<stdin>:20:20: ERROR: Unterminated string literal",
+      "query": "根据描述绘制图表，渲染一个基于层级数据的圆形打包图（pack layout），用于展示游戏技能树的结构分布，包含近战、远程、辅助和通用四大类别及其子技能节点，通过颜色区分层级深度，并启用了元素高亮交互与入场动画。参考数据：{\"value\":{\"name\":\"游戏技能树\",\"children\":[{\"name\":\"近战\",\"value\":35,\"children\":[{\"name\":\"剑术\",\"value\":15},{\"name\":\"斧技\",\"value\":10},{\"name\":\"格挡\",\"value\":10}]},{\"name\":\"远程\",\"value\":25,\"children\":[{\"name\":\"弓箭\",\"value\":10},{\"name\":\"法杖\",\"value\":15}]},{\"name\":\"辅助\",\"value\":20,\"children\":[{\"name\":\"治疗\",\"value\":8},{\"name\":\"增益\",\"value\":7},{\"name\":\"侦查\",\"value\":5}]},{\"name\":\"通用\",\"value\":20}]}}"
+    },
+    {
+      "id": "g2-116",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 渲染一个水波图（liquid chart），展示数值 0.581 的填充状态，并配置了波浪样式、文本样式及轮廓等绘制属性。参考数据：\n[0.581]"
+    },
+    {
+      "id": "g2-118",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，通过生成模拟的年度空气质量数据，按月份和昼夜分段展示 AQI 指数的变化情况。使用螺旋坐标系绘制柱状图，将昼夜数据作为不同系列展示在同一图表中，颜色根据 AQI 阈值进行映射以反映污染程度，辅以标题说明其为城市 AQI 年度昼夜螺旋分布图。参考数据：[{\"segment\":\"Jan Day\",\"time\":\"Jan-01\",\"aqi\":59.75309820130072,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-01\",\"aqi\":38.42223227663679,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-02\",\"aqi\":63.18905725375226,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-02\",\"aqi\":41.28575136478989,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-03\",\"aqi\":65.79830525173698,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-03\",\"aqi\":43.16982369674006,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-04\",\"aqi\":67.61207982884797,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-04\",\"aqi\":45.45676930938814,\"section\":\"Night\"},{\"segment\":\"Jan Day\",\"time\":\"Jan-05\",\"aqi\":69.13532791158072,\"section\":\"Day\"},{\"segment\":\"Jan Night\",\"time\":\"Jan-05\",\"aqi\":47.21420319164731,\"section\":\"Night\"}]"
+    },
+    {
+      "id": "g2-122",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，基于Iris数据集，使用G2库创建一个组合视图，包含按物种和测量类别（x轴为PetalWidth、PetalLength、SepalWidth、SepalLength）分组的密度估计曲线（KDE）和小提琴形状的箱线图，用于展示不同物种在各测量维度上的数值分布情况。参考数据：\n[{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3.5},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":5.1},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":4.9},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.3}]"
+    },
+    {
+      "id": "g2-126",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 创建一个密度图，对不同特征（x: PetalWidth、PetalLength、SepalWidth、SepalLength）按物种分类的数据进行核密度估计变换，将原始数值映射为密度曲线，并按 x 字段分组、着色，密度值影响图形尺寸，最终渲染图表。参考数据：\n[{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3.5},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":5.1},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":4.9},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.3}]"
+    },
+    {
+      "id": "g2-127",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 渲染一个韦恩图，展示 iOS、安卓、Web 三个平台用户群体的交集与数量分布，包括单平台用户和跨平台组合用户，使用路径图表示区域并通过标签显示关键信息。\n参考数据：\n[{\"sets\":[\"iOS\"],\"size\":32},{\"sets\":[\"安卓\"],\"size\":28},{\"sets\":[\"Web\"],\"size\":18},{\"sets\":[\"iOS\",\"安卓\"],\"size\":12,\"label\":\"双端\"},{\"sets\":[\"iOS\",\"Web\"],\"size\":8},{\"sets\":[\"安卓\",\"Web\"],\"size\":6},{\"sets\":[\"iOS\",\"安卓\",\"Web\"],\"size\":3,\"label\":\"全平台\"}]"
+    },
+    {
+      "id": "g2-128",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 绘制一个韦恩图，用于展示不同部门之间的人员交集情况。通过路径类型图表呈现集合关系，支持交互高亮和提示信息显示。参考数据：[{\"sets\":[\"市场营销\"],\"size\":18,\"label\":\"市场\"},{\"sets\":[\"产品开发\"],\"size\":22,\"label\":\"产品\"},{\"sets\":[\"客户服务\"],\"size\":15,\"label\":\"客服\"},{\"sets\":[\"市场营销\",\"产品开发\"],\"size\":7,\"label\":\"市场+产品\"},{\"sets\":[\"市场营销\",\"客户服务\"],\"size\":5,\"label\":\"市场+客服\"},{\"sets\":[\"产品开发\",\"客户服务\"],\"size\":6,\"label\":\"产品+客服\"},{\"sets\":[\"市场营销\",\"产品开发\",\"客户服务\"],\"size\":3,\"label\":\"跨部门\"}]"
+    },
+    {
+      "id": "g2-130",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用径向坐标系展示电影评分数据，按评分高低排序，通过颜色映射评分值，呈现不同电影的评分分布和对比情况。参考数据：[{\"movie\":\"电影A\",\"rating\":9.2,\"genre\":\"科幻\"},{\"movie\":\"电影B\",\"rating\":8.7,\"genre\":\"动作\"},{\"movie\":\"电影C\",\"rating\":8.5,\"genre\":\"科幻\"},{\"movie\":\"电影D\",\"rating\":7.9,\"genre\":\"喜剧\"},{\"movie\":\"电影E\",\"rating\":7.2,\"genre\":\"动作\"},{\"movie\":\"电影F\",\"rating\":6.8,\"genre\":\"喜剧\"}]"
+    },
+    {
+      "id": "g2-131",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用韦恩图展示不同兴趣领域（如户外、电竞、艺术等）之间的交集关系，通过颜色区分不同的学校类型，并显示每个区域代表的学校名称及对应的人数规模，支持交互高亮效果和底部图例。参考数据：[{\"sets\":[\"户外\"],\"size\":60,\"schools\":[\"中学\"]},{\"sets\":[\"电竞\"],\"size\":40,\"schools\":[\"职校\"]},{\"sets\":[\"艺术\"],\"size\":35,\"schools\":[\"美术学院\"]},{\"sets\":[\"户外\",\"电竞\"],\"size\":20,\"schools\":[\"青少年活动中心\"]},{\"sets\":[\"艺术\",\"电竞\"],\"size\":10,\"schools\":[\"艺术职校\"]}]"
+    },
+    {
+      "id": "g2-132",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 创建一个极坐标堆叠柱状图，展示2000至2014年间不同类型（A、B、C）随年份变化的数值分布，数据通过 fold 转换宽格式为长格式后按难民类型堆叠渲染，包含自定义图例、交互高亮和坐标轴设置。参考数据：\n[{\"year\":\"2000\",\"类型 A\":21,\"类型 B\":16,\"类型 C\":8},{\"year\":\"2001\",\"类型 A\":25,\"类型 B\":16,\"类型 C\":8},{\"year\":\"2002\",\"类型 A\":25,\"类型 B\":15,\"类型 C\":8},{\"year\":\"2003\",\"类型 A\":25,\"类型 B\":14,\"类型 C\":7},{\"year\":\"2004\",\"类型 A\":25,\"类型 B\":14,\"类型 C\":7},{\"year\":\"2005\",\"类型 A\":24,\"类型 B\":13,\"类型 C\":8},{\"year\":\"2006\",\"类型 A\":24,\"类型 B\":14,\"类型 C\":7},{\"year\":\"2007\",\"类型 A\":26,\"类型 B\":16,\"类型 C\":7},{\"year\":\"2008\",\"类型 A\":26,\"类型 B\":15.2,\"类型 C\":8},{\"year\":\"2009\",\"类型 A\":27.1,\"类型 B\":15.2,\"类型 C\":10}]"
+    },
+    {
+      "id": "g2-133",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用弦图展示多个模块之间的关联关系，每个模块根据风险等级着色，连接线的粗细和颜色映射了模块间关系的强度。参考数据：[{\"source\":\"支付\",\"target\":\"客服\",\"value\":16},{\"source\":\"支付\",\"target\":\"营销\",\"value\":24},{\"source\":\"支付\",\"target\":\"风控\",\"value\":38},{\"source\":\"支付\",\"target\":\"数据平台\",\"value\":30},{\"source\":\"支付\",\"target\":\"网关\",\"value\":12},{\"source\":\"客服\",\"target\":\"支付\",\"value\":16},{\"source\":\"客服\",\"target\":\"营销\",\"value\":10},{\"source\":\"客服\",\"target\":\"风控\",\"value\":19},{\"source\":\"客服\",\"target\":\"数据平台\",\"value\":15},{\"source\":\"客服\",\"target\":\"网关\",\"value\":6}]"
+    },
+    {
+      "id": "g2-138",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用G2渲染一个密度图，数据包含Iris花的三种物种（setosa、versicolor、virginica）在四个特征（SepalLength、SepalWidth、PetalLength、PetalWidth）上的测量值，通过kde变换按x字段分组计算数值型字段y的概率密度分布，并用颜色区分x字段对应的密度曲线。参考数据：\n[{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3.5},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":5.1},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.4},{\"species\":\"I. setosa\",\"x\":\"SepalWidth\",\"y\":3},{\"species\":\"I. setosa\",\"x\":\"SepalLength\",\"y\":4.9},{\"species\":\"I. setosa\",\"x\":\"PetalWidth\",\"y\":0.2},{\"species\":\"I. setosa\",\"x\":\"PetalLength\",\"y\":1.3}]"
+    },
+    {
+      "id": "g2-140",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用径向坐标系渲染一个排序后的柱状图，展示各月份的销售数据，颜色根据销售值渐变映射，并在柱子外部显示具体数值标签。参考数据：[{\"month\":\"1月\",\"sales\":38},{\"month\":\"2月\",\"sales\":52},{\"month\":\"3月\",\"sales\":61},{\"month\":\"4月\",\"sales\":45},{\"month\":\"5月\",\"sales\":49},{\"month\":\"6月\",\"sales\":72}]"
+    },
+    {
+      "id": "g2-144",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用打包图展示电商平台各模块的访问量分布情况，通过圆形区域的大小表示数值高低，并根据层级深度进行颜色区分。图表渲染了一个根节点为“电商平台”的层次数据结构，包含首页、商品详情、购物车、订单页和个人中心等子模块及其进一步细分。参考数据：[{\"name\":\"电商平台\",\"value\":100,\"children\":[{\"name\":\"首页\",\"value\":30,\"children\":[{\"name\":\"轮播\",\"value\":8},{\"name\":\"推荐位\",\"value\":12},{\"name\":\"导航\",\"value\":10}]},{\"name\":\"商品详情\",\"value\":25},{\"name\":\"购物车\",\"value\":15},{\"name\":\"订单页\",\"value\":20,\"children\":[{\"name\":\"支付\",\"value\":7},{\"name\":\"列表\",\"value\":8},{\"name\":\"确认\",\"value\":5}]},{\"name\":\"个人中心\",\"value\":10}]}]"
+    },
+    {
+      "id": "g2-148",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，创建一个词云图，使用150个包含'text'和'value'字段的对象作为数据源，其中文本为'词1'到'词150'，值为20到99之间的随机整数；通过矩形螺旋布局渲染词云，设置字体大小范围、间距、字体族、透明度、描边等样式，关闭坐标轴和图例，配置工具提示显示词条名称和对应的随机频次值，最后调用render方法渲染图表。参考数据：\n[{\"text\":\"词1\",\"value\":92},{\"text\":\"词2\",\"value\":65},{\"text\":\"词3\",\"value\":28},{\"text\":\"词4\",\"value\":81},{\"text\":\"词5\",\"value\":42},{\"text\":\"词6\",\"value\":88},{\"text\":\"词7\",\"value\":38},{\"text\":\"词8\",\"value\":55},{\"text\":\"词9\",\"value\":70},{\"text\":\"词10\",\"value\":26}]"
+    },
+    {
+      "id": "g2-150",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 创建一个组合图表，展示时间序列上的股票价格（开盘、收盘、最高、最低）与情绪指数的联动关系。图表包含 K 线图（通过 link 表示高低区间、interval 表示开盘收盘柱体）和一条独立的情绪指数折线图（使用右侧 y 轴），支持 brushX 交互进行横向区域选择。颜色根据涨跌动态区分。参考数据：\n[{\"date\":\"2024-01-01\",\"open\":100,\"close\":110,\"high\":115,\"low\":95,\"sentiment\":0.7},{\"date\":\"2024-01-02\",\"open\":110,\"close\":105,\"high\":112,\"low\":100,\"sentiment\":-0.3},{\"date\":\"2024-01-03\",\"open\":105,\"close\":108,\"high\":109,\"low\":102,\"sentiment\":0.2}]"
+    },
+    {
+      "id": "g2-153",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用提供的数据绘制K线图，展示股票价格的变化情况，包括开盘价、收盘价、最高价和最低价，根据收盘价与开盘价的关系对颜色进行编码，并添加了提示信息。参考数据：[{\"date\":\"2024-01-01\",\"open\":100,\"close\":105,\"high\":110,\"low\":98},{\"date\":\"2024-01-02\",\"open\":105,\"close\":103,\"high\":107,\"low\":99},{\"date\":\"2024-01-03\",\"open\":103,\"close\":108,\"high\":109,\"low\":101},{\"date\":\"2024-01-04\",\"open\":108,\"close\":104,\"high\":111,\"low\":102}]"
+    },
+    {
+      "id": "g2-155",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 创建一个直方图，对300个随机生成的数值进行分箱统计（15个区间），显示每个区间内的数据计数，并根据计数值设置不同颜色（大于30为红色，否则为灰色），启用元素高亮交互。\n参考数据：\n[{\"value\":42.31},{\"value\":12.45},{\"value\":87.63},{\"value\":5.21},{\"value\":63.89},{\"value\":30.12},{\"value\":9.87},{\"value\":76.44},{\"value\":23.56},{\"value\":55.01}]"
+    },
+    {
+      "id": "g2-157",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，创建一个液体填充图表，用于展示目标完成度等单指标达成情况，通过三角形水波图形和文字标注直观显示数值比例。参考数据：[0.6]"
+    },
+    {
+      "id": "g2-161",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用打包图展示品牌在不同地区市场的覆盖情况，通过圆形的嵌套结构体现层级关系，内层为大区，外层为国家或子区域。颜色区分不同的大洲区域，鼠标悬停可查看具体覆盖门店数量。参考数据：[{\"name\":\"北美\",\"value\":400,\"children\":[{\"name\":\"美国\",\"value\":320},{\"name\":\"加拿大\",\"value\":80}]},{\"name\":\"欧洲\",\"value\":380,\"children\":[{\"name\":\"德国\",\"value\":150},{\"name\":\"法国\",\"value\":120},{\"name\":\"英国\",\"value\":110}]},{\"name\":\"亚太\",\"value\":520,\"children\":[{\"name\":\"中国\",\"value\":300,\"children\":[{\"name\":\"华北\",\"value\":100},{\"name\":\"华东\",\"value\":120},{\"name\":\"华南\",\"value\":80}]},{\"name\":\"日本\",\"value\":120},{\"name\":\"印度\",\"value\":100}]},{\"name\":\"其他\",\"value\":100}]"
+    },
+    {
+      "id": "g2-165",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用给定的数据创建一个环形图，通过堆叠 Y 轴变换和 theta 坐标系来展示两层结构的数值分布情况，并根据层级设置不同的字体大小显示标签，同时支持图例过滤交互。参考数据：[{\"item\":\"A\",\"value\":30,\"layer\":1},{\"item\":\"B\",\"value\":25,\"layer\":1},{\"item\":\"C\",\"value\":20,\"layer\":1},{\"item\":\"A1\",\"value\":10,\"layer\":2,\"parent\":\"A\"},{\"item\":\"A2\",\"value\":20,\"layer\":2,\"parent\":\"A\"}]"
+    },
+    {
+      "id": "g2-166",
+      "status": "error",
+      "error": "empty code",
+      "query": "根据描述绘制图表，使用 G2 绘制一个横向的金字塔图，展示用户在不同阶段的转化情况，并标注各阶段的数值和流失比例。每个阶段用不同颜色区分，整体呈现漏斗状的转化趋势。\n参考数据：[{\"stage\":\"用户曝光\",\"value\":120000,\"loss\":\"80%\"},{\"stage\":\"点击广告\",\"value\":32000,\"loss\":\"73.3%\"},{\"stage\":\"下载APP\",\"value\":18000,\"loss\":\"43.8%\"},{\"stage\":\"注册账号\",\"value\":9000,\"loss\":\"50%\"},{\"stage\":\"首次登录\",\"value\":4500,\"loss\":\"50%\"}]"
+    },
+    {
+      "id": "g2-168",
+      "status": "blank",
+      "error": "blank render (white screen)",
+      "query": "根据描述绘制图表，使用 G2 绘制一个自定义形状的水波图，展示特定数值的占比情况，并通过图形样式和文本显示具体百分比。参考数据：[0.65]"
+    }
+  ]
+}
