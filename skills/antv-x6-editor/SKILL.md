@@ -11,6 +11,8 @@ tools:
 
 X6 v3 is AntV's diagram editing engine for flowcharts, DAGs, ER diagrams, org charts, and other interactive node-edge editors. Unlike G2/G6, X6 uses an **imperative API** — you create a `Graph` instance, then call `graph.addNode()`, `graph.addEdge()`, and register plugins via `graph.use()`.
 
+Use X6 3.1.8 or later for the ID-string examples below. The container must already exist and have a non-zero size.
+
 ```javascript
 import { Graph } from '@antv/x6';
 
@@ -40,7 +42,8 @@ graph.centerContent();
 ### CDN Usage
 
 ```html
-<script src="https://unpkg.com/@antv/x6@3/dist/x6.js"></script>
+<div id="container" style="width: 800px; height: 500px;"></div>
+<script src="https://unpkg.com/@antv/x6@3.1.8/dist/x6.min.js"></script>
 <script>
   const graph = new X6.Graph({
     container: 'container',
@@ -100,16 +103,20 @@ const graph = new Graph({ container: 'container', background: { color: '#F2F7FA'
 graph.addNode({ shape: 'rect', x: 40, y: 40, width: 100, height: 40 });
 ```
 
-### MUST: Use string literal `container: 'container'` — no variable declaration
+### MUST: Use an existing container ID or `HTMLElement`
+
+X6 3.1.8+ resolves a string as a DOM ID, not a CSS selector: use `'container'`, not `'#container'`. An `HTMLElement` is also valid. X6 3.1.7 requires the element form.
 
 ```javascript
-// ❌ WRONG — declaring container variable is forbidden
-const container = document.getElementById('container');
-const graph = new Graph({ container });
-
-// ✅ CORRECT — string literal, runtime auto-resolves
+// ✅ CORRECT — X6 3.1.8+ resolves the existing DOM ID
 const graph = new Graph({ container: 'container', background: { color: '#F2F7FA' } });
+
+// ✅ ALSO VALID — an existing DOM element
+const graphContainer = document.getElementById('container');
+const graphWithElement = new Graph({ container: graphContainer });
 ```
+
+If the host already provides an `HTMLElement` named `container` (as the evaluator does), reuse it with `new Graph({ container })`. Avoid redeclaring that binding in the same scope. A standalone application can declare its own container variable.
 
 ### MUST: Register plugins before using their methods
 
@@ -270,4 +277,4 @@ Shape.HTML.register({
 
 ## Dependencies
 
-- `@antv/x6` — X6 v3 diagram editing engine (exports `Graph` + 11 plugin classes)
+- `@antv/x6` — X6 3.1.8+ diagram editing engine (exports `Graph` + 11 plugin classes)

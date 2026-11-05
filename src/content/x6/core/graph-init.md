@@ -52,8 +52,8 @@ Graph 是 X6 的画布容器，管理所有节点和边。X6 采用**命令式 A
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: 'container',  // 必填：DOM id 或 HTMLElement
-  width: 80 0,              // 可选：不设则自适应容器
+  container: 'container',  // 必填：DOM id（X6 3.1.8+）或 HTMLElement
+  width: 800,              // 可选：不设则自适应容器
   height: 600,
 });
 ```
@@ -370,15 +370,15 @@ graph.addEdge({ source: 'n1', target: 'n2' });
 
 ### 5. container 使用规范
 
-`container` 变量由运行环境自动注入，**禁止**在代码中声明 `const container = ...`，否则报 `Identifier 'container' has already been declared`。
+X6 3.1.8+ 支持已存在的 DOM ID 字符串和 `HTMLElement`；3.1.7 应使用 DOM 元素。独立页面可以声明自己的容器变量。仅当宿主已在同一作用域注入 `container` 时，才需要避免重复声明。
 
 ```javascript
-// ✅ 正确：直接使用字符串 'container'
+// ✅ 正确：X6 3.1.8+ 使用已存在的 DOM ID
 const graph = new Graph({ container: 'container' });
 
-// ❌ 错误：重复声明 container 变量
+// ❌ 仅当宿主已在同一作用域注入 container 时，以下声明才会冲突
 const container = document.getElementById('container');
-const graph = new Graph({ container }); // 报错：Identifier 'container' has already been declared
+const graphWithElement = new Graph({ container }); // 宿主已有 container 时会发生标识符冲突
 ```
 
 ### 6. 初始化后未正确调用画布变换方法
@@ -399,7 +399,7 @@ graph.centerContent();
 ### 7. container 必须有效
 
 ```javascript
-// ✅ 正确：使用字符串 'container'（运行环境已注入）
+// ✅ 正确：X6 3.1.8+ 使用已挂载且尺寸非零的容器 ID
 const graph = new Graph({ container: 'container' });
 
 // ❌ 错误：传入不存在的元素
@@ -452,15 +452,15 @@ connecting: {
 }
 ```
 
-### 11. container 使用字符串 'container'
+### 11. container 字符串按 DOM ID 解析（X6 3.1.8+）
 
 ```javascript
-// ✅ 正确：使用默认的 'container' 字符串
+// ✅ 正确：使用已存在的 DOM ID，不要写成 '#container'
 const graph = new Graph({ container: 'container' });
 
-// ❌ 错误：在代码中声明 container 变量（运行环境已注入，重复声明会报错）
-const container = document.getElementById('my-container');
-const graph = new Graph({ container }); // Identifier 'container' has already been declared
+// ✅ 同样有效：使用已存在的 DOM 元素
+const graphContainer = document.getElementById('container');
+const graphWithElement = new Graph({ container: graphContainer });
 ```
 
 ### 12. 错误使用 `zoomToFit` 和 `centerContent` 顺序
@@ -594,7 +594,9 @@ graph.zoomToRect({
 });
 ```
 
-### 20. 错误使用 `container` 变量（重复声明）
+### 20. 不要重复声明宿主已注入的 `container`
+
+只有同一作用域已有 `container` 绑定时，以下重复声明才会冲突。独立页面声明局部变量是合法的；宿主已提供 DOM 元素时也可以直接使用 `new Graph({ container })`。
 
 ```javascript
 // ❌ 错误：在代码中重复声明 container 变量

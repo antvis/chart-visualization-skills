@@ -334,12 +334,14 @@ graph.fromJSON(data); // ✅ 正确：自动渲染
 // graph.centerContent(); // 可选：居中内容
 ```
 
-### 错误：在代码中声明 `const container`
+### 错误：重复声明宿主已注入的 `container`
+
+仅当宿主已在同一作用域注入 `container` 时，以下声明才会冲突。独立页面可以正常声明自己的容器变量，X6 3.1.8+ 支持已存在的 DOM ID 字符串和 `HTMLElement`。
 
 **错误代码示例：**
 
 ```javascript
-// ❌ 错误：重复声明 container 变量（运行环境已注入）
+// ❌ 错误：在宿主已注入同名变量的作用域中重复声明
 const container = document.getElementById('container');
 const graph = new Graph({ container }); // 报错：Identifier 'container' has already been declared
 ```

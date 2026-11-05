@@ -21,7 +21,7 @@ anti_patterns: []
 ### X6 3.x 关键约束（强制）
 
 - **`graph.render()` 不存在**：X6 3.x 中 `new Graph()` / `addNode` / `addEdge` / `fromJSON` 均自动渲染，代码中不得出现 `graph.render()`。
-- **不得声明 `container` 变量**：运行环境会作为函数参数注入 `container`。Graph 初始化只使用字符串字面量 `container: 'container'`，禁止 `const/let/var container = ...`，也禁止 `document.getElementById('container')`。
+- **使用有效的容器 ID 或 `HTMLElement`**：以下 ID 字符串示例要求 X6 3.1.8+；字符串按 DOM ID 解析，不是 CSS 选择器。X6 3.1.7 应传入 DOM 元素。若宿主已注入 DOM 元素 `container`，可直接使用 `new Graph({ container })`，不要在同一作用域重复声明；独立页面可以正常声明自己的容器变量。
 - **使用插件方法前必须先 `graph.use(new Plugin(...))` 注册对应插件**：`graph.toPNG / toSVG / toJPEG` 依赖 `Export`；`graph.select / unselect` 依赖 `Selection`；`graph.undo / redo` 依赖 `History`；`graph.copy / paste / cut` 依赖 `Clipboard`；`graph.bindKey` 依赖 `Keyboard`。未注册插件时对应方法不存在。
 - **自定义 shape 必须先注册再使用**：`Graph.registerNode(name, def)` / `Graph.registerEdge(name, def)` / `Shape.HTML.register({ shape, ... })` 必须在首次 `addNode / addEdge` 之前完成。
 - **`@antv/x6` 仅导出 11 个插件类**：`Clipboard`、`Dnd`、`Export`、`History`、`Keyboard`、`MiniMap`、`Scroller`、`Selection`、`Snapline`、`Stencil`、`Transform`。`mousewheel`、`embedding`、`panning`、`connecting`、`translating`、`interacting`、`background`、`grid` 是 `new Graph()` 的**构造选项**，不是插件，**不得** import 同名类、不得 `graph.use(new XxxClass())`。例：滚轮缩放写在 Graph 构造中 `mousewheel: { enabled: true, zoomAtMousePosition: true, modifiers: ['ctrl'] }`。
@@ -38,7 +38,7 @@ anti_patterns: []
   多步属性变更可用 `graph.startBatch('animate'); cell.attr(...); graph.stopBatch('animate');` 包装。
 
 ### 初始化规范
-- `container` 参数必填，**必须使用字符串形式** `container: 'container'`，运行时环境会自动解析为 DOM 元素
+- `container` 参数必填；X6 3.1.8+ 支持已存在的 DOM ID 字符串（如 `'container'`）或 `HTMLElement`；初始化前确保元素已挂载且尺寸非零
 - **必须设置背景色**：`background: { color: '#F2F7FA' }`，所有画布都需要统一的浅蓝灰色背景
 - **不要添加 `grid` 配置**，除非用户明确要求显示网格
 - **不要设置 `width` / `height`**，除非用户明确指定画布尺寸；画布默认自适应容器大小

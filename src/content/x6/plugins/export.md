@@ -269,16 +269,18 @@ graph.toPNG((dataUri) => { console.log(dataUri); });
 const dataUri = await graph.toPNGAsync({ backgroundColor: '#fff' });
 ```
 
-### ❌ 使用 DOM 容器引用而非 ID 字符串初始化画布
+### 容器 ID 和 DOM 引用均可使用（X6 3.1.8+）
 
 ```javascript
-// 错误：在某些环境下可能导致容器重复声明
-const container = document.getElementById('container');
-const graph = new Graph({ container });
+// 正确：独立页面可以声明自己的容器变量
+const graphContainer = document.getElementById('container');
+const graph = new Graph({ container: graphContainer });
 
-// 推荐：使用字符串 ID
-const graph = new Graph({ container: 'container' });
+// 同样有效：使用已存在的 DOM ID
+const graphWithId = new Graph({ container: 'container' });
 ```
+
+若宿主已注入 DOM 元素 `container`，直接使用 `new Graph({ container })`，避免在同一作用域重复声明。
 
 ### ❌ 调用 graph.render() 导致报错
 

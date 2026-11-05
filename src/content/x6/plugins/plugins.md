@@ -499,7 +499,7 @@ graph.fromJSON(data);
 import { Graph, Selection, Snapline, History, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: container, // ❌ 应使用字符串 container: 'container'
+  container: undefined, // ❌ 未提供有效容器
 });
 
 graph.use(new Selection({ enabled: true }));
@@ -511,7 +511,7 @@ graph.use(new Keyboard({ enabled: true }));
 ```
 
 **错误原因**：
-1. `container` 参数应为 DOM 元素或其 ID 字符串。
+1. `container` 参数应为有效的 DOM 元素或其 ID 字符串（ID 字符串要求 X6 3.1.8+）。宿主注入的 DOM 元素 `container` 同样有效。
 2. 画布中没有添加任何节点或边，导致白屏。
 
 **修正代码**：

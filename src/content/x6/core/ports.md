@@ -523,15 +523,15 @@ graph.addNode({
 
 **错误示例：**
 ```javascript
-// 错误：container 变量未定义或为 null
+// 错误：未提供有效容器
 const graph = new Graph({
-  container: container, // ❌ container 未声明，应使用字符串 'container'
+  container: undefined,
 });
 ```
 
 **修正方法：**
 ```javascript
-// 正确：使用字符串 'container'（运行环境已注入，禁止声明 const container）
+// 正确：X6 3.1.8+ 使用已存在的 DOM ID；也可传入有效的 HTMLElement
 const graph = new Graph({
   container: 'container',
   width: 800,

@@ -580,9 +580,9 @@ const graph = new Graph({
 });
 ```
 
-### 错误 10：在代码中声明 `const container`
+### 错误 10：重复声明宿主已注入的 `container`
 
-`container` 变量由运行环境自动注入，**禁止**在代码中重复声明，否则报 `Identifier 'container' has already been declared`。
+若宿主已在同一作用域注入 `container`，不要重复声明，否则会发生标识符冲突。独立页面可以正常声明自己的容器变量；X6 3.1.8+ 支持已存在的 DOM ID 字符串和 `HTMLElement`。
 
 ```javascript
 // ❌ 错误做法：重复声明 container 变量
@@ -590,7 +590,7 @@ const container = document.getElementById('container');
 const graph = new Graph({ container });
 
 // ✅ 正确做法：直接使用字符串 'container'
-const graph = new Graph({
+const graphWithId = new Graph({
   container: 'container',
   width: 800,
   height: 600,

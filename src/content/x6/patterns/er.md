@@ -30,7 +30,7 @@ use_cases:
 
 1. **必须先调用 `Shape.HTML.register()` 注册 `er-entity` 节点，再创建 Graph 实例和添加节点**
 2. **`Shape.HTML.register()` 中的 `html(cell)` 函数必须返回一个有效的 DOM 元素**（不能返回 HTML 字符串）
-3. **容器使用字符串 `'container'`**，禁止 `document.getElementById('container')`
+3. **使用已存在的容器**：X6 3.1.8+ 可传入 DOM ID 字符串 `'container'` 或 `HTMLElement`；3.1.7 应传入 DOM 元素
 4. **禁止调用 `graph.render()`** — X6 自动渲染
 5. **禁止调用 `graph.dispose()`** — 会导致白屏
 
