@@ -178,7 +178,7 @@ interface RetrieveOptions {
   library?: string;    // Library filter, e.g. 'g2' or 'g6'
   topK?: number;       // Number of results (default: 7)
   strategy?: 'hybrid' | 'vector';  // Retrieval strategy (default: 'hybrid')
-  maxTokens?: number;  // Token budget — content trimmed to fit when set
+  maxTokens?: number;  // Total estimated token budget across returned doc contents
 }
 ```
 
@@ -188,9 +188,10 @@ interface RetrieveOptions {
 | `topK` | `number` | `7` | Number of results |
 | `content` | `boolean` | `true` | Include markdown content body |
 | `strategy` | `'hybrid' \| 'vector'` | `'hybrid'` | Retrieval strategy |
-| `maxTokens` | `number` | — | Token budget; content trimmed to fit when set |
+| `maxTokens` | `number` | — | Total estimated token budget across returned doc contents; `0` returns empty content |
 
 > Notes:
+> - `maxTokens` for the local API uses the built-in estimate (Chinese characters ≈ 1 token, other characters ≈ 4 per token). It budgets content only, excluding result metadata. Complete frontmatter and fenced code blocks (including blockquote fences) are prioritized; blocks that cannot fit are omitted, and prose is trimmed to the remaining budget. Only actual separators between retained segments consume budget.
 > - Default retrieval uses **hybrid** strategy: zvec native FTS (jieba) + Vector (HNSW ANN) + RRF fusion.
 > - `strategy: 'vector'` uses pure ANN vector similarity search.
 > - Constraints docs (category `__constraints__`) are indexed as regular skill documents and appear naturally in search results.

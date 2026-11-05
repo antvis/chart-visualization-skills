@@ -68,7 +68,7 @@ export async function retrieve(
     .filter((doc, index, all) => all.findIndex((item) => item.id === doc.id) === index)
     .slice(0, topK);
 
-  if (maxTokens && content) {
+  if (maxTokens !== undefined && content) {
     docs = applyTokenBudget(docs, maxTokens);
   }
 

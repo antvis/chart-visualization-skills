@@ -10,7 +10,7 @@ export interface RetrieveOptions {
    * - 'hybrid'  FTS + vector via zvec native multiQuery, RRF-fused (default)
    */
   strategy?: 'vector' | 'hybrid';
-  /** Maximum token budget for doc content. When set, content is auto-trimmed. */
+  /** Total estimated token budget across returned doc contents; 0 returns empty content. */
   maxTokens?: number;
 }
 

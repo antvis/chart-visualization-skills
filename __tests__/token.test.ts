@@ -23,6 +23,126 @@ describe('countTokens', () => {
 });
 
 describe('truncateSmart', () => {
+  it('never clips a quoted fence opener at the end of a document', () => {
+    const opener = '> ```javascript';
+    const content = 'Preface '.repeat(10) + '\n' + opener;
+    for (let budget = 1; budget <= countTokens(content); budget++) {
+      const result = truncateSmart(content, budget);
+      expect(countTokens(result)).toBeLessThanOrEqual(budget);
+      if (result.includes('>')) expect(result).toContain(opener);
+    }
+  });
+
+  it.each([
+    '> ```javascript\n> const value = 1;\n>```',
+    '> > ~~~javascript\r\n> > const value = 1;\r\n>> ~~~',
+    '> ````markdown\n> ```js\n> const value = 1;\n> ```\n> ````',
+  ])('retains a complete quoted code block: %s', (code) => {
+    const budget = countTokens(code);
+    const result = truncateSmart('说明'.repeat(100) + '\n' + code, budget);
+
+    expect(result).toContain(code);
+    expect(countTokens(result)).toBeLessThanOrEqual(budget);
+  });
+
+  it('retains a first code block that exactly fits without a joining newline', () => {
+    const code = '```js\nx = 1;\n```'; // 16 character units, exactly 4 tokens
+    const result = truncateSmart('说明'.repeat(100) + '\n' + code, 4);
+
+    expect(result).toBe(code);
+    expect(countTokens(result)).toBe(4);
+  });
+
+  it('counts rounding once across frontmatter, code and actual joining newlines', () => {
+    const frontmatter = '---\nt: x\n---\n';
+    const code = '```js\nx = 1;\n```';
+    const expected = frontmatter + '\n' + code;
+    const budget = countTokens(expected);
+    const result = truncateSmart(frontmatter + '中'.repeat(100) + '\n' + code, budget);
+
+    expect(result).toBe(expected);
+    expect(countTokens(result)).toBe(budget);
+  });
+
+  it('fills the remaining budget with prose after accounting for its separator', () => {
+    const code = '```js\nx = 1;\n```';
+    const result = truncateSmart('abcdef\n' + code, 5);
+
+    expect(result).toBe('abc\n' + code);
+    expect(countTokens(result)).toBe(5);
+  });
+
+  it.each([1, 2, 3])('uses all %i tokens for plain text without reserving a newline', (budget) => {
+    const content = 'abcdefghijklmnopqrst';
+
+    expect(truncateSmart(content, budget)).toBe(content.slice(0, budget * 4));
+  });
+
+  it('does not restore an oversized code block beyond the budget', () => {
+    const content = '```js\n' + 'const x = 1;\n'.repeat(1000) + '```';
+    const result = truncateSmart(content, 100);
+
+    expect(countTokens(result)).toBeLessThanOrEqual(100);
+    expect(result).toBe('');
+  });
+
+  it('never introduces code placeholders when trimming prose before a block', () => {
+    const content = '说明'.repeat(150) + '\n\n```js\nconst x = 1;\n```\n';
+    for (let budget = 1; budget <= 100; budget++) {
+      const result = truncateSmart(content, budget);
+      expect(countTokens(result)).toBeLessThanOrEqual(budget);
+      expect(result).not.toContain('<<CODE');
+      expect((result.match(/^```/gm) ?? []).length % 2).toBe(0);
+    }
+  });
+
+  it('keeps small complete code blocks when a preceding block cannot fit', () => {
+    const oversized = '```js\n' + 'const x = 1;\n'.repeat(1000) + '```\n';
+    const small = '```js\nconst y = 2;\n```';
+    const result = truncateSmart(oversized + '\n' + small, 30);
+
+    expect(result).toContain(small);
+    expect(result).not.toContain('const x');
+    expect(countTokens(result)).toBeLessThanOrEqual(30);
+  });
+
+  it('omits oversized frontmatter without leaving a broken delimiter', () => {
+    const content = '---\ntitle: ' + '中'.repeat(100) + '\n---\nUseful prose';
+    const result = truncateSmart(content, 10);
+
+    expect(result).toContain('Useful prose');
+    expect(result).not.toContain('---');
+    expect(countTokens(result)).toBeLessThanOrEqual(10);
+  });
+
+  it('handles CRLF frontmatter and tilde fences as complete segments', () => {
+    const frontmatter = '---\r\ntitle: Test\r\n---\r\n';
+    const code = '~~~js\r\nconst x = 1;\r\n~~~';
+    const content = frontmatter + '描述'.repeat(100) + '\r\n' + code;
+    const result = truncateSmart(content, 30);
+
+    expect(result).toContain(frontmatter);
+    expect(result).toContain(code);
+    expect(countTokens(result)).toBeLessThanOrEqual(30);
+  });
+
+  it('keeps longer fences intact when their code contains shorter fences', () => {
+    const code = '````markdown\n```js\nconst x = 1;\n```\n````';
+    const result = truncateSmart('Long explanation. '.repeat(100) + '\n' + code, 30);
+
+    expect(result).toContain(code);
+    expect(countTokens(result)).toBeLessThanOrEqual(30);
+  });
+
+  it.each([0, 1, 2, 10, 20])('enforces a %i-token budget for mixed text', (budget) => {
+    const content = '中😀文abc'.repeat(50);
+    const result = truncateSmart(content, budget);
+
+    expect(countTokens(result)).toBeLessThanOrEqual(budget);
+    expect(content.startsWith(result)).toBe(true);
+    expect(result).not.toMatch(/[\uD800-\uDBFF]$/);
+  });
+
   it('returns original content if under budget', () => {
     const content = 'hello world'; // 3 tokens
     expect(truncateSmart(content, 10)).toBe(content);
@@ -110,6 +230,22 @@ Just plain description without any code blocks.`;
 });
 
 describe('applyTokenBudget', () => {
+  it('enforces the total budget across documents with large code blocks', () => {
+    const content = '```js\n' + 'const x = 1;\n'.repeat(1000) + '```';
+    const docs = [{ id: '1', content }, { id: '2', content }] as Doc[];
+    const result = applyTokenBudget(docs, 200);
+
+    expect(result.reduce((sum, doc) => sum + countTokens(doc.content!), 0))
+      .toBeLessThanOrEqual(200);
+  });
+
+  it('returns empty content when the budget is smaller than the document count', () => {
+    const docs = [{ id: '1', content: '中文' }, { id: '2', content: '中文' }] as Doc[];
+    const result = applyTokenBudget(docs, 1);
+
+    expect(result.map(doc => doc.content)).toEqual(['', '']);
+  });
+
   it('distributes budget across docs', () => {
     const docs: Doc[] = [
       { id: '1', title: 'Doc 1', content: 'A'.repeat(100), description: '', library: 'g2', version: '', category: '', subcategory: '', tags: [], use_cases: [], anti_patterns: [], related: [] },
