@@ -23,6 +23,61 @@ describe('countTokens', () => {
 });
 
 describe('truncateSmart', () => {
+  it('never clips a quoted fence opener at the end of a document', () => {
+    const opener = '> ```javascript';
+    const content = 'Preface '.repeat(10) + '\n' + opener;
+    for (let budget = 1; budget <= countTokens(content); budget++) {
+      const result = truncateSmart(content, budget);
+      expect(countTokens(result)).toBeLessThanOrEqual(budget);
+      if (result.includes('>')) expect(result).toContain(opener);
+    }
+  });
+
+  it.each([
+    '> ```javascript\n> const value = 1;\n>```',
+    '> > ~~~javascript\r\n> > const value = 1;\r\n>> ~~~',
+    '> ````markdown\n> ```js\n> const value = 1;\n> ```\n> ````',
+  ])('retains a complete quoted code block: %s', (code) => {
+    const budget = countTokens(code);
+    const result = truncateSmart('说明'.repeat(100) + '\n' + code, budget);
+
+    expect(result).toContain(code);
+    expect(countTokens(result)).toBeLessThanOrEqual(budget);
+  });
+
+  it('retains a first code block that exactly fits without a joining newline', () => {
+    const code = '```js\nx = 1;\n```'; // 16 character units, exactly 4 tokens
+    const result = truncateSmart('说明'.repeat(100) + '\n' + code, 4);
+
+    expect(result).toBe(code);
+    expect(countTokens(result)).toBe(4);
+  });
+
+  it('counts rounding once across frontmatter, code and actual joining newlines', () => {
+    const frontmatter = '---\nt: x\n---\n';
+    const code = '```js\nx = 1;\n```';
+    const expected = frontmatter + '\n' + code;
+    const budget = countTokens(expected);
+    const result = truncateSmart(frontmatter + '中'.repeat(100) + '\n' + code, budget);
+
+    expect(result).toBe(expected);
+    expect(countTokens(result)).toBe(budget);
+  });
+
+  it('fills the remaining budget with prose after accounting for its separator', () => {
+    const code = '```js\nx = 1;\n```';
+    const result = truncateSmart('abcdef\n' + code, 5);
+
+    expect(result).toBe('abc\n' + code);
+    expect(countTokens(result)).toBe(5);
+  });
+
+  it.each([1, 2, 3])('uses all %i tokens for plain text without reserving a newline', (budget) => {
+    const content = 'abcdefghijklmnopqrst';
+
+    expect(truncateSmart(content, budget)).toBe(content.slice(0, budget * 4));
+  });
+
   it('does not restore an oversized code block beyond the budget', () => {
     const content = '```js\n' + 'const x = 1;\n'.repeat(1000) + '```';
     const result = truncateSmart(content, 100);

@@ -22,15 +22,17 @@ export function truncateSmart(content: string, budget: number): string {
 
   // Store actual segments rather than inserting placeholders into prose.
   let cursor = frontmatter?.length ?? 0;
-  const opening = /^ {0,3}(`{3,}|~{3,})[^\r\n]*(?:\r?\n|$)/gm;
+  const opening = /^ {0,3}((?:>[ \t]{0,4})*)(`{3,}|~{3,})[^\r\n]*(?:\r?\n|$)/gm;
   opening.lastIndex = cursor;
   let match: RegExpExecArray | null;
   while ((match = opening.exec(content))) {
     if (match.index > cursor) {
       segments.push({ text: content.slice(cursor, match.index), protected: false });
     }
-    const fence = match[1];
-    const closing = new RegExp(`^ {0,3}${fence[0]}{${fence.length},}[ \\t]*(?:\\r?\\n|$)`, 'gm');
+    const quoteDepth = (match[1].match(/>/g) ?? []).length;
+    const fence = match[2];
+    const quotePrefix = `(?:>[ \\t]{0,4}){${quoteDepth}}`;
+    const closing = new RegExp(`^ {0,3}${quotePrefix}${fence[0]}{${fence.length},}[ \\t]*(?:\\r?\\n|$)`, 'gm');
     closing.lastIndex = opening.lastIndex;
     const end = closing.exec(content);
     cursor = end ? closing.lastIndex : content.length;
@@ -41,24 +43,25 @@ export function truncateSmart(content: string, budget: number): string {
     segments.push({ text: content.slice(cursor), protected: false });
   }
 
-  // Reserve complete protected segments first, including joining newlines.
+  // Sum quarter-token units before rounding, counting only actual separators.
   const selected = new Map<number, string>();
-  let remaining = budget;
+  let remainingUnits = budget * 4;
   for (const [index, segment] of segments.entries()) {
     if (!segment.protected) continue;
-    const cost = countTokens(segment.text + '\n');
-    if (cost <= remaining) {
+    const cost = countTokenUnits(segment.text) + (selected.size > 0 ? 1 : 0);
+    if (cost <= remainingUnits) {
       selected.set(index, segment.text);
-      remaining -= cost;
+      remainingUnits -= cost;
     }
   }
 
   for (const [index, segment] of segments.entries()) {
-    if (segment.protected || remaining <= 1) continue;
-    const text = truncateText(segment.text, remaining - 1);
+    if (segment.protected || remainingUnits <= 0) continue;
+    const separatorUnits = selected.size > 0 ? 1 : 0;
+    const text = truncateText(segment.text, remainingUnits - separatorUnits);
     if (!text) continue;
     selected.set(index, text);
-    remaining -= countTokens(text + '\n');
+    remainingUnits -= countTokenUnits(text) + separatorUnits;
   }
 
   return [...selected.entries()]
@@ -68,21 +71,25 @@ export function truncateSmart(content: string, budget: number): string {
 }
 
 /** 使用与 countTokens 相同的字符权重，避免截断 Unicode 码点。 */
-function truncateText(text: string, budget: number): string {
+function truncateText(text: string, maxUnits: number): string {
   let units = 0;
   let end = 0;
   for (const character of text) {
     const cost = /[一-龥]/.test(character) ? 4 : character.length;
-    if (units + cost > budget * 4) break;
+    if (units + cost > maxUnits) break;
     units += cost;
     end += character.length;
   }
   return text.slice(0, end);
 }
 
+/** 中文字符占 4 个单位，其他 UTF-16 字符占 1 个单位。 */
+function countTokenUnits(text: string): number {
+  const chinese = (text.match(/[一-龥]/g) ?? []).length;
+  return text.length + chinese * 3;
+}
+
 export function countTokens(text: string): number {
   // 简单估算：中文字符 ≈ 1 token，英文/符号 ≈ 4 字符 ≈ 1 token
-  const chinese = (text.match(/[一-龥]/g) ?? []).length;
-  const other = text.length - chinese;
-  return chinese + Math.ceil(other / 4);
+  return Math.ceil(countTokenUnits(text) / 4);
 }
