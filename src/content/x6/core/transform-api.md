@@ -37,7 +37,7 @@ graph.resize(1000, 600);
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   autoResize: true,  // 自动跟随父容器尺寸
 });
 ```
@@ -46,7 +46,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   autoResize: document.getElementById('wrapper'),
 });
 ```
@@ -119,7 +119,7 @@ const { sx, sy } = graph.getScale();
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   scaling: { min: 0.2, max: 4 },  // 全局缩放范围限制
 });
 ```
@@ -348,7 +348,7 @@ const localPoint = graph.graphToLocal({ x: 200, y: 150 });
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   autoResize: true,

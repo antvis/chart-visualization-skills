@@ -43,7 +43,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   virtual: true,  // 启用虚拟渲染，使用默认缓冲边距 120px
@@ -54,7 +54,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   virtual: {
@@ -93,7 +93,7 @@ const graph = new Graph({
 import { Graph, Scroller } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   virtual: { enabled: true, margin: 150 },
@@ -109,7 +109,7 @@ graph.use(new Scroller({ enabled: true }));
 import { Graph, Scroller, MiniMap } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 1000,
   height: 600,
   virtual: { enabled: true, margin: 200 },
@@ -177,7 +177,7 @@ if (nodeCount < 200) {
 ```javascript
 // 问题：2000 个节点全量渲染，DOM 过多导致交互卡顿
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -185,7 +185,7 @@ const graph = new Graph({
 
 // 解决：启用虚拟渲染
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   virtual: true,  // ✅ 只渲染可视区域
@@ -197,13 +197,13 @@ const graph = new Graph({
 ```javascript
 // 不推荐：只有 20 个节点时无需虚拟渲染
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   virtual: { enabled: true, margin: 200 }, // 计算可视区域的开销大于渲染节省的时间
 });
 
 // 推荐：数据量小时不启用
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   // virtual 默认 false
 });
 ```

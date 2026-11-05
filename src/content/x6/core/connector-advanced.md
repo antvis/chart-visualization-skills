@@ -53,7 +53,7 @@ use_cases:
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 const node = graph.addNode({
   shape: 'rect',
@@ -113,7 +113,7 @@ graph.addEdge({
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connector: {
       name: 'jumpover',
@@ -183,7 +183,7 @@ graph.addEdge({
 ```javascript
 // 在 Graph 初始化时全局配置
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connector: {
       name: 'jumpover',

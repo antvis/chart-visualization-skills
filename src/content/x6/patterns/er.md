@@ -30,7 +30,7 @@ use_cases:
 
 1. **必须先调用 `Shape.HTML.register()` 注册 `er-entity` 节点，再创建 Graph 实例和添加节点**
 2. **`Shape.HTML.register()` 中的 `html(cell)` 函数必须返回一个有效的 DOM 元素**（不能返回 HTML 字符串）
-3. **容器必须是已存在的 `HTMLElement`**：独立页面使用 `document.getElementById('container')`；宿主已注入 DOM 元素时直接复用 `container`
+3. **使用已存在的容器**：X6 3.1.8+ 可传入 DOM ID 字符串 `'container'` 或 `HTMLElement`；3.1.7 应传入 DOM 元素
 4. **禁止调用 `graph.render()`** — X6 自动渲染
 5. **禁止调用 `graph.dispose()`** — 会导致白屏
 
@@ -80,7 +80,7 @@ import { Graph, Shape } from '@antv/x6';
 Shape.HTML.register({ shape: 'er-entity', width: 200, height: 120, effect: ['data'], html(cell) { /* ... */ } });
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   panning: true,
   mousewheel: { enabled: true, modifiers: 'ctrl' },
@@ -336,7 +336,7 @@ Shape.HTML.register({
 **错误示例：**
 ```javascript
 // 错误：调用 graph.dispose() 会销毁整个画布，导致图表白屏
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.addNode({ shape: 'rect', x: 100, y: 60, width: 120, height: 50, label: 'Temporary' });
 graph.dispose(); // ❌ 错误操作
 ```
@@ -344,7 +344,7 @@ graph.dispose(); // ❌ 错误操作
 **修正方法：**
 ```javascript
 // 正确：避免调用 graph.dispose()，如需重置画布请使用 graph.clearCells()
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.addNode({ shape: 'rect', x: 100, y: 60, width: 120, height: 50, label: 'Temporary' });
 
 // 如需清空画布内容，请使用：

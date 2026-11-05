@@ -29,7 +29,7 @@ use_cases:
 ```javascript
 import { Graph, MiniMap } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new MiniMap({
   enabled: true,
   container: document.getElementById('minimap'),
@@ -60,7 +60,7 @@ graph.use(new MiniMap({
 import { Graph, Scroller, MiniMap } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -151,7 +151,7 @@ graph.use(new MiniMap({
 ```javascript
 // 错误：3.x 不支持
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   minimap: { enabled: true, container: el },  // ❌
 });
 ```
@@ -159,6 +159,6 @@ const graph = new Graph({
 ```javascript
 // 正确
 import { Graph, MiniMap } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new MiniMap({ enabled: true, container: el }));  // ✅
 ```

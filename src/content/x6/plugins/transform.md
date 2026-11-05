@@ -32,7 +32,7 @@ use_cases:
 ```javascript
 import { Graph, Transform } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Transform({
   resizing: { enabled: true },
   rotating: { enabled: true },
@@ -113,7 +113,7 @@ graph.on('node:rotated', ({ node, e }) => {
 import { Graph, Transform } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   grid: { visible: true },
@@ -172,7 +172,7 @@ graph.use(new Transform({
 ```javascript
 // 错误：3.x 不支持
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   resizing: { enabled: true },   // ❌
   rotating: { enabled: true },   // ❌
 });
@@ -181,7 +181,7 @@ const graph = new Graph({
 ```javascript
 // 正确
 import { Graph, Transform } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Transform({
   resizing: { enabled: true },
   rotating: { enabled: true },

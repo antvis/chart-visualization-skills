@@ -33,7 +33,7 @@ use_cases:
 ```javascript
 import { Graph, History } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new History({ enabled: true }));
 
 // 撤销
@@ -155,7 +155,7 @@ graph.use(new History({
 import { Graph, History, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -203,13 +203,13 @@ graph.undo();
 ### ❌ 未注册插件调用 undo/redo
 
 ```javascript
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.undo();  // ❌ 无效，History 插件未注册
 ```
 
 ```javascript
 import { Graph, History } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new History({ enabled: true }));
 graph.undo();  // ✅
 ```
@@ -219,7 +219,7 @@ graph.undo();  // ✅
 ```javascript
 // 错误：3.x 不支持
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   history: { enabled: true },  // ❌
 });
 ```
@@ -227,6 +227,6 @@ const graph = new Graph({
 ```javascript
 // 正确
 import { Graph, History } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new History({ enabled: true }));  // ✅
 ```

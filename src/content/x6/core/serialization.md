@@ -142,7 +142,7 @@ graph.dispose();
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container'), background: { color: '#F2F7FA' } });
+const graph = new Graph({ container: 'container', background: { color: '#F2F7FA' } });
 
 // 加载数据
 const initialData = {
@@ -180,7 +180,7 @@ function load() {
 
 ```javascript
 // ❌ 错误示例：直接使用 toJSON 返回值加载数据
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'node1', shape: 'rect', label: 'Node 1', x: 40, y: 40, width: 80, height: 40 },
   { id: 'node2', shape: 'rect', label: 'Node 2', x: 240, y: 40, width: 80, height: 40 },
@@ -242,7 +242,7 @@ graph.fromJSON([
 
 ```javascript
 // ❌ 错误示例：混合节点和边在同一个数组中传递给 fromJSON
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'source', shape: 'rect', label: 'Source', x: 40, y: 40, width: 100, height: 40 },
   { id: 'target', shape: 'rect', label: 'Target', x: 200, y: 160, width: 100, height: 40 },
@@ -267,7 +267,7 @@ graph.fromJSON({
 
 ```javascript
 // ❌ 错误示例：将 toJSON 返回值直接用于 fromJSON
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'node1', shape: 'rect', x: 40, y: 40, width: 80, height: 40, label: 'Node 1' },
   { source: 'node1', target: 'node2' }
@@ -291,7 +291,7 @@ graph2.fromJSON({ nodes: data.cells.filter(c => c.shape), edges: data.cells.filt
 
 ```javascript
 // ❌ 错误示例：边缺少 shape 字段
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'source', shape: 'rect', label: 'Source', x: 40, y: 40, width: 100, height: 40 },
   { id: 'target', shape: 'rect', label: 'Target', x: 200, y: 160, width: 100, height: 40 },
@@ -301,7 +301,7 @@ graph.fromJSON([
 
 ```javascript
 // ✅ 正确做法：确保边有 shape 字段
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'source', shape: 'rect', label: 'Source', x: 40, y: 40, width: 100, height: 40 },
   { id: 'target', shape: 'rect', label: 'Target', x: 200, y: 160, width: 100, height: 40 },
@@ -313,7 +313,7 @@ graph.fromJSON([
 
 ```javascript
 // ❌ 错误示例：混合节点和边在同一个数组中传递给 fromJSON
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON([
   { id: 'source', shape: 'rect', label: 'Source', x: 40, y: 40, width: 100, height: 40 },
   { id: 'target', shape: 'rect', label: 'Target', x: 200, y: 160, width: 100, height: 40 },
@@ -323,7 +323,7 @@ graph.fromJSON([
 
 ```javascript
 // ✅ 正确做法：使用对象结构分别指定 nodes 和 edges
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON({
   nodes: [
     { id: 'source', shape: 'rect', label: 'Source', x: 40, y: 40, width: 100, height: 40 },

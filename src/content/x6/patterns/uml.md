@@ -91,7 +91,7 @@ Shape.HTML.register({
 import { Graph, Shape } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 900,
   height: 700,
   background: { color: '#fff' },

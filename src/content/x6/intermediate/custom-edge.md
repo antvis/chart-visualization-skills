@@ -63,7 +63,7 @@ Graph.registerEdge(
   true,
 );
 
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 graph.addEdge({
   shape: 'custom-edge',
@@ -254,7 +254,7 @@ graph.addEdge({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     allowBlank: false,
     router: 'orth',

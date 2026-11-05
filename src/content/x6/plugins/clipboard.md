@@ -32,7 +32,7 @@ use_cases:
 ```javascript
 import { Graph, Clipboard } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Clipboard({ enabled: true }));
 
 // 复制
@@ -137,7 +137,7 @@ graph.on('clipboard:changed', ({ cells }) => {
 import { Graph, Selection, Clipboard, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -218,7 +218,7 @@ graph.bindKey('ctrl+c', () => {
 
 ```javascript
 // 错误：插件未注册
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.copy(cells);   // ❌ 无效
 graph.paste();       // ❌ 无效
 ```
@@ -226,7 +226,7 @@ graph.paste();       // ❌ 无效
 ```javascript
 // 正确：先注册插件
 import { Graph, Clipboard } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Clipboard({ enabled: true }));
 graph.copy(cells);   // ✅
 graph.paste();       // ✅

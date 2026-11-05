@@ -33,7 +33,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   panning: true,  // 简写：启用左键拖拽平移
@@ -61,7 +61,7 @@ panning: { enabled: true, eventTypes: ['leftMouseDown'] }
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: {
     enabled: true,
     modifiers: 'ctrl',  // 按住 Ctrl 才能拖拽平移
@@ -96,7 +96,7 @@ panning: {
 import { Graph, Selection } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: {
     enabled: true,
     modifiers: 'ctrl',  // Ctrl+拖拽 = 平移
@@ -113,7 +113,7 @@ X6 内置支持空格键临时平移（类似设计工具），按住空格键�
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true },
   // 按住空格 + 鼠标拖拽 = 平移（自动支持）
 });
@@ -142,7 +142,7 @@ graph.translate(tx, ty);     // 设置绝对偏移
 import { Graph, Selection } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -167,7 +167,7 @@ graph.addNode({ x: 400, y: 300, width: 120, height: 60, label: 'Node B' });
 ```javascript
 // ✅ 推荐：左键拖拽平移 + Ctrl+滚轮缩放（互不干扰）
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   panning: { enabled: true },                       // 等价 eventTypes: ['leftMouseDown']
   mousewheel: { enabled: true, modifiers: 'ctrl' }, // 仅 Ctrl+滚轮缩放
@@ -175,7 +175,7 @@ const graph = new Graph({
 
 // ✅ 推荐：Shift+拖拽平移 + Ctrl+滚轮缩放（再叠加 Selection rubberband 也不冲突）
 const graph2 = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true, modifiers: 'shift' },
   mousewheel: { enabled: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 },
 });
@@ -184,7 +184,7 @@ const graph2 = new Graph({
 ```javascript
 // ❌ 反模式：mouseWheel 放进 panning.eventTypes，又同时启用 mousewheel 缩放
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true, eventTypes: ['leftMouseDown', 'mouseWheel'] }, // ❌
   mousewheel: { enabled: true, modifiers: ['ctrl'], minScale: 0.5, maxScale: 3 },
 });
@@ -209,7 +209,7 @@ const graph = new Graph({
 ```javascript
 // 错误：冲突
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: true,  // ❌
 });
 graph.use(new Scroller({ enabled: true, pannable: true }));
@@ -218,10 +218,10 @@ graph.use(new Scroller({ enabled: true, pannable: true }));
 ```javascript
 // 正确：二选一
 // 方案 A：使用 panning
-const graph = new Graph({ container: document.getElementById('container'), panning: true });
+const graph = new Graph({ container: 'container', panning: true });
 
 // 方案 B：使用 Scroller
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Scroller({ enabled: true, pannable: true }));
 ```
 
@@ -230,7 +230,7 @@ graph.use(new Scroller({ enabled: true, pannable: true }));
 ```javascript
 // 问题：无修饰键时，拖拽到底是平移还是框选？
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true },  // 无修饰键
 });
 graph.use(new Selection({ enabled: true, rubberband: true }));  // 也无修饰键
@@ -240,7 +240,7 @@ graph.use(new Selection({ enabled: true, rubberband: true }));  // 也无修饰�
 ```javascript
 // 正确：使用修饰键区分
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true, modifiers: 'ctrl' },  // ✅ Ctrl+拖拽平移
 });
 graph.use(new Selection({ enabled: true, rubberband: true }));  // 普通拖拽框选

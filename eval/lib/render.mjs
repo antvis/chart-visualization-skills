@@ -17,7 +17,7 @@ const SCREENSHOTS_DIR = path.join(RESULTS_DIR, 'screenshots');
 const LIBS = {
   g2: { cdn: 'https://unpkg.com/@antv/g2@5.4.8/dist/g2.min.js', global: 'G2', pkg: '@antv/g2' },
   g6: { cdn: 'https://unpkg.com/@antv/g6@5.1.0/dist/g6.min.js', global: 'G6', pkg: '@antv/g6' },
-  x6: { cdn: 'https://cdn.jsdelivr.net/npm/@antv/x6@3.1.7/dist/x6.min.js', global: 'X6', pkg: '@antv/x6' },
+  x6: { cdn: 'https://cdn.jsdelivr.net/npm/@antv/x6@3.1.8/dist/x6.min.js', global: 'X6', pkg: '@antv/x6' },
 };
 
 // < 0.3% non-white pixels => blank. Sparse charts (scatter points, thin lines)

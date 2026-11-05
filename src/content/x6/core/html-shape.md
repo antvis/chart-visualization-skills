@@ -102,7 +102,7 @@ Shape.HTML.register({
 });
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 
@@ -134,7 +134,7 @@ Shape.HTML.register({
   },
 });
 
-const graph = new Graph({ container: document.getElementById('container'), background: { color: '#F2F7FA' } });
+const graph = new Graph({ container: 'container', background: { color: '#F2F7FA' } });
 
 graph.addNode({
   shape: 'card',

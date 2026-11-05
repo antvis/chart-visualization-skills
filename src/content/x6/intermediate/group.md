@@ -49,7 +49,7 @@ X6 通过父子关系（parent-children）实现群组功能。父节点移动�
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -132,7 +132,7 @@ parent.addChild(edge);
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   embedding: {
     enabled: true,
     // 查找父节点的方法：拖拽节点时遍历画布中的节点，返回的节点为目标父节点
@@ -161,7 +161,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   translating: {
     restrict(cellView) {
       const cell = cellView.cell;
@@ -242,7 +242,7 @@ Graph.registerNode(
 );
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -333,7 +333,7 @@ Graph.registerNode(
 );
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -410,11 +410,11 @@ graph.on('node:click', ({ node }) => {
 
 ```javascript
 // 错误：没有配置 embedding，拖拽不会触发嵌入
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 // 正确：必须启用 embedding
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   embedding: { enabled: true },
 });
 ```

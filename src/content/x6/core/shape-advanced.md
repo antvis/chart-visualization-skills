@@ -56,7 +56,7 @@ X6 3.x 提供以下内置 shape：
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 // 使用 path 快捷属性
 graph.addNode({
@@ -111,7 +111,7 @@ graph.addNode({
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 // 折线形状（不闭合）
 graph.addNode({
@@ -167,7 +167,7 @@ graph.addNode({
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 graph.addNode({
   shape: 'text-block',
@@ -212,7 +212,7 @@ graph.addNode({
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: {
     color: '#F2F7FA',
   },

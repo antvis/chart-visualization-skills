@@ -42,7 +42,7 @@ use_cases:
 import { Graph, Dnd } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -139,7 +139,7 @@ validateNode(droppingNode: Node, options: {
 import { Graph, Dnd, Snapline } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   grid: { visible: true, size: 10 },
@@ -323,7 +323,7 @@ stencilContainer.appendChild(stencil.container);
 import { Graph, Stencil } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });

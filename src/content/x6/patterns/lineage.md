@@ -522,7 +522,7 @@ Uncaught TypeError: Cannot read property 'appendChild' of undefined
 ```
 
 **修正方法：**
-确保 `container` 是一个已存在的 DOM 元素，不能传选择器字符串：
+确保 `container` 是一个 DOM 元素或有效的选择器字符串：
 
 ```javascript
 const graph = new Graph({
@@ -532,11 +532,11 @@ const graph = new Graph({
 });
 ```
 
-若宿主已注入 DOM 元素 `container`：
+或者：
 
 ```javascript
 const graph = new Graph({
-  container, // 正确：复用宿主提供的 HTMLElement
+  container: 'container', // 正确：使用选择器字符串
   width: 800,
   height: 450,
 });

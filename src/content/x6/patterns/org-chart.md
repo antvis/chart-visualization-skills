@@ -84,7 +84,7 @@ Graph.registerNode('org-card', {
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 1000,
   height: 600,
   background: { color: '#F8FAFC' },

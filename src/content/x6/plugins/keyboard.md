@@ -44,7 +44,7 @@ use_cases:
 import { Graph, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -130,7 +130,7 @@ keyboard.bindKey(['delete', 'backspace'], () => {
 import { Graph, Keyboard, Selection, Clipboard, History } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });

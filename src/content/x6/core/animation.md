@@ -52,7 +52,7 @@ X6 的 `animate` API 基于 [Web Animations API](https://developer.mozilla.org/e
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 400,
   background: { color: '#F2F7FA' },
@@ -375,17 +375,16 @@ node.animate(
 );
 ```
 
-### ❌ 将容器 ID 字符串传给 X6
+### ❌ 容器选择器错误
 
 ```javascript
-// 错误：X6 不会自动解析 ID 字符串
+// 错误：直接传入 DOM 元素变量（评测/Playground 环境中 container 由运行环境注入）
+const container = document.getElementById('container');
+const graph = new Graph({ container });
+
+// 正确：直接使用字符串字面量 'container'
 const graph = new Graph({ container: 'container' });
-
-// 正确：传入已存在的 DOM 元素
-const graph = new Graph({ container: document.getElementById('container') });
 ```
-
-若宿主已提供 `HTMLElement` 类型的 `container`，直接使用 `new Graph({ container })`，无需重新声明。
 
 ### ❌ 用 `complete` 回调监听动画结束
 

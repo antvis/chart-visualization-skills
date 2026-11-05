@@ -59,7 +59,7 @@ graph.addEdge({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     anchor: 'center', // 全局默认节点锚点
   },
@@ -148,7 +148,7 @@ const graph = new Graph({
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   connecting: {

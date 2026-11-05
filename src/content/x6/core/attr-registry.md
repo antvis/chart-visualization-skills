@@ -224,7 +224,7 @@ Graph.registerAttr('progress', {
   },
 });
 
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 graph.addNode({
   shape: 'rect',

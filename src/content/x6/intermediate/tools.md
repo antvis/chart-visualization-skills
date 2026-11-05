@@ -520,7 +520,7 @@ graph.addEdge({
 import { Graph, Selection } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   plugins: [
     new Selection({
@@ -549,7 +549,7 @@ graph.on('node:selected', ({ node }) => {
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 
@@ -608,7 +608,7 @@ node.addTools([
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 

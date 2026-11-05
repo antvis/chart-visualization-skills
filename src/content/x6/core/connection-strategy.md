@@ -44,7 +44,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionStrategy: 'pinRelative',
   },
@@ -57,7 +57,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionStrategy: 'pinAbsolute',
   },
@@ -80,7 +80,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionStrategy: 'pinRelative',
   },
@@ -111,7 +111,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     allowBlank: false,
     // 有端口时通常不需要 connectionStrategy
@@ -143,7 +143,7 @@ Graph.registerConnectionStrategy('myStrategy', (terminal, cellView, magnet, coor
 });
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionStrategy: 'myStrategy',
   },
@@ -157,7 +157,7 @@ const graph = new Graph({
 ```javascript
 // 不推荐：节点有端口时再用 pinAbsolute 会导致锚点计算混乱
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: { connectionStrategy: 'pinAbsolute' },
 });
 graph.addNode({
@@ -170,7 +170,7 @@ graph.addNode({
 ```javascript
 // 正确：有端口时使用默认策略（noop），让连线自然连接到端口
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: { allowBlank: false },  // ✅ 使用默认策略
 });
 ```

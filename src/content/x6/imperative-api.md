@@ -47,7 +47,7 @@ use_cases:
 当用户要求使用 X6 绘制图表、展示关系或实现画布交互时，**必须输出完整的、可运行的 JavaScript 代码**。核心流程：
 
 1. 从 `@antv/x6` 导入 `Graph` 及所需插件
-2. 使用 `new Graph({ container: document.getElementById('container'), ... })` 创建画布实例
+2. 使用 `new Graph({ container: 'container', ... })` 创建画布实例
 3. 使用 `graph.addNode()` / `graph.addEdge()` 构建内容
 4. 如需插件，使用 `graph.use(new Plugin(options))` 注册
 5. 如需交互，使用 `graph.on()` 绑定事件
@@ -58,7 +58,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 400,
   background: { color: '#F2F7FA' },
@@ -138,7 +138,7 @@ graph.addEdge({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   grid: {
     visible: true,
@@ -225,7 +225,7 @@ node.show();
 ```javascript
 import { Graph, History, Snapline, Selection, Export } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 // 注册插件
 graph.use(new History({ enabled: true }));
@@ -253,7 +253,7 @@ graph.enableSelection();
 ```javascript
 import { Graph, Export } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Export());
 
 graph.toPNG((dataUri) => {
@@ -319,7 +319,7 @@ graph.addEdge({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   translating: {
     restrict(cellView) {
@@ -335,7 +335,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   highlighting: {
     magnetAvailable: {
       name: 'stroke',
@@ -362,7 +362,7 @@ const graph = new Graph({
 | 错误模式 | 修正方案 |
 |---------|---------|
 | **未生成任何代码** | 必须输出完整代码：`import` → `new Graph()` → `addNode` → `addEdge` |
-| **遗漏 Graph 实例化** | 始终以 `new Graph({ container: document.getElementById('container') })` 开头 |
+| **遗漏 Graph 实例化** | 始终以 `new Graph({ container: 'container' })` 开头 |
 | **边连接混淆 ID 与实例** | 推荐直接用节点实例；用字符串 ID 需确保节点设置了相同 `id` |
 | **自定义节点未注册** | 使用前先 `Graph.registerNode('name', config, true)` |
 | **插件未导入或未启用** | 从 `@antv/x6` 导入，`new Plugin({ enabled: true })` + `graph.use()` |

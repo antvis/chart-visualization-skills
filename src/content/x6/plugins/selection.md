@@ -34,7 +34,7 @@ use_cases:
 ```javascript
 import { Graph, Selection } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({
   enabled: true,
   rubberband: true,  // 启用框选
@@ -153,7 +153,7 @@ graph.on('selection:changed', ({ added, removed, selected }) => {
 import { Graph, Selection, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -211,14 +211,14 @@ graph.use(new Selection({
 
 ```javascript
 // 错误：未注册 Selection 插件
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.select(node);  // ❌ 无效，不会报错但不生效
 ```
 
 ```javascript
 // 正确：先注册插件
 import { Graph, Selection } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({ enabled: true }));
 graph.select(node);  // ✅
 ```
@@ -228,7 +228,7 @@ graph.select(node);  // ✅
 ```javascript
 // 错误：3.x 不支持
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   selecting: { enabled: true, rubberband: true },  // ❌
 });
 ```
@@ -236,6 +236,6 @@ const graph = new Graph({
 ```javascript
 // 正确：使用 graph.use()
 import { Graph, Selection } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({ enabled: true, rubberband: true }));  // ✅
 ```

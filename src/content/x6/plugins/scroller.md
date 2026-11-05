@@ -32,7 +32,7 @@ use_cases:
 ```javascript
 import { Graph, Scroller } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Scroller({
   enabled: true,
   pannable: true,  // 画布可拖拽平移
@@ -120,7 +120,7 @@ const scrollerContainer = scroller.container;
 import { Graph, Scroller, MiniMap } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -155,7 +155,7 @@ Scroller 和 MiniMap 搭配使用时，MiniMap 会自动反映 Scroller 的视�
 ```javascript
 import { Graph, Scroller, MiniMap } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 graph.use(new Scroller({ enabled: true, pannable: true }));
 graph.use(new MiniMap({
@@ -187,7 +187,7 @@ X6 Graph 本身有 `panning` 配置（不需要插件），但 Scroller 提供�
 ```javascript
 // 错误：两者冲突
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: true,  // ❌ 与 Scroller 冲突
 });
 graph.use(new Scroller({ enabled: true, pannable: true }));
@@ -195,7 +195,7 @@ graph.use(new Scroller({ enabled: true, pannable: true }));
 
 ```javascript
 // 正确：使用 Scroller 时不要配置 panning
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Scroller({ enabled: true, pannable: true }));  // ✅
 ```
 
@@ -204,7 +204,7 @@ graph.use(new Scroller({ enabled: true, pannable: true }));  // ✅
 ```javascript
 // 错误：3.x 不支持
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   scroller: { enabled: true, pannable: true },  // ❌
 });
 ```
@@ -212,6 +212,6 @@ const graph = new Graph({
 ```javascript
 // 正确
 import { Graph, Scroller } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Scroller({ enabled: true, pannable: true }));  // ✅
 ```

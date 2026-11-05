@@ -162,7 +162,7 @@ const hasPort = node.hasPort('port-id');
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
 });
 
 // 默认隐藏端口
@@ -243,7 +243,7 @@ ports: {
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     allowBlank: false,
     allowNode: false,        // 只允许连接到端口
@@ -523,17 +523,17 @@ graph.addNode({
 
 **错误示例：**
 ```javascript
-// 错误：container 变量未定义或为 null
+// 错误：未提供有效容器
 const graph = new Graph({
-  container: undefined, // ❌ 未传入有效的 DOM 元素
+  container: undefined,
 });
 ```
 
 **修正方法：**
 ```javascript
-// 正确：传入已存在的 DOM 元素；宿主已注入时也可直接复用 container
+// 正确：X6 3.1.8+ 使用已存在的 DOM ID；也可传入有效的 HTMLElement
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -564,7 +564,7 @@ edge.prop('vertices', [{ x: 200, y: 50 }]);
 ```javascript
 // 错误：connecting 配置不完整或错误
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     snap: true,
     allowBlank: true,
@@ -601,7 +601,7 @@ const graph = new Graph({
 ```javascript
 // 正确：使用完整的 connecting 配置
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   connecting: {
     allowBlank: true,

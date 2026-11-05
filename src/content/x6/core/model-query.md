@@ -199,7 +199,7 @@ const path = graph.getShortestPath(sourceNode, targetNode);
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 const a = graph.addNode({ shape: 'rect', x: 50, y: 200, width: 80, height: 40, label: 'A' });
 const b = graph.addNode({ shape: 'rect', x: 200, y: 100, width: 80, height: 40, label: 'B' });

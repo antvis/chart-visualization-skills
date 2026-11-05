@@ -34,7 +34,7 @@ import { Graph } from '@antv/x6';
 
 // 纯色背景
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -56,7 +56,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 ```
@@ -65,7 +65,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: {
     image: 'https://example.com/bg.png',
     size: 'cover',
@@ -81,7 +81,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: {
     image: 'https://example.com/tile.png',
     repeat: 'repeat',
@@ -96,7 +96,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: {
     image: 'https://example.com/pattern.png',
     repeat: 'flip-xy',  // 水平和垂直都翻转
@@ -111,7 +111,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: {
     image: 'https://example.com/watermark.png',
     repeat: 'watermark',
@@ -143,7 +143,7 @@ graph.clearBackground();
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -167,13 +167,13 @@ graph.addNode({
 ```javascript
 // 注意：grid 的颜色是网格线/点的颜色，不是背景色
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: { visible: true, args: { color: '#F2F7FA' } },  // ❌ 这不是设置背景色
 });
 
 // 正确：背景色用 background，网格颜色用 grid.args.color
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },  // ✅ 背景色
   grid: { visible: true, args: { color: '#ddd' } },  // ✅ 网格点颜色
 });

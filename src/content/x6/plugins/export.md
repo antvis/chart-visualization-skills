@@ -46,7 +46,7 @@ Export 插件需要先注册才能使用导出功能：
 import { Graph, Export } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -168,7 +168,7 @@ graph.toJPEG((dataUri) => {
 import { Graph, Export } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -221,7 +221,7 @@ graph.exportPNG('flowchart', {
 ```javascript
 // ✅ 正确的导出代码模板（每次生成导出代码都必须包含这两行）
 import { Graph, Export } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Export());  // 必须在调用任何导出方法之前
 ```
 
@@ -237,12 +237,12 @@ graph.use(new Export());  // 必须在调用任何导出方法之前
 ```javascript
 // 错误：graph.toPNG is not a function / graph.exportPNG is not a function
 import { Graph } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.toPNG((dataUri) => { console.log(dataUri); }); // TypeError
 
 // 正确：必须先 import Export 并注册
 import { Graph, Export } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Export());
 graph.toPNG((dataUri) => { console.log(dataUri); }); // ✅
 ```
@@ -269,17 +269,18 @@ graph.toPNG((dataUri) => { console.log(dataUri); });
 const dataUri = await graph.toPNGAsync({ backgroundColor: '#fff' });
 ```
 
-### ❌ 使用 ID 字符串初始化画布
+### 容器 ID 和 DOM 引用均可使用（X6 3.1.8+）
 
 ```javascript
-// 错误：X6 要求 HTMLElement，不会解析 ID 字符串
-const graph = new Graph({ container: 'container' });
+// 正确：独立页面可以声明自己的容器变量
+const graphContainer = document.getElementById('container');
+const graph = new Graph({ container: graphContainer });
 
-// 正确：获取已存在的 DOM 元素
-const graph = new Graph({ container: document.getElementById('container') });
+// 同样有效：使用已存在的 DOM ID
+const graphWithId = new Graph({ container: 'container' });
 ```
 
-宿主已注入 DOM 元素 `container` 时可以直接复用，避免在同一作用域重复声明。
+若宿主已注入 DOM 元素 `container`，直接使用 `new Graph({ container })`，避免在同一作用域重复声明。
 
 ### ❌ 调用 graph.render() 导致报错
 
@@ -296,13 +297,13 @@ graph.render();
 ```javascript
 // 错误：即使引入了 Export，如果没有注册插件，仍然会报错
 import { Graph, Export } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 // 忘记调用 graph.use(new Export());
 graph.toPNG((dataUri) => { console.log(dataUri); }); // ❌ TypeError
 
 // 正确：确保插件已注册
 import { Graph, Export } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Export()); // ✅ 必须注册插件
 graph.toPNG((dataUri) => { console.log(dataUri); }); // ✅ 正确调用
 ```

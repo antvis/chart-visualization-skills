@@ -34,7 +34,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   grid: {
@@ -63,7 +63,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: {
     visible: true,
     size: 10,
@@ -82,7 +82,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: {
     visible: true,
     size: 10,
@@ -101,7 +101,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: {
     visible: true,
     size: 10,
@@ -120,7 +120,7 @@ const graph = new Graph({
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: {
     visible: true,
     size: 10,
@@ -170,7 +170,7 @@ graph.drawGrid({
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   grid: {
@@ -201,7 +201,7 @@ graph.addNode({
 ```javascript
 // 错误理解：以为 visible: false 就没有网格效果
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   grid: { visible: false, size: 20 },
 });
 // 实际上节点拖拽时仍会吸附到 20px 网格！

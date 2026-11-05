@@ -83,7 +83,7 @@ Graph.registerNode(
 );
 
 // 使用自定义节点
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 graph.addNode({
   shape: 'custom-rect',
@@ -219,7 +219,7 @@ Shape.HTML.register({
   },
 });
 
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 graph.addNode({
   shape: 'custom-html',
@@ -264,7 +264,7 @@ Shape.HTML.register({
   },
 });
 
-const graph = new Graph({ container: document.getElementById('container'), width: 800, height: 600 });
+const graph = new Graph({ container: 'container', width: 800, height: 600 });
 
 const node = graph.addNode({
   shape: 'data-card',
@@ -386,7 +386,7 @@ graph.addNode({ shape: 'dept-group', x: 40, y: 40, label: '部门' });
 
 // 3) 需要 Embedding 嵌入交互时，在 Graph 构造选项里开启（不是插件！）
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   embedding: { enabled: true, findParent: 'bbox', frontOnly: false },
 });
 ```

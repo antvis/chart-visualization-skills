@@ -164,7 +164,7 @@ Graph.registerNode(
 );
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 

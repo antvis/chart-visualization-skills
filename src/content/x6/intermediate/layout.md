@@ -89,7 +89,7 @@ const model = dagreLayout.layout(data);
 
 // 渲染到画布
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -139,7 +139,7 @@ const gridLayout = new GridLayout({
 
 const model = gridLayout.layout(data);
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON(model);
 ```
 
@@ -160,7 +160,7 @@ const circularLayout = new CircularLayout({
 
 const model = circularLayout.layout(data);
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON(model);
 ```
 
@@ -183,7 +183,7 @@ const forceLayout = new ForceLayout({
 
 const model = forceLayout.layout(data);
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON(model);
 ```
 
@@ -260,7 +260,7 @@ function traverse(node) {
 traverse(result);
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   connecting: { connector: 'smooth' },

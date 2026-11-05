@@ -70,7 +70,7 @@ X6 3.x 中，插件从 `@antv/x6` 直接导入，通过 `graph.use(new Plugin(op
 ```javascript
 import { Graph, Selection, Snapline, History } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 // 通过 graph.use() 注册插件
 graph.use(new Selection({ enabled: true }));
@@ -110,14 +110,14 @@ X6 11 个内置插件都从 `@antv/x6` **主包**导入；**用到哪些，就�
 ```javascript
 // ❌ 漏写 Selection 导致 Illegal constructor
 import { Graph } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({ enabled: true, rubberband: true })); // ❌ Selection 未 import → 回退到 window.Selection
 ```
 
 ```javascript
 // ✅ 必须把 Selection 写进 import
 import { Graph, Selection } from '@antv/x6';
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({ enabled: true, rubberband: true })); // ✅
 ```
 
@@ -172,7 +172,7 @@ Shape.HTML.register({ shape: 'form', html() { /* ... */ } });
 ```javascript
 import { Graph, Selection } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({
   enabled: true,
   rubberband: true,        // 启用框选
@@ -194,7 +194,7 @@ graph.cleanSelection();          // 清空选择
 ```javascript
 import { Graph, Snapline } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Snapline({
   enabled: true,
   tolerance: 10,           // 吸附容差（像素）
@@ -206,7 +206,7 @@ graph.use(new Snapline({
 ```javascript
 import { Graph, History } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new History({ enabled: true }));
 
 // 撤销
@@ -241,7 +241,7 @@ graph.batchUpdate('custom-batch', () => {
 ```javascript
 import { Graph, Clipboard } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Clipboard({ enabled: true }));
 
 // 复制选中元素
@@ -259,7 +259,7 @@ graph.cut(graph.getSelected( ));
 ```javascript
 import { Graph, Keyboard } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Keyboard({
   enabled: true,
   global: true,            // 全局快捷键（不限于画布焦点）
@@ -298,7 +298,7 @@ graph.bindKey('ctrl+a', () => {
 ```javascript
 import { Graph, Scroller } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Scroller({
   enabled: true,
   pannable: true,          // 画布可平移
@@ -312,7 +312,7 @@ graph.use(new Scroller({
 ```javascript
 import { Graph, MiniMap } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new MiniMap({
   enabled: true,
   container: document.getElementById('minimap'),  // 小地图容器
@@ -328,7 +328,7 @@ graph.use(new MiniMap({
 ```javascript
 import { Graph, Transform } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Transform({
   resizing: {
     enabled: true,           // 允许调整大小
@@ -346,7 +346,7 @@ Stencil 用于创建可拖拽的节点面板（工具箱）：
 ```javascript
 import { Graph, Stencil } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 const stencil = new Stencil({
   title: 'Components',
@@ -380,7 +380,7 @@ stencil.load(customNodes, 'custom');
 ```javascript
 import { Graph, Dnd } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 const dnd = new Dnd({ target: graph });
 graph.use(dnd);
@@ -403,7 +403,7 @@ document.getElementById('drag-source').addEventListener('mousedown', (e) => {
 import { Graph, Selection, Snapline, History, Clipboard, Keyboard, Transform } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },
@@ -438,7 +438,7 @@ graph.bindKey('delete', () => graph.removeCells(graph.getSelectedCells()));
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   selecting: { enabled: true },  // ❌ 3.x 不支持
   snapline: { enabled: true },   // ❌ 3.x 不支持
   history: { enabled: true },    // ❌ 3.x 不支持
@@ -452,7 +452,7 @@ X6 3.x 中插件通过 `graph.use()` 注册，不支持构造函数选项模式�
 ```javascript
 import { Graph, Selection, Snapline, History } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.use(new Selection({ enabled: true }));
 graph.use(new Snapline({ enabled: true }));
 graph.use(new History({ enabled: true }));
@@ -499,7 +499,7 @@ graph.fromJSON(data);
 import { Graph, Selection, Snapline, History, Keyboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: undefined, // ❌ 未传入有效的 DOM 元素
+  container: undefined, // ❌ 未提供有效容器
 });
 
 graph.use(new Selection({ enabled: true }));
@@ -511,7 +511,7 @@ graph.use(new Keyboard({ enabled: true }));
 ```
 
 **错误原因**：
-1. `container` 参数必须为已存在的 DOM 元素，不能是字符串或 undefined。
+1. `container` 参数应为有效的 DOM 元素或其 ID 字符串（ID 字符串要求 X6 3.1.8+）。宿主注入的 DOM 元素 `container` 同样有效。
 2. 画布中没有添加任何节点或边，导致白屏。
 
 **修正代码**：
@@ -519,7 +519,7 @@ graph.use(new Keyboard({ enabled: true }));
 import { Graph, Selection, Snapline, History, Keyboard, Clipboard } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'), // ✅ 正确：传入已存在的 DOM 元素
+  container: 'container', // ✅ 正确：使用字符串 ID
   width: 800,
   height: 600,
   background: { color: '#F2F7FA' },

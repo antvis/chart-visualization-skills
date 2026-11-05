@@ -284,7 +284,7 @@ graph.on('node:move', ({ node }) => {
 ```javascript
 // ✅ 正确做法：使用 graph 配置项
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 600,
   height: 400,
   translating: {
@@ -335,7 +335,7 @@ innerGroup.addChild(child1);
 ```javascript
 // ❌ 错误做法：connectionPoint 设置不完整
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionPoint: 'boundary', // 只设置了连接点类型，缺少创建边的配置
   },
@@ -347,7 +347,7 @@ const graph = new Graph({
 ```javascript
 // ✅ 正确做法：完整配置连接点和创建边的行为
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     connectionPoint: 'boundary',
     createEdge() {
@@ -404,7 +404,7 @@ graph.on('node:mousemove', ({ node }) => {
 ```javascript
 // ✅ 正确做法：使用 translating.restrict 限制节点只能垂直移动
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   translating: {
     restrict(cellView) {
       const cell = cellView.cell;
@@ -422,7 +422,7 @@ const graph = new Graph({
 ```javascript
 // ❌ 错误做法：在 graph 配置中设置但未在边中生效
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     router: 'manhattan',
     connector: {
@@ -508,7 +508,7 @@ graph.on('node:mousemove', ({ node }) => {
 ```javascript
 // ✅ 正确做法：使用 translating.restrict 配置
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   translating: {
     restrict: {
       x: 0,
@@ -527,7 +527,7 @@ const graph = new Graph({
 ```javascript
 // ❌ 错误做法：在 graph 配置中设置但未在边中生效
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     router: 'manhattan',
     connector: {
@@ -561,7 +561,7 @@ const edge = graph.addEdge({
 ```javascript
 // ❌ 错误做法：调用 graph.render()
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
@@ -574,21 +574,28 @@ graph.render(); // 报错：graph.render is not a function
 ```javascript
 // ✅ 正确做法：无需调用 graph.render()
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
 });
 ```
 
-### 错误 10：重复声明宿主已注入的 container
+### 错误 10：重复声明宿主已注入的 `container`
 
-仅当宿主已在同一作用域提供 `container` 时，重复声明才会报错。直接复用宿主提供的 DOM 元素：
+若宿主已在同一作用域注入 `container`，不要重复声明，否则会发生标识符冲突。独立页面可以正常声明自己的容器变量；X6 3.1.8+ 支持已存在的 DOM ID 字符串和 `HTMLElement`。
 
 ```javascript
-const graph = new Graph({ container, width: 800, height: 600 });
-```
+// ❌ 错误做法：重复声明 container 变量
+const container = document.getElementById('container');
+const graph = new Graph({ container });
 
-独立页面可正常使用 `document.getElementById('container')` 获取已存在的容器，X6 不接受 ID 字符串。
+// ✅ 正确做法：直接使用字符串 'container'
+const graphWithId = new Graph({
+  container: 'container',
+  width: 800,
+  height: 600,
+});
+```
 
 ### 错误 11：使用未注册的自定义边 shape
 

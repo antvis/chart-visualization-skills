@@ -57,7 +57,7 @@ use_cases:
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 const source = graph.addNode({
   shape: 'rect',
@@ -139,7 +139,7 @@ OneSide 路由器会：
 ```javascript
 import { Graph } from '@antv/x6';
 
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 
 const node = graph.addNode({
   shape: 'rect',
@@ -303,7 +303,7 @@ graph.addEdge({
 
 // ✅ 正确：确保 graph 初始化时启用 router，并在 addEdge 中显式设置
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     router: 'orth',
   },

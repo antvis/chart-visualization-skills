@@ -46,7 +46,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   connecting: {
@@ -181,7 +181,7 @@ highlighting: {
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   connecting: {
@@ -269,7 +269,7 @@ nodeView.unhighlight();
 ```javascript
 // 错误：忘记开启 connecting.highlight
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     allowBlank: false,
     // highlight 默认为 false！
@@ -282,7 +282,7 @@ const graph = new Graph({
 
 // 正确：必须设置 highlight: true
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   connecting: {
     allowBlank: false,
     highlight: true, // ✅ 开启连线高亮

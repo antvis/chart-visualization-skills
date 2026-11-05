@@ -30,7 +30,7 @@ use_cases:
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   mousewheel: {
@@ -148,7 +148,7 @@ graph.zoomToRect({ x: 100, y: 100, width: 400, height: 300 });
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   width: 800,
   height: 600,
   grid: { visible: true },
@@ -211,7 +211,7 @@ const graph = new Graph({
 ```javascript
 // 正确示例：确保 DOM 元素存在并已挂载
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   panning: {
     enabled: true,
@@ -237,7 +237,7 @@ graph.addNode({ shape: 'rect', x: 260, y: 160, width: 120, height: 50, label: 'C
 // 又同时把 'mouseWheel' 放进 panning.eventTypes，会导致滚轮事件
 // 在 panning（平移）和 mousewheel（缩放）之间冲突，体感像「白屏 / 失效」。
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: {
     enabled: true,
     eventTypes: ['leftMouseDown', 'mouseWheel'], // ❌ 与 mousewheel 缩放冲突
@@ -256,7 +256,7 @@ const graph = new Graph({
 // - 普通左键拖拽 = 平移（或 Shift+拖拽，看产品定义）
 // - Ctrl + 滚轮  = 缩放
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   panning: {
     enabled: true,
@@ -278,7 +278,7 @@ const graph = new Graph({
 ```javascript
 // 错误示例：只配置了 panning / mousewheel，没有任何节点或边
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   panning: { enabled: true, modifiers: 'shift' },
   mousewheel: { enabled: true, modifiers: 'ctrl', minScale: 0.5, maxScale: 3 },
 });
@@ -288,7 +288,7 @@ const graph = new Graph({
 ```javascript
 // 正确示例：即便用户 query 只描述了交互配置，也至少要 addNode/addEdge 出可见内容
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   grid: { visible: true, size: 10 },
   panning: { enabled: true, modifiers: 'shift' },

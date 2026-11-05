@@ -73,7 +73,7 @@ Graph.registerNode('diamond', {
 }, true);
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
   grid: { visible: true },
 });
@@ -129,7 +129,7 @@ graph.centerContent();
 适用于订单状态、工作流状态等：
 
 ```javascript
-const graph = new Graph({ container: document.getElementById('container'), background: { color: '#F2F7FA' } });
+const graph = new Graph({ container: 'container', background: { color: '#F2F7FA' } });
 
 const states = [
   { id: 'pending', x: 60, y: 120, label: 'Pending', color: '#fa8c16', bg: '#fff7e6' },
@@ -163,7 +163,7 @@ transitions.forEach(t => {
 
 ```javascript
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 
@@ -204,7 +204,7 @@ graph.addEdge({ source: cfo, target: fin, ...edgeStyle });
 用大矩形节点作为泳道背景，流程节点置于不同泳道中：
 
 ```javascript
-const graph = new Graph({ container: document.getElementById('container'), background: { color: '#F2F7FA' } });
+const graph = new Graph({ container: 'container', background: { color: '#F2F7FA' } });
 
 // 泳道背景（低 zIndex）
 graph.addNode({
@@ -237,7 +237,7 @@ graph.addEdge({ source: task1, target: task2, router: 'orth', connector: 'rounde
 
 使用 `graph.fromJSON` 方法可以一次性加载完整的图结构，包括节点和边。注意以下几点：
 
-- `container` 必须是已存在的 DOM 元素，不能是 ID 或选择器字符串
+- `container` 必须是 DOM 元素或其 ID 字符串
 - 不需要手动调用 `graph.render()`，`fromJSON` 会自动渲染
 - 节点和边的属性应符合 X6 规范
 
@@ -245,7 +245,7 @@ graph.addEdge({ source: task1, target: task2, router: 'orth', connector: 'rounde
 import { Graph } from '@antv/x6';
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 });
 
@@ -318,7 +318,7 @@ graph.centerContent();
 **错误代码示例：**
 
 ```javascript
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON(data);
 graph.render(); // ❌ 错误：graph.render is not a function
 ```
@@ -329,18 +329,28 @@ X6 的 `Graph` 实例没有 `render` 方法。使用 `fromJSON` 加载数据后�
 **正确做法：**
 
 ```javascript
-const graph = new Graph({ container: document.getElementById('container') });
+const graph = new Graph({ container: 'container' });
 graph.fromJSON(data); // ✅ 正确：自动渲染
 // graph.centerContent(); // 可选：居中内容
 ```
 
-### 错误：重复声明宿主已注入的 container
+### 错误：重复声明宿主已注入的 `container`
 
-如果宿主已在同一作用域提供 DOM 元素 `container`，不要重复声明；直接使用 `new Graph({ container })`。独立页面则可以正常获取并声明自己的容器变量：
+仅当宿主已在同一作用域注入 `container` 时，以下声明才会冲突。独立页面可以正常声明自己的容器变量，X6 3.1.8+ 支持已存在的 DOM ID 字符串和 `HTMLElement`。
+
+**错误代码示例：**
 
 ```javascript
-const graphContainer = document.getElementById('container');
-const graph = new Graph({ container: graphContainer });
+// ❌ 错误：在宿主已注入同名变量的作用域中重复声明
+const container = document.getElementById('container');
+const graph = new Graph({ container }); // 报错：Identifier 'container' has already been declared
+```
+
+**正确做法：**
+
+```javascript
+// ✅ 正确：直接使用字符串 'container'
+const graph = new Graph({ container: 'container' });
 ```
 
 ### 错误：节点或边属性格式不正确
@@ -379,7 +389,7 @@ const graph = new Graph({ container: graphContainer });
 import { Graph } from '@antv/x6'
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 })
 
@@ -401,7 +411,7 @@ X6 Graph 实例没有 `render` 方法，调用会导致运行时错误。`fromJS
 import { Graph } from '@antv/x6'
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   background: { color: '#F2F7FA' },
 })
 
@@ -417,7 +427,7 @@ graph.centerContent() // 可选：居中内容
 import { Graph, Shape, Addon } from '@antv/x6' // ❌ 错误：导入了不存在的模块
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   plugins: [
     new Addon.Selection({ // ❌ 错误：插件不支持或导入错误
       enabled: true,
@@ -438,7 +448,7 @@ X6 的模块结构中没有 `Shape` 和 `Addon` 模块。插件需要通过 `@an
 import { Graph } from '@antv/x6'
 
 const graph = new Graph({
-  container: document.getElementById('container'),
+  container: 'container',
   // 插件需要通过独立包引入，如 @antv/x6-plugin-selection
 })
 ```
